@@ -1,0 +1,64 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../backend/node_modules/.prisma/client"
+}
+
+model User {
+  id        Int        @id @default(autoincrement())
+  email     String     @unique
+  name      String?
+  workflows Workflow[]
+}
+
+model Workflow {
+  id         Int            @id @default(autoincrement())
+  name       String
+  definition String         // JSON string of workflow nodes & connections (contains { nodes, edges })
+  isActive   Boolean        @default(true)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  userId     Int?
+  user       User?          @relation(fields: [userId], references: [id])
+  executions ExecutionLog[]
+}
+
+model ExecutionLog {
+  id          Int       @id @default(autoincrement())
+  workflowId  Int
+  workflow    Workflow  @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  status      String    // pending, running, success, failed
+  startedAt   DateTime  @default(now())
+  finishedAt  DateTime?
+  logs        String?   // JSON string of step actions and results
+}
+
+model CRMContact {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  status    String   // lead, contact, customer
+  score     Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model SimulatedEmail {
+  id      Int      @id @default(autoincrement())
+  to      String
+  subject String
+  body    String
+  sentAt  DateTime @default(now())
+}
+
+model DelayedExecution {
+  id          Int      @id @default(autoincrement())
+  workflowId  Int
+  executionId Int
+  nodeId      String   // The node ID where it is waiting
+  resumeTime  DateTime // When the delay expires
+  contextData String   // JSON string of current context variables/data
+}
