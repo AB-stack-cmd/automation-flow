@@ -3,26 +3,140 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NEURON_FLOW | Orchestrator Builder</title>
+    <title>NEURON_FLOW | Workflow Editor</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
     <script>
       tailwind.config = {
         darkMode: "class",
         theme: {
           extend: {
             colors: {
-              background: "#131313",
-              surface: "#1a1a1a",
-              primary: "#facc15"
+              "on-secondary-fixed": "#410004",
+              "on-primary-fixed-variant": "#574500",
+              "inverse-primary": "#735c00",
+              "surface-variant": "#2a2a2a",
+              "on-secondary": "#68000a",
+              "error": "#ffb4ab",
+              "surface-tint": "#eec200",
+              "background": "#0e0e0e",
+              "tertiary-container": "#33e4ff",
+              "secondary-fixed": "#ffdad7",
+              "on-error-container": "#ffdad6",
+              "on-background": "#e5e2e1",
+              "surface": "#0e0e0e",
+              "tertiary": "#c7f5ff",
+              "surface-dim": "#0e0e0e",
+              "on-secondary-container": "#ffaea8",
+              "primary": "#ffecb9",
+              "primary-fixed-dim": "#eec200",
+              "outline-variant": "#2a2a2a",
+              "surface-bright": "#1c1b1b",
+              "on-tertiary-container": "#006270",
+              "secondary-fixed-dim": "#ffb3ad",
+              "error-container": "#93000a",
+              "secondary": "#ffb3ad",
+              "primary-fixed": "#ffe083",
+              "on-tertiary-fixed-variant": "#004e59",
+              "tertiary-fixed": "#a0efff",
+              "inverse-surface": "#e5e2e1",
+              "inverse-on-surface": "#313030",
+              "surface-container": "#131313",
+              "on-tertiary-fixed": "#001f25",
+              "on-secondary-fixed-variant": "#930013",
+              "surface-container-highest": "#1c1b1b",
+              "on-error": "#690005",
+              "on-primary-container": "#6c5700",
+              "tertiary-fixed-dim": "#15daf4",
+              "on-primary-fixed": "#231b00",
+              "on-tertiary": "#00363e",
+              "on-primary": "#3c2f00",
+              "surface-container-low": "#131313",
+              "on-surface-variant": "#a0a0a0",
+              "secondary-container": "#a40217",
+              "outline": "#333333",
+              "surface-container-lowest": "#0a0a0a",
+              "primary-container": "#facc15",
+              "on-surface": "#e5e2e1",
+              "surface-container-high": "#171717",
+              "accent-coral": "#ef4444"
+            },
+            borderRadius: {
+              "DEFAULT": "0.125rem",
+              "lg": "0.25rem",
+              "xl": "0.5rem",
+              "full": "0.75rem"
+            },
+            spacing: {
+              "margin-lg": "48px",
+              "margin-md": "32px",
+              "gutter": "16px",
+              "unit": "4px",
+              "margin-sm": "16px",
+              "container-max": "1440px"
+            },
+            fontFamily: {
+              "headline-lg-mobile": ["Inter"],
+              "body-lg": ["Inter"],
+              "body-md": ["Inter"],
+              "headline-xl": ["Inter"],
+              "headline-lg": ["Inter"],
+              "label-sm": ["JetBrains Mono"],
+              "label-md": ["JetBrains Mono"],
+              "headline-md": ["Inter"]
+            },
+            fontSize: {
+              "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+              "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+              "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+              "headline-xl": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+              "headline-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+              "label-sm": ["10px", {"lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+              "label-md": ["11px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "400"}],
+              "headline-md": ["18px", {"lineHeight": "26px", "fontWeight": "500"}]
             }
           }
         }
       }
     </script>
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 20;
+        font-size: 20px;
+      }
+      .dot-grid {
+        background-image: radial-gradient(circle, rgba(255,255,255,0.03) 0.5px, transparent 0.5px);
+        background-size: 32px 32px;
+      }
+      .node-card {
+        background: rgba(19, 19, 19, 0.4);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .node-card:hover {
+        background: rgba(19, 19, 19, 0.6);
+        border-color: rgba(255, 255, 255, 0.1);
+        transform: translateY(-1px);
+      }
+      .node-handle {
+        width: 6px;
+        height: 6px;
+        background: #0a0a0a;
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 50%;
+        position: absolute;
+        z-index: 10;
+      }
+      .node-handle-active {
+        background: #ef4444;
+        border-color: #ef4444;
+        box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+      }
+    </style>
   </head>
-  <body class="bg-[#131313] text-[#e5e2e1] selection:bg-[#facc15]/30 selection:text-[#ffe083] overflow-x-hidden min-h-screen m-0 p-0">
-    <div id="root" style="width: 100%; height: 100vh; max-width: none; border-inline: none; margin: 0; text-align: left; display: block;"></div>
+  <body class="bg-surface text-on-surface font-body-md selection:bg-accent-coral/30 selection:text-white m-0 p-0 h-screen overflow-hidden">
+    <div id="root" class="w-full h-full"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

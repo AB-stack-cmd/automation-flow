@@ -275,9 +275,9 @@ export default function Home() {
               <a className="text-on-surface-variant font-body-md text-body-md hover:text-primary transition-colors" href="#">Pricing</a>
             </nav>
             <div className="flex items-center gap-4">
-              <button className="px-6 py-2 bg-primary-container text-on-primary-container font-label-md text-label-md rounded hover:opacity-90 active:scale-95 transition-all">
+              <a href="http://localhost:5173/" className="px-6 py-2 bg-primary-container text-on-primary-container font-label-md text-label-md rounded hover:opacity-90 active:scale-95 transition-all flex items-center justify-center">
                 Get Started
-              </button>
+              </a>
             </div>
           </div>
         </header>
@@ -297,9 +297,9 @@ export default function Home() {
               Experience unparalleled precision in logic deployment and data flow management.
             </p>
             <div className="flex flex-col sm:flex-row gap-gutter items-center">
-              <button className="w-full sm:w-auto px-10 py-4 bg-primary-container text-black font-headline-md text-headline-md rounded hover:brightness-110 active:scale-95 transition-all shadow-xl shadow-primary-container/10">
+              <a href="http://localhost:5173/" className="w-full sm:w-auto px-10 py-4 bg-primary-container text-black font-headline-md text-headline-md rounded hover:brightness-110 active:scale-95 transition-all shadow-xl shadow-primary-container/10 flex items-center justify-center">
                 Get Started Free
-              </button>
+              </a>
               <button className="w-full sm:w-auto px-10 py-4 bg-transparent border border-outline-variant text-on-surface font-headline-md text-headline-md rounded hover:bg-surface-container-high active:scale-95 transition-all flex items-center justify-center gap-2 group">
                 <span className="material-symbols-outlined text-secondary-container group-hover:scale-110 transition-transform" data-icon="play_circle">play_circle</span>
                 Watch Demo

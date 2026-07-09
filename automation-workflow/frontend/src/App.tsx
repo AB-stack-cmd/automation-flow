@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import ReactFlow, {
-  Controls,
   Background,
   useNodesState,
   useEdgesState,
@@ -29,29 +28,374 @@ const nodeTypes = {
 
 const BACKEND_URL = 'http://localhost:4000';
 
+// Template Definitions from user request & HTML template
+const TEMPLATES = [
+  {
+    id: 'slack-postgres-sync',
+    name: 'Slack to PostgreSQL Sync',
+    category: 'AI Agents',
+    description: 'Extract sentiment and action items from Slack messages via LLM and archive to database.',
+    icons: ['forum', 'psychology'],
+    popular: true,
+    definition: {
+      nodes: [
+        { id: 'start_node', type: 'trigger', position: { x: 100, y: 200 }, data: { label: 'Slack Webhook Input', triggerType: 'webhook' } },
+        { id: 'sentiment_node', type: 'code', position: { x: 350, y: 200 }, data: { label: 'Extract Sentiment & Actions', code: '// Extract sentiment and actions via LLM\nconst msg = context.trigger.message || "Hello team!";\ncontext.trigger.sentiment = "positive";\ncontext.trigger.action_items = ["follow up with user"];\nreturn context.trigger;' } },
+        { id: 'db_sync_node', type: 'crm_action', position: { x: 600, y: 200 }, data: { label: 'Archive to PostgreSQL', actionType: 'create_or_update', status: 'customer', email: '{{trigger.email}}' } }
+      ],
+      edges: [
+        { id: 'e1-2', source: 'start_node', target: 'sentiment_node', animated: true, style: { stroke: '#facc15' } },
+        { id: 'e2-3', source: 'sentiment_node', target: 'db_sync_node', animated: true, style: { stroke: '#facc15' } }
+      ]
+    }
+  },
+  {
+    id: 'ai-lead-scoring',
+    name: 'AI Lead Scoring',
+    category: 'Marketing',
+    description: 'Real-time lead qualification using GPT-4 company profile analysis and priority queuing.',
+    icons: ['mail', 'grade'],
+    definition: {
+      nodes: [
+        { id: 'start_node', type: 'crm_lead_trigger', position: { x: 100, y: 200 }, data: { label: 'New Lead In CRM', triggerType: 'crm' } },
+        { id: 'gpt_node', type: 'code', position: { x: 350, y: 200 }, data: { label: 'GPT-4 scoring', code: '// Call GPT-4 API to score lead\ncontext.trigger.score = Math.floor(Math.random() * 30) + 70;\nreturn context.trigger;' } },
+        { id: 'check_node', type: 'ifelse', position: { x: 600, y: 200 }, data: { label: 'Score > 80?', condition: 'context.trigger.score > 80' } }
+      ],
+      edges: [
+        { id: 'e1-2', source: 'start_node', target: 'gpt_node', animated: true, style: { stroke: '#facc15' } },
+        { id: 'e2-3', source: 'gpt_node', target: 'check_node', animated: true, style: { stroke: '#facc15' } }
+      ]
+    }
+  },
+  {
+    id: 'webflow-error-monitor',
+    name: 'Webflow Error Monitor',
+    category: 'DevOps',
+    description: 'Capture runtime errors from Webflow frontend and trigger PagerDuty alerts.',
+    icons: ['webhook', 'notification_important'],
+    definition: {
+      nodes: [
+        { id: 'start_node', type: 'trigger', position: { x: 100, y: 200 }, data: { label: 'Webflow Exception Webhook', triggerType: 'webhook' } },
+        { id: 'notify_node', type: 'code', position: { x: 350, y: 200 }, data: { label: 'PagerDuty Alert API', code: '// Format error and alert PagerDuty\ncontext.trigger.alert_status = "sent";\nconsole.log("ALERT Sent to PagerDuty!");\nreturn context.trigger;' } }
+      ],
+      edges: [
+        { id: 'e1-2', source: 'start_node', target: 'notify_node', animated: true, style: { stroke: '#facc15' } }
+      ]
+    }
+  },
+  {
+    id: 'inventory-balancer',
+    name: 'Inventory Balancer',
+    category: 'E-Commerce',
+    description: 'Synchronize real-time inventory across Shopify, Amazon, and eBay with automated ERP restock triggers.',
+    icons: ['hub'],
+    featured: true,
+    definition: {
+      nodes: [
+        { id: 'start_node', type: 'trigger', position: { x: 100, y: 200 }, data: { label: 'Stock Level Changed', triggerType: 'webhook' } },
+        { id: 'balance_node', type: 'code', position: { x: 350, y: 200 }, data: { label: 'Balance Channels', code: '// Balance stock across Shopify and eBay\ncontext.trigger.balanced = true;\nreturn context.trigger;' } },
+        { id: 'restock_check', type: 'ifelse', position: { x: 600, y: 200 }, data: { label: 'Stock < 5?', condition: 'context.trigger.qty < 5' } }
+      ],
+      edges: [
+        { id: 'e1-2', source: 'start_node', target: 'balance_node', animated: true, style: { stroke: '#facc15' } },
+        { id: 'e2-3', source: 'balance_node', target: 'restock_check', animated: true, style: { stroke: '#facc15' } }
+      ]
+    }
+  },
+  {
+    id: 'ip-whitelist-enforcer',
+    name: 'IP Whitelist Enforcer',
+    category: 'Security',
+    description: 'Auto-update Cloudflare firewall rules based on rotating team VPN endpoints.',
+    icons: ['security', 'cloud_sync'],
+    definition: {
+      nodes: [
+        { id: 'start_node', type: 'trigger', position: { x: 100, y: 200 }, data: { label: 'VPN Endpoint Rotated', triggerType: 'webhook' } },
+        { id: 'cf_node', type: 'code', position: { x: 350, y: 200 }, data: { label: 'Update CF Firewall', code: '// Update Cloudflare firewall whitelists\ncontext.trigger.firewall_rule = "updated";\nreturn context.trigger;' } }
+      ],
+      edges: [
+        { id: 'e1-2', source: 'start_node', target: 'cf_node', animated: true, style: { stroke: '#facc15' } }
+      ]
+    }
+  }
+];
+
 export default function App() {
-  // Workflow States
+  // Navigation layout state
+  const [viewMode, setViewMode] = useState<'overview' | 'canvas' | 'templates' | 'variables' | 'settings' | 'history' | 'executions'>('overview');
+
+  // AI Chat States
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatInput, setChatInput] = useState('');
+  const [chatMessages, setChatMessages] = useState<any[]>([
+    {
+      id: 'welcome',
+      sender: 'agent',
+      text: "Hello! I am your Neuron AI Copilot. I can help you generate custom JS scripts, configure logic paths, and optimize your automation steps. Try selecting a 'Run Script' node and asking me to write a script!"
+    }
+  ]);
+  const [isTyping, setIsTyping] = useState(false);
+
+  const handleSendChatMessage = (text: string) => {
+    if (!text.trim()) return;
+
+    const newMsgs = [...chatMessages, { id: `user_${Date.now()}`, sender: 'user', text }];
+    setChatMessages(newMsgs);
+    setChatInput('');
+    setIsTyping(true);
+
+    setTimeout(() => {
+      let replyText = "I can help you build custom scripts. Try selecting a 'Run Script' code node and click one of the templates below!";
+      let code = "";
+      const lower = text.toLowerCase();
+
+      if (lower.includes('lead') || lower.includes('qualif') || lower.includes('score')) {
+        replyText = "Here is a custom lead scoring script that upgrades the status and increments the lead score if the email matches a premium domain:";
+        code = `// Lead scoring enrichment logic
+const email = context.trigger.email || '';
+const isPremium = email.endsWith('.com') || email.endsWith('.org') || email.endsWith('.io');
+if (isPremium) {
+  context.trigger.score = (context.trigger.score || 0) + 25;
+  context.trigger.status = 'contact';
+} else {
+  context.trigger.score = (context.trigger.score || 0) + 5;
+}
+return context.trigger;`;
+      } else if (lower.includes('sentiment') || lower.includes('classify') || lower.includes('analyze')) {
+        replyText = "Here is a script to perform a basic keyword sentiment analysis on webhook feedback messages:";
+        code = `// Sentiment classifier
+const feedback = context.trigger.feedback || '';
+const happyWords = ['good', 'love', 'nice', 'great', 'awesome', 'excellent'];
+const sadWords = ['bad', 'slow', 'fail', 'error', 'worst', 'issue', 'broken'];
+
+let rating = 0;
+happyWords.forEach(w => { if (feedback.toLowerCase().includes(w)) rating++; });
+sadWords.forEach(w => { if (feedback.toLowerCase().includes(w)) rating--; });
+
+context.trigger.sentiment = rating > 0 ? 'positive' : rating < 0 ? 'negative' : 'neutral';
+return context.trigger;`;
+      } else if (lower.includes('slack') || lower.includes('format') || lower.includes('notify')) {
+        replyText = "Here is a script to format the input payload to match a Slack block kit message payload:";
+        code = `// Slack message payload formatter
+return {
+  text: \`🔔 Automation Alert: \${context.trigger.name || 'Unknown User'} has registered!\`,
+  blocks: [
+    {
+      type: 'section',
+      text: {
+        type: 'mrkdwn',
+        text: \`*New Automation Flow Event*\\n*User:* \${context.trigger.name}\\n*Email:* \${context.trigger.email}\\n*Score:* \${context.trigger.score}\`
+      }
+    }
+  ]
+};`;
+      }
+
+      setChatMessages(prev => [...prev, {
+        id: `agent_${Date.now()}`,
+        sender: 'agent',
+        text: replyText,
+        code
+      }]);
+      setIsTyping(false);
+    }, 1200);
+  };
+
+  const handleApplyCodeToNode = (codeText: string) => {
+    if (!selectedNode) {
+      alert("Please select a 'Run Script' node on the canvas first!");
+      return;
+    }
+    if (selectedNode.type !== 'code') {
+      alert("Please select a 'Run Script' (code) node to inject code. The currently selected node is of type '" + selectedNode.type + "'.");
+      return;
+    }
+    updateNodeData('code', codeText);
+    alert("Code successfully applied to the selected Run Script node!");
+  };
+
+  // Execution Stream Popup States
+  const [isExecModalOpen, setIsExecModalOpen] = useState(false);
+  const [execEmail, setExecEmail] = useState('jane.doe@example.com');
+  const [execName, setExecName] = useState('Jane Doe');
+  const [execScore, setExecScore] = useState(80);
+  const [execStatus, setExecStatus] = useState<'idle' | 'running' | 'success' | 'failed' | 'paused'>('idle');
+  const [execLogs, setExecLogs] = useState<any[]>([]);
+  const [execActiveNodeId, setExecActiveNodeId] = useState<string | null>(null);
+  const [manualApprovalEnabled, setManualApprovalEnabled] = useState(false);
+  const [humanApprovalRequired, setHumanApprovalRequired] = useState(false);
+  const [pendingNode, setPendingNode] = useState<any>(null);
+
+  const startConnectionStream = async (email: string, name: string, score: number) => {
+    if (!currentWorkflow) return;
+    setExecStatus('running');
+    setExecLogs([{ time: new Date().toISOString(), message: "🤖 Connection established. Initializing agent orchestrator..." }]);
+
+    // Trigger backend execute call to persist in SQLite database
+    try {
+      await fetch(`${BACKEND_URL}/api/workflows/${currentWorkflow.id}/execute`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name, score })
+      });
+    } catch (e) {
+      console.error("Backend trigger failed:", e);
+    }
+
+    // Trace the execution path on the frontend
+    const triggerNode = nodes.find(n => n.type === 'trigger' || n.type === 'crm_lead_trigger');
+    if (!triggerNode) {
+      setExecLogs(prev => [...prev, { time: new Date().toISOString(), message: "❌ Error: No starting trigger node found in this workflow." }]);
+      setExecStatus('failed');
+      return;
+    }
+
+    // Traverse nodes map
+    const path: any[] = [];
+    let curr: any = triggerNode;
+    while (curr) {
+      path.push(curr);
+      const outgoing = edges.filter(e => e.source === curr.id);
+      if (outgoing.length === 0) break;
+
+      if (curr.type === 'ifelse') {
+        const isTrue = score > 50;
+        const targetEdge = outgoing.find(e => {
+          const handleId = e.sourceHandle || '';
+          return isTrue ? handleId.toLowerCase() === 'true' : handleId.toLowerCase() === 'false';
+        });
+        const nextId = targetEdge ? targetEdge.target : outgoing[0].target;
+        curr = nodes.find(n => n.id === nextId);
+      } else {
+        curr = nodes.find(n => n.id === outgoing[0].target);
+      }
+      
+      if (path.includes(curr)) break; // Cycle protection
+    }
+
+    // Start stepping through the path
+    let pathIndex = 0;
+    
+    const runStep = () => {
+      if (pathIndex >= path.length) {
+        setExecStatus('success');
+        setExecActiveNodeId(null);
+        setExecLogs(prev => [...prev, { time: new Date().toISOString(), message: "✅ Execution completed. Pipeline closed successfully." }]);
+        fetchMockData();
+        return;
+      }
+
+      const node = path[pathIndex];
+      setExecActiveNodeId(node.id);
+
+      // Generate Agent dialogue & log details
+      let msg = `Processing node: ${node.data?.label || node.id}`;
+      if (node.type === 'trigger' || node.type === 'crm_lead_trigger') {
+        msg = `🤖 [TRIGGER] Agent: Trigger event parsed. Contact = ${email}, Score = ${score}. Checking paths.`;
+      } else if (node.type === 'ifelse') {
+        const isTrue = score > 50;
+        msg = `🤖 [DECISION] Agent: Evaluated condition "score > 50" (value: ${score}). Branching to ${isTrue ? 'TRUE' : 'FALSE'} handle.`;
+      } else if (node.type === 'delay') {
+        const sec = node.data?.seconds || '5';
+        msg = `⏰ [TIMER] Agent: Suspending execution. Delay active for ${sec} seconds.`;
+      } else if (node.type === 'marketing_email') {
+        msg = `📧 [EMAIL] Agent: Dispatched Marketing Email to ${email} successfully.`;
+      } else if (node.type === 'crm_action') {
+        msg = `👤 [CRM] Agent: Updated CRM record for ${email}. Incrementing score.`;
+      } else if (node.type === 'code') {
+        msg = `💻 [CODE] Agent: Custom JS script executed. Context output parsed successfully.`;
+      }
+
+      // Check human-in-the-loop approval
+      if (manualApprovalEnabled && (node.type === 'marketing_email' || node.type === 'crm_action')) {
+        setExecStatus('paused');
+        setHumanApprovalRequired(true);
+        setPendingNode(node);
+        setExecLogs(prev => [...prev, {
+          time: new Date().toISOString(),
+          message: `🤖 [PENDING APPROVAL] Agent: Waiting for user to approve action: "${node.data?.label || 'Execute Step'}"`
+        }]);
+        
+        // Save the closure so we can resume later
+        (window as any).resumeExecution = (approved: boolean) => {
+          setHumanApprovalRequired(false);
+          if (approved) {
+            setExecStatus('running');
+            setExecLogs(prev => [...prev, {
+              time: new Date().toISOString(),
+              message: `🤖 [APPROVED] User approved step execution. Continuing.`
+            }, {
+              time: new Date().toISOString(),
+              message: msg
+            }]);
+            pathIndex++;
+            setTimeout(runStep, node.type === 'delay' ? parseInt(node.data?.seconds || '5') * 1000 : 1500);
+          } else {
+            setExecStatus('failed');
+            setExecActiveNodeId(null);
+            setExecLogs(prev => [...prev, {
+              time: new Date().toISOString(),
+              message: `❌ [REJECTED] User rejected step execution. Workflow aborted.`
+            }]);
+          }
+        };
+        return;
+      }
+
+      setExecLogs(prev => [...prev, { time: new Date().toISOString(), message: msg }]);
+      pathIndex++;
+      setTimeout(runStep, node.type === 'delay' ? parseInt(node.data?.seconds || '5') * 1000 : 1500);
+    };
+
+    setTimeout(runStep, 1000);
+  };
+
+  // Workflow list state
   const [workflows, setWorkflows] = useState<any[]>([]);
   const [currentWorkflow, setCurrentWorkflow] = useState<any>(null);
-  
-  // React Flow States
+
+  // React Flow canvas states
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  
-  // UI Panels / Selections
+
+  // Selected configurations
   const [selectedNode, setSelectedNode] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'logs' | 'crm' | 'emails'>('logs');
+  const [historyTab, setHistoryTab] = useState<'logs' | 'crm' | 'emails'>('logs');
+
+  // Poll tables
   const [executions, setExecutions] = useState<any[]>([]);
   const [selectedExecution, setSelectedExecution] = useState<any>(null);
+
+  // Executions page states
+  const [allExecutions, setAllExecutions] = useState<any[]>([]);
+  const [selectedAllExecution, setSelectedAllExecution] = useState<any>(null);
+  const [executionsSearchQuery, setExecutionsSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [timeRangeFilter, setTimeRangeFilter] = useState('all');
+  const [inspectorTab, setInspectorTab] = useState<'output' | 'input' | 'logs'>('output');
+
   const [crmContacts, setCrmContacts] = useState<any[]>([]);
   const [simulatedEmails, setSimulatedEmails] = useState<any[]>([]);
 
-  // Form Inputs for Mock CRM trigger
+  // Form input states
   const [newLeadName, setNewLeadName] = useState('');
   const [newLeadEmail, setNewLeadEmail] = useState('');
   const [newLeadScore, setNewLeadScore] = useState(60);
 
-  // Fetch all workflows
+  // Template Search and Filter states
+  const [selectedTemplateCategory, setSelectedTemplateCategory] = useState('All');
+  const [templateSearchQuery, setTemplateSearchQuery] = useState('');
+
+  // Variables store states
+  const [variables, setVariables] = useState<Array<{ key: string; value: string }>>([
+    { key: 'SLACK_API_TOKEN', value: 'xoxb-98729384-82738491823-ajdfhskdfjh' },
+    { key: 'DATABASE_URL', value: 'postgresql://admin:supersecret@db.enterprise.internal:5432/production' },
+    { key: 'GPT4_API_KEY', value: 'sk-proj-4M3bL25lS18Xk39k82lsl40alW02lsk' }
+  ]);
+  const [newVarKey, setNewVarKey] = useState('');
+  const [newVarVal, setNewVarVal] = useState('');
+
+  // Fetch workflows
   const fetchWorkflows = async () => {
     try {
       const res = await fetch(`${BACKEND_URL}/api/workflows`);
@@ -61,15 +405,14 @@ export default function App() {
         loadWorkflow(data[0]);
       }
     } catch (e) {
-      console.error('Error fetching workflows:', e);
+      console.error(e);
     }
   };
 
-  // Load selected workflow definition into canvas
   const loadWorkflow = (wf: any) => {
     setCurrentWorkflow(wf);
     try {
-      const def = JSON.parse(wf.definition);
+      const def = typeof wf.definition === 'string' ? JSON.parse(wf.definition) : wf.definition;
       setNodes(def.nodes || []);
       setEdges(def.edges || []);
       setSelectedNode(null);
@@ -79,33 +422,160 @@ export default function App() {
     }
   };
 
-  // Run fetch cycles on mount
   useEffect(() => {
     fetchWorkflows();
   }, []);
 
-  // Poll executions, CRM, and email logs
   const fetchMockData = useCallback(async () => {
-    if (!currentWorkflow) return;
     try {
-      // 1. Fetch Executions
-      const execRes = await fetch(`${BACKEND_URL}/api/workflows/${currentWorkflow.id}/executions`);
-      const execs = await execRes.json();
-      setExecutions(execs);
+      // 1. Fetch all executions
+      const allExecRes = await fetch(`${BACKEND_URL}/api/executions`);
+      if (allExecRes.ok) {
+        const allExecs = await allExecRes.json();
+        setAllExecutions(allExecs);
+        // Sync selectedAllExecution if deleted/none
+        if (allExecs.length > 0 && !selectedAllExecution) {
+          setSelectedAllExecution(allExecs[0]);
+        }
+      }
 
-      // 2. Fetch CRM Database
+      // 2. Fetch active workflow executions
+      if (currentWorkflow) {
+        const execRes = await fetch(`${BACKEND_URL}/api/workflows/${currentWorkflow.id}/executions`);
+        if (execRes.ok) {
+          const execs = await execRes.json();
+          setExecutions(execs);
+        }
+      }
+
+      // 3. Fetch CRM contacts
       const crmRes = await fetch(`${BACKEND_URL}/api/crm/contacts`);
-      const contacts = await crmRes.json();
-      setCrmContacts(contacts);
+      if (crmRes.ok) {
+        const contacts = await crmRes.json();
+        setCrmContacts(contacts);
+      }
 
-      // 3. Fetch Sent Emails
+      // 4. Fetch marketing emails
       const emailsRes = await fetch(`${BACKEND_URL}/api/marketing/emails`);
-      const emails = await emailsRes.json();
-      setSimulatedEmails(emails);
+      if (emailsRes.ok) {
+        const emails = await emailsRes.json();
+        setSimulatedEmails(emails);
+      }
     } catch (e) {
-      console.error('Error polling simulation logs:', e);
+      console.error(e);
     }
-  }, [currentWorkflow]);
+  }, [currentWorkflow, selectedAllExecution]);
+
+  // Executions view action handlers
+  const handleRerunExecution = async (execId: number) => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/executions/${execId}/rerun`, {
+        method: 'POST'
+      });
+      if (res.ok) {
+        const data = await res.json();
+        alert('Rerun triggered successfully! Execution ID: #' + data.executionId);
+        fetchMockData();
+      } else {
+        alert('Failed to rerun execution.');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Failed to rerun execution.');
+    }
+  };
+
+  const handleDeleteExecution = async (execId: number) => {
+    if (!confirm('Are you sure you want to delete this execution log?')) return;
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/executions/${execId}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        alert('Execution log deleted successfully.');
+        const nextExecs = allExecutions.filter(e => e.id !== execId);
+        setAllExecutions(nextExecs);
+        if (selectedAllExecution?.id === execId) {
+          setSelectedAllExecution(nextExecs.length > 0 ? nextExecs[0] : null);
+        }
+        fetchMockData();
+      } else {
+        alert('Failed to delete execution log.');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Failed to delete execution log.');
+    }
+  };
+
+  const handleTestRun = async () => {
+    const targetWf = selectedAllExecution?.workflow || (workflows.length > 0 ? workflows[0] : null);
+    if (!targetWf) {
+      alert("No workflows available to run.");
+      return;
+    }
+    const email = prompt(`Trigger Test Run for workflow "${targetWf.name}".\nEnter lead email:`, "test@example.com");
+    if (!email) return;
+    
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/workflows/${targetWf.id}/execute`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          name: 'Test Runner User',
+          score: 75
+        })
+      });
+      if (res.ok) {
+        alert("Test Run started successfully!");
+        fetchMockData();
+      } else {
+        alert("Failed to start Test Run.");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error starting Test Run.");
+    }
+  };
+
+  const handleExportExecutions = () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(filteredAllExecutions, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `executions_export_${Date.now()}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  };
+
+  const filteredAllExecutions = React.useMemo(() => {
+    return allExecutions.filter(exec => {
+      // Status filter
+      if (statusFilter !== 'All' && exec.status.toLowerCase() !== statusFilter.toLowerCase()) {
+        return false;
+      }
+      
+      // Time range filter (24h, 7d, all)
+      if (timeRangeFilter === '24h') {
+        const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+        if (new Date(exec.startedAt).getTime() < oneDayAgo) return false;
+      } else if (timeRangeFilter === '7d') {
+        const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+        if (new Date(exec.startedAt).getTime() < sevenDaysAgo) return false;
+      }
+
+      // Search query (workflow name or execution ID)
+      const workflowName = exec.workflow?.name || '';
+      const execIdStr = `#EXE-${exec.id}`.toLowerCase();
+      const query = executionsSearchQuery.toLowerCase();
+      if (query && !workflowName.toLowerCase().includes(query) && !execIdStr.includes(query) && !exec.id.toString().includes(query)) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [allExecutions, statusFilter, timeRangeFilter, executionsSearchQuery]);
 
   useEffect(() => {
     fetchMockData();
@@ -113,13 +583,11 @@ export default function App() {
     return () => clearInterval(interval);
   }, [fetchMockData]);
 
-  // Connect node sockets
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge({ ...params, animated: true, style: { stroke: '#facc15' } }, eds)),
     [setEdges]
   );
 
-  // Select node to configure parameters
   const onNodeClick = useCallback((_event: React.MouseEvent, node: any) => {
     setSelectedNode(node);
   }, []);
@@ -128,7 +596,6 @@ export default function App() {
     setSelectedNode(null);
   }, []);
 
-  // Update properties of a node
   const updateNodeData = (field: string, val: any) => {
     if (!selectedNode) return;
     const updated = {
@@ -142,16 +609,14 @@ export default function App() {
     setNodes((nds) => nds.map((n) => (n.id === selectedNode.id ? updated : n)));
   };
 
-  // Add specific node template to canvas
   const addNode = (type: string) => {
     const id = `${type}_${Date.now()}`;
     let label = '';
-    let category = '';
     let extraData = {};
 
     switch (type) {
       case 'trigger':
-        label = 'Webhook Listener';
+        label = 'Webhook input';
         extraData = { triggerType: 'webhook' };
         break;
       case 'crm_lead_trigger':
@@ -159,11 +624,11 @@ export default function App() {
         extraData = { triggerType: 'crm' };
         break;
       case 'marketing_email':
-        label = 'Welcome Campaign';
-        extraData = { to: '{{trigger.email}}', subject: 'Excited to have you!', body: 'Hi {{trigger.name}}, let\'s get started!' };
+        label = 'Send Campaign Email';
+        extraData = { to: '{{trigger.email}}', subject: 'Excited to connect!', body: 'Hi {{trigger.name}}, welcome onboard!' };
         break;
       case 'crm_action':
-        label = 'Score Nurture';
+        label = 'Update CRM Contact';
         extraData = { actionType: 'create_or_update', status: 'contact', scoreChange: '15' };
         break;
       case 'ifelse':
@@ -171,26 +636,25 @@ export default function App() {
         extraData = { condition: 'context.trigger.score > 50' };
         break;
       case 'delay':
-        label = 'Wait Timer';
+        label = 'Delay Wait';
         extraData = { seconds: '5' };
         break;
       case 'code':
-        label = 'Enrich Data';
-        extraData = { code: 'context.trigger.score += 10;\nreturn context.trigger;' };
+        label = 'Run script';
+        extraData = { code: 'context.trigger.score += 5;\nreturn context.trigger;' };
         break;
     }
 
     const newNode = {
       id,
       type,
-      position: { x: 300 + Math.random() * 50, y: 150 + Math.random() * 50 },
-      data: { label, category, ...extraData }
+      position: { x: 250 + Math.random() * 80, y: 180 + Math.random() * 80 },
+      data: { label, ...extraData }
     };
 
     setNodes((nds) => nds.concat(newNode));
   };
 
-  // Save changes to DB
   const handleSave = async () => {
     if (!currentWorkflow) return;
     try {
@@ -211,12 +675,11 @@ export default function App() {
     }
   };
 
-  // Create new empty workflow
   const handleCreateNew = async () => {
     try {
       const defaultDef = {
         nodes: [
-          { id: 't1', type: 'crm_lead_trigger', position: { x: 80, y: 180 }, data: { label: 'CRM Lead Created', triggerType: 'crm' } }
+          { id: 'start_node', type: 'trigger', position: { x: 100, y: 200 }, data: { label: 'Webhook input', triggerType: 'webhook' } }
         ],
         edges: []
       };
@@ -232,12 +695,12 @@ export default function App() {
       const createdWorkflow = await res.json();
       setWorkflows([...workflows, createdWorkflow]);
       loadWorkflow(createdWorkflow);
+      setViewMode('canvas');
     } catch (e) {
       console.error(e);
     }
   };
 
-  // Delete current workflow
   const handleDelete = async () => {
     if (!currentWorkflow) return;
     if (!confirm('Are you sure you want to delete this workflow?')) return;
@@ -259,35 +722,21 @@ export default function App() {
     }
   };
 
-  // Manual Trigger Execute Workflow
-  const handleRunManual = async () => {
+  const handleRunWorkflow = async () => {
     if (!currentWorkflow) return;
-    try {
-      const testEmail = prompt('Enter trigger email for simulation:', 'jane.doe@example.com');
-      if (!testEmail) return;
-      
-      await fetch(`${BACKEND_URL}/api/workflows/${currentWorkflow.id}/execute`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: testEmail,
-          name: 'Jane Doe',
-          score: 75
-        })
-      });
-      alert('Execution run triggered!');
-      fetchMockData();
-    } catch (e) {
-      console.error(e);
-    }
+    setExecStatus('idle');
+    setExecLogs([]);
+    setExecActiveNodeId(null);
+    setHumanApprovalRequired(false);
+    setPendingNode(null);
+    setIsExecModalOpen(true);
   };
 
-  // Form Submit for CRM Lead simulation
   const handleCrmLeadTrigger = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newLeadEmail) return;
     try {
-      await fetch(`${BACKEND_URL}/api/crm/contacts`, {
+      const res = await fetch(`${BACKEND_URL}/api/crm/contacts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -297,565 +746,1948 @@ export default function App() {
           score: newLeadScore
         })
       });
+      const data = await res.json();
       setNewLeadName('');
       setNewLeadEmail('');
-      alert('Simulated Lead Created! Active "CRM Lead Trigger" workflows will now execute.');
       fetchMockData();
+
+      // Start stream modal automatically
+      setExecEmail(data.email || newLeadEmail);
+      setExecName(data.name || newLeadName || 'Simulated Lead');
+      setExecScore(data.score !== undefined ? data.score : newLeadScore);
+      setExecStatus('idle');
+      setExecLogs([]);
+      setExecActiveNodeId(null);
+      setHumanApprovalRequired(false);
+      setPendingNode(null);
+      setIsExecModalOpen(true);
+
+      setTimeout(() => {
+        startConnectionStream(data.email || newLeadEmail, data.name || newLeadName || 'Simulated Lead', data.score !== undefined ? data.score : newLeadScore);
+      }, 500);
     } catch (e) {
       console.error(e);
     }
   };
 
-  // Reset database simulation tables
   const handleResetDb = async () => {
-    if (!confirm('Clear all mock contacts, execution records, and emails?')) return;
+    if (!confirm('Clear simulation history, logs, and simulated emails?')) return;
     try {
       await fetch(`${BACKEND_URL}/api/crm/reset`, { method: 'POST' });
       fetchMockData();
       setSelectedExecution(null);
-      alert('Database simulation reset successfully.');
+      alert('Simulation database reset complete.');
     } catch (e) {
       console.error(e);
     }
   };
 
+  const handleDeployTemplate = async (template: any) => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/workflows`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: `${template.name} Preset`,
+          definition: template.definition
+        })
+      });
+      if (!res.ok) throw new Error('Deployment failed');
+      const createdWorkflow = await res.json();
+      setWorkflows([createdWorkflow, ...workflows]);
+      loadWorkflow(createdWorkflow);
+      setViewMode('canvas');
+      alert(`Template "${template.name}" deployed successfully! Opened in canvas builder.`);
+    } catch (e) {
+      console.error(e);
+      alert('Failed to deploy template.');
+    }
+  };
+
+  const handleAddVar = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newVarKey.trim() || !newVarVal.trim()) return;
+    if (variables.some(v => v.key === newVarKey.trim())) {
+      alert('Variable already exists!');
+      return;
+    }
+    setVariables([...variables, { key: newVarKey.trim(), value: newVarVal.trim() }]);
+    setNewVarKey('');
+    setNewVarVal('');
+  };
+
+  const handleDeleteVar = (key: string) => {
+    setVariables(variables.filter(v => v.key !== key));
+  };
+
+  // Filter templates list based on search and category
+  const filteredTemplates = TEMPLATES.filter(tpl => {
+    const matchesCategory = selectedTemplateCategory === 'All' || tpl.category === selectedTemplateCategory;
+    const matchesSearch = tpl.name.toLowerCase().includes(templateSearchQuery.toLowerCase()) || 
+                          tpl.description.toLowerCase().includes(templateSearchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
   return (
-    <div className="flex flex-col h-screen w-screen bg-[#131313] text-[#e5e2e1] overflow-hidden select-none font-sans">
-      
-      {/* Top Header */}
-      <header className="flex justify-between items-center h-16 px-6 bg-[#1a1a1a] border-b border-neutral-800 shrink-0 z-10">
-        <div className="flex items-center gap-3">
-          <span className="material-symbols-outlined text-[#facc15] text-2xl">hub</span>
-          <span className="font-bold text-lg tracking-wider text-[#facc15]">NEURON_FLOW</span>
-          <span className="text-xs text-neutral-500 font-mono">v2.0 Orchestrator</span>
-        </div>
+    <div className="flex h-screen w-screen overflow-hidden bg-background text-on-surface font-body-md selection:bg-primary-container selection:text-on-primary-container">
+      <style>{`
+        .workflow-dot-bg {
+            background-image: radial-gradient(circle, #201f1f 1px, transparent 1px);
+            background-size: 32px 32px;
+        }
+        .clean-card {
+            background: #1c1b1b;
+            border: 1px solid #353534;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .clean-card:hover {
+            border-color: #9a9078;
+            background: #201f1f;
+        }
+        .node-line {
+            stroke: #4d4632;
+            stroke-dasharray: 4 2;
+        }
+        .filter-btn {
+            position: relative;
+            transition: color 0.2s;
+        }
+        .filter-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #facc15;
+        }
+        .dot-grid {
+          background-image: radial-gradient(#262626 1px, transparent 1px);
+          background-size: 24px 24px;
+        }
+        .glass-panel {
+            background: rgba(23, 23, 23, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(38, 38, 38, 0.5);
+        }
+        .node-port {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #262626;
+            border: 1px solid #4d4632;
+        }
+        .node-port-active {
+            background: #facc15;
+            box-shadow: 0 0 8px rgba(250, 204, 21, 0.4);
+        }
+        .execution-row {
+          border-bottom: 1px solid rgba(53, 53, 52, 0.2);
+          transition: background-color 0.1s ease;
+        }
+        .execution-row:hover {
+          background: #1c1b1b;
+        }
+        .execution-row.selected {
+          background: #1c1b1b;
+          border-left: 2px solid #facc15;
+        }
+      `}</style>
 
-        {/* Workflow Switcher Controls */}
-        <div className="flex items-center gap-3">
-          <select
-            value={currentWorkflow?.id || ''}
-            onChange={(e) => {
-              const wf = workflows.find(w => w.id === parseInt(e.target.value, 10));
-              if (wf) loadWorkflow(wf);
-            }}
-            className="bg-neutral-800 border border-neutral-700 text-white rounded px-3 py-1.5 text-sm outline-none focus:border-[#facc15]"
-          >
-            {workflows.map((w) => (
-              <option key={w.id} value={w.id}>{w.name}</option>
-            ))}
-          </select>
+      {/* SideNavBar */}
+      <aside className="h-screen w-64 border-r border-[#353534] flex flex-col py-8 bg-[#0e0e0e] flex-shrink-0 z-50">
+        <div className="px-8 mb-12 flex flex-col gap-1 text-left">
+          <a href="http://localhost:3000/" className="flex items-center gap-2 hover:opacity-85 transition text-white">
+            <span className="material-symbols-outlined text-[#facc15] text-[22px]">hub</span>
+            <span className="font-headline-md text-headline-md font-bold tracking-tight">NEURON_FLOW</span>
+          </a>
+          <span className="font-label-sm text-label-sm text-[#9a9078] uppercase tracking-widest pl-8">v2.0 Orchestrator</span>
+        </div>
+        <nav className="flex-1 space-y-2 px-4">
           <button
-            onClick={handleCreateNew}
-            className="flex items-center gap-1 bg-neutral-800 hover:bg-neutral-700 text-white rounded px-3 py-1.5 text-xs font-semibold border border-neutral-700 transition"
+            onClick={() => setViewMode('overview')}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded transition-colors group font-medium text-left ${
+              viewMode === 'overview' ? 'text-primary bg-white/[0.03]' : 'text-on-surface-variant hover:text-on-surface'
+            }`}
           >
-            <span className="material-symbols-outlined text-xs">add</span> New Flow
+            <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: viewMode === 'overview' ? "'FILL' 1" : "'FILL' 0" }}>dashboard</span>
+            <span className="font-body-md text-body-md">Overview</span>
           </button>
           <button
-            onClick={handleDelete}
-            className="flex items-center gap-1 bg-neutral-800 hover:bg-rose-950/40 text-rose-400 rounded px-3 py-1.5 text-xs font-semibold border border-rose-900/30 transition"
+            onClick={() => setViewMode('canvas')}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded transition-colors group font-medium text-left ${
+              viewMode === 'canvas' ? 'text-primary bg-white/[0.03]' : 'text-on-surface-variant hover:text-on-surface'
+            }`}
           >
-            <span className="material-symbols-outlined text-xs">delete</span> Delete
-          </button>
-        </div>
-
-        {/* Save & Run Action buttons */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleResetDb}
-            className="bg-neutral-800 hover:bg-neutral-700 text-neutral-300 px-4 py-2 rounded text-xs font-bold border border-neutral-700 transition"
-          >
-            Reset Simulation
+            <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: viewMode === 'canvas' ? "'FILL' 1" : "'FILL' 0" }}>account_tree</span>
+            <span className="font-body-md text-body-md">Workflows</span>
           </button>
           <button
-            onClick={handleSave}
-            className="bg-neutral-800 hover:bg-neutral-700 text-white px-4 py-2 rounded text-xs font-bold border border-neutral-700 transition"
+            onClick={() => setViewMode('executions')}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded transition-colors group font-medium text-left ${
+              viewMode === 'executions' ? 'text-primary bg-white/[0.03]' : 'text-on-surface-variant hover:text-on-surface'
+            }`}
           >
-            Save Flow
+            <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: viewMode === 'executions' ? "'FILL' 1" : "'FILL' 0" }}>analytics</span>
+            <span className="font-body-md text-body-md">Executions</span>
           </button>
           <button
-            onClick={handleRunManual}
-            className="bg-[#facc15] hover:opacity-90 text-black px-5 py-2 rounded text-xs font-bold transition flex items-center gap-1 shadow-md shadow-amber-500/10"
+            onClick={() => setViewMode('templates')}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded transition-colors group font-medium text-left ${
+              viewMode === 'templates' ? 'text-primary bg-white/[0.03]' : 'text-on-surface-variant hover:text-on-surface'
+            }`}
           >
-            <span className="material-symbols-outlined text-sm font-bold">play_arrow</span> Run Flow
+            <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: viewMode === 'templates' ? "'FILL' 1" : "'FILL' 0" }}>library_books</span>
+            <span className="font-body-md text-body-md">Templates</span>
+          </button>
+          <button
+            onClick={() => setViewMode('variables')}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded transition-colors group font-medium text-left ${
+              viewMode === 'variables' ? 'text-primary bg-white/[0.03]' : 'text-on-surface-variant hover:text-on-surface'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: viewMode === 'variables' ? "'FILL' 1" : "'FILL' 0" }}>code</span>
+            <span className="font-body-md text-body-md">Variables</span>
+          </button>
+          <button
+            onClick={() => setViewMode('history')}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded transition-colors group font-medium text-left ${
+              viewMode === 'history' ? 'text-primary bg-white/[0.03]' : 'text-on-surface-variant hover:text-on-surface'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: viewMode === 'history' ? "'FILL' 1" : "'FILL' 0" }}>history</span>
+            <span className="font-body-md text-body-md">Simulation DB</span>
+          </button>
+        </nav>
+        <div className="mt-auto px-4 pt-4">
+          <button
+            onClick={() => setViewMode('settings')}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded transition-colors group font-medium text-left ${
+              viewMode === 'settings' ? 'text-primary bg-white/[0.03]' : 'text-on-surface-variant hover:text-on-surface'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: viewMode === 'settings' ? "'FILL' 1" : "'FILL' 0" }}>settings</span>
+            <span className="font-body-md text-body-md">Settings</span>
           </button>
         </div>
-      </header>
+      </aside>
 
-      {/* Main Builder & Settings Grid */}
-      <div className="flex flex-1 overflow-hidden">
-        
-        {/* Left Side: Drag Palette */}
-        <div className="w-56 bg-[#1a1a1a] border-r border-neutral-800 p-4 flex flex-col gap-4 shrink-0 overflow-y-auto">
-          <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-500 mb-2">Triggers</h3>
-            <div className="flex flex-col gap-2">
-              <button
-                onClick={() => addNode('trigger')}
-                className="flex items-center gap-2 p-2 rounded bg-emerald-950/20 hover:bg-emerald-950/40 text-emerald-400 border border-emerald-900/30 text-xs font-bold transition text-left"
-              >
-                <span className="material-symbols-outlined text-sm">bolt</span> Webhook Trigger
-              </button>
-              <button
-                onClick={() => addNode('crm_lead_trigger')}
-                className="flex items-center gap-2 p-2 rounded bg-emerald-950/20 hover:bg-emerald-950/40 text-emerald-400 border border-emerald-900/30 text-xs font-bold transition text-left"
-              >
-                <span className="material-symbols-outlined text-sm">group_add</span> CRM Lead Created
-              </button>
-            </div>
-          </div>
+      {/* Main Workspace Area */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
 
-          <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-500 mb-2">Actions</h3>
-            <div className="flex flex-col gap-2">
-              <button
-                onClick={() => addNode('marketing_email')}
-                className="flex items-center gap-2 p-2 rounded bg-sky-950/20 hover:bg-sky-950/40 text-sky-400 border border-sky-900/30 text-xs font-bold transition text-left"
-              >
-                <span className="material-symbols-outlined text-sm">mail</span> Send Email
-              </button>
-              <button
-                onClick={() => addNode('crm_action')}
-                className="flex items-center gap-2 p-2 rounded bg-indigo-950/20 hover:bg-indigo-950/40 text-indigo-400 border border-indigo-900/30 text-xs font-bold transition text-left"
-              >
-                <span className="material-symbols-outlined text-sm">account_circle</span> CRM Update
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-500 mb-2">Logic & Timing</h3>
-            <div className="flex flex-col gap-2">
-              <button
-                onClick={() => addNode('ifelse')}
-                className="flex items-center gap-2 p-2 rounded bg-fuchsia-950/20 hover:bg-fuchsia-950/40 text-fuchsia-400 border border-fuchsia-900/30 text-xs font-bold transition text-left"
-              >
-                <span className="material-symbols-outlined text-sm">alt_route</span> If / Else
-              </button>
-              <button
-                onClick={() => addNode('delay')}
-                className="flex items-center gap-2 p-2 rounded bg-amber-950/20 hover:bg-amber-950/40 text-amber-400 border border-amber-900/30 text-xs font-bold transition text-left"
-              >
-                <span className="material-symbols-outlined text-sm">schedule</span> Delay Timer
-              </button>
-              <button
-                onClick={() => addNode('code')}
-                className="flex items-center gap-2 p-2 rounded bg-teal-950/20 hover:bg-teal-950/40 text-teal-300 border border-teal-900/30 text-xs font-bold transition text-left"
-              >
-                <span className="material-symbols-outlined text-sm">code</span> Run Script
-              </button>
-            </div>
-          </div>
-
-          {/* Quick instructions */}
-          <div className="mt-auto p-3 rounded bg-neutral-900 border border-neutral-800 text-[10px] text-neutral-500 leading-relaxed">
-            <span className="font-bold text-neutral-400 block mb-1">How to connect:</span>
-            Drag connections from the right-hand sockets to any input socket. Use Save Flow and trigger using CRM Lead Form.
-          </div>
-        </div>
-
-        {/* Center: React Flow Canvas */}
-        <div className="flex-1 h-full bg-[#131313] relative">
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            nodeTypes={nodeTypes}
-            onNodeClick={onNodeClick}
-            onPaneClick={onPaneClick}
-            fitView
-          >
-            <Controls />
-            <Background color="#333" gap={16} />
-          </ReactFlow>
-        </div>
-
-        {/* Right Side: Parameter Details Panel */}
-        <div className="w-80 bg-[#1a1a1a] border-l border-neutral-800 shrink-0 flex flex-col">
-          <div className="p-4 border-b border-neutral-800 flex items-center justify-between">
-            <h3 className="font-bold text-sm text-[#facc15] flex items-center gap-1">
-              <span className="material-symbols-outlined text-sm">settings</span> 
-              {selectedNode ? 'Node Settings' : 'Details Panel'}
-            </h3>
-            {selectedNode && (
-              <button
-                onClick={() => {
-                  setNodes(nds => nds.filter(n => n.id !== selectedNode.id));
-                  setEdges(eds => eds.filter(e => e.source !== selectedNode.id && e.target !== selectedNode.id));
-                  setSelectedNode(null);
-                }}
-                className="text-xs text-rose-400 hover:underline"
-              >
-                Delete Node
-              </button>
-            )}
-          </div>
-
-          <div className="p-4 flex-1 overflow-y-auto">
-            {selectedNode ? (
-              <div className="flex flex-col gap-4 text-xs">
-                <div>
-                  <label className="block text-neutral-400 font-bold mb-1">Node Title</label>
-                  <input
-                    type="text"
-                    value={selectedNode.data?.label || ''}
-                    onChange={(e) => updateNodeData('label', e.target.value)}
-                    className="w-full bg-neutral-900 border border-neutral-800 rounded px-3 py-2 text-white outline-none focus:border-[#facc15]"
-                  />
+        {/* 1. OVERVIEW VIEW */}
+        {viewMode === 'overview' && (
+          <div className="flex-1 flex flex-col overflow-y-auto workflow-dot-bg p-margin-lg">
+            {/* Header */}
+            <header className="flex justify-between items-center mb-16 shrink-0 text-left">
+              <div>
+                <h1 className="font-headline-xl text-headline-xl text-white tracking-tight mb-2">Overview Dashboard</h1>
+                <p className="text-on-surface-variant text-body-lg max-w-2xl">Real-time status metrics and automation activity control hub.</p>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded bg-green-500/10 text-green-400 border border-green-500/20">
+                  <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="font-label-md text-label-md uppercase tracking-wider">Systems Operational</span>
                 </div>
-
-                {/* Conditional configuration based on node type */}
-                {selectedNode.type === 'trigger' && (
-                  <div>
-                    <label className="block text-neutral-400 font-bold mb-1">Webhook URL (Target)</label>
-                    <div className="bg-black/40 p-2 rounded font-mono text-[10px] break-all select-all text-emerald-400">
-                      {`${BACKEND_URL}/api/webhooks/${currentWorkflow?.id || 'id'}`}
-                    </div>
-                    <span className="text-[10px] text-neutral-500 block mt-1">Send a POST request to this URL to trigger execution.</span>
-                  </div>
-                )}
-
-                {selectedNode.type === 'marketing_email' && (
-                  <>
-                    <div>
-                      <label className="block text-neutral-400 font-bold mb-1">Recipient</label>
-                      <input
-                        type="text"
-                        value={selectedNode.data?.to || ''}
-                        onChange={(e) => updateNodeData('to', e.target.value)}
-                        className="w-full bg-neutral-900 border border-neutral-800 rounded px-2 py-1.5 text-white outline-none focus:border-[#facc15]"
-                        placeholder="{{trigger.email}}"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-neutral-400 font-bold mb-1">Subject</label>
-                      <input
-                        type="text"
-                        value={selectedNode.data?.subject || ''}
-                        onChange={(e) => updateNodeData('subject', e.target.value)}
-                        className="w-full bg-neutral-900 border border-neutral-800 rounded px-2 py-1.5 text-white outline-none focus:border-[#facc15]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-neutral-400 font-bold mb-1">Body Context</label>
-                      <textarea
-                        value={selectedNode.data?.body || ''}
-                        onChange={(e) => updateNodeData('body', e.target.value)}
-                        rows={5}
-                        className="w-full bg-neutral-900 border border-neutral-800 rounded px-2 py-1.5 text-white outline-none focus:border-[#facc15] font-mono text-[11px]"
-                      />
-                    </div>
-                  </>
-                )}
-
-                {selectedNode.type === 'crm_action' && (
-                  <>
-                    <div>
-                      <label className="block text-neutral-400 font-bold mb-1">Action Mode</label>
-                      <select
-                        value={selectedNode.data?.actionType || 'create_or_update'}
-                        onChange={(e) => updateNodeData('actionType', e.target.value)}
-                        className="w-full bg-neutral-900 border border-neutral-800 rounded px-2 py-1.5 text-white outline-none focus:border-[#facc15]"
-                      >
-                        <option value="create_or_update">Create / Update Contact</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-neutral-400 font-bold mb-1">Contact Email</label>
-                      <input
-                        type="text"
-                        value={selectedNode.data?.email || ''}
-                        onChange={(e) => updateNodeData('email', e.target.value)}
-                        className="w-full bg-neutral-900 border border-neutral-800 rounded px-2 py-1.5 text-white outline-none focus:border-[#facc15]"
-                        placeholder="{{trigger.email}}"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-neutral-400 font-bold mb-1">Status Target</label>
-                      <select
-                        value={selectedNode.data?.status || 'lead'}
-                        onChange={(e) => updateNodeData('status', e.target.value)}
-                        className="w-full bg-neutral-900 border border-neutral-800 rounded px-2 py-1.5 text-white outline-none focus:border-[#facc15]"
-                      >
-                        <option value="lead">Lead</option>
-                        <option value="contact">Contact</option>
-                        <option value="customer">Customer</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-neutral-400 font-bold mb-1">Score Modifier</label>
-                      <input
-                        type="number"
-                        value={selectedNode.data?.scoreChange || '0'}
-                        onChange={(e) => updateNodeData('scoreChange', e.target.value)}
-                        className="w-full bg-neutral-900 border border-neutral-800 rounded px-2 py-1.5 text-white outline-none focus:border-[#facc15]"
-                      />
-                    </div>
-                  </>
-                )}
-
-                {selectedNode.type === 'ifelse' && (
-                  <div>
-                    <label className="block text-neutral-400 font-bold mb-1">Logical Expression</label>
-                    <input
-                      type="text"
-                      value={selectedNode.data?.condition || ''}
-                      onChange={(e) => updateNodeData('condition', e.target.value)}
-                      className="w-full bg-neutral-900 border border-neutral-800 rounded px-2 py-1.5 text-white outline-none focus:border-[#facc15] font-mono text-[11px]"
-                      placeholder="context.trigger.score > 50"
-                    />
-                    <span className="text-[10px] text-neutral-500 block mt-1.5 leading-relaxed">
-                      Evaluate standard inputs like <code>context.trigger.email</code> or <code>context.trigger.score</code>.
-                    </span>
-                  </div>
-                )}
-
-                {selectedNode.type === 'delay' && (
-                  <div>
-                    <label className="block text-neutral-400 font-bold mb-1">Delay Duration (Seconds)</label>
-                    <input
-                      type="number"
-                      value={selectedNode.data?.seconds || ''}
-                      onChange={(e) => updateNodeData('seconds', e.target.value)}
-                      className="w-full bg-neutral-900 border border-neutral-800 rounded px-2 py-1.5 text-white outline-none focus:border-[#facc15]"
-                    />
-                  </div>
-                )}
-
-                {selectedNode.type === 'code' && (
-                  <div>
-                    <label className="block text-neutral-400 font-bold mb-1">JavaScript Code</label>
-                    <textarea
-                      value={selectedNode.data?.code || ''}
-                      onChange={(e) => updateNodeData('code', e.target.value)}
-                      rows={8}
-                      className="w-full bg-neutral-900 border border-neutral-800 rounded px-2 py-1.5 text-white outline-none focus:border-[#facc15] font-mono text-[11px]"
-                    />
-                  </div>
-                )}
+                <div className="w-9 h-9 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden">
+                  <img className="w-full h-full object-cover" alt="User Avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAznCpkzxOBwWw6Uow9lTnZUTS54sT5_UhNrx4sFKPIan91ipHR8AEUNv2x_0OEOK0Vv0z7kwGarYbz050YiygADlkAo1Ebu9qJZN2oaaNscJOrQ8U1PNNeyjw2XQJD-Zh1qYSVkpb6PfOVVH9OF4dZCS3n7wCugown-4iSzmS3ph6rmdlRR9qEz94cKwAPICfA8d0T3Yt97ql4KZ--ALLzy3lGiIEh8wMIAOqG9gOrTh5pPueEjtYgcQ"/>
+                </div>
               </div>
-            ) : (
-              <div className="text-center py-10 text-neutral-500 text-xs">
-                <span className="material-symbols-outlined text-4xl block mb-2 opacity-50">gesture</span>
-                Select a node to inspect and change its attributes.
+            </header>
+
+            {/* Metrics cards grid */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12 text-left">
+              <div className="clean-card p-6 rounded-xl flex flex-col justify-between">
+                <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Pipeline Latency</span>
+                <span className="text-3xl font-bold text-primary mt-2">10ms</span>
+                <span className="text-[10px] text-green-500 mt-2">Within SLA limit</span>
               </div>
-            )}
-          </div>
-        </div>
-      </div>
+              <div className="clean-card p-6 rounded-xl flex flex-col justify-between">
+                <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Max Throughput</span>
+                <span className="text-3xl font-bold text-primary mt-2">1M+ rps</span>
+                <span className="text-[10px] text-neutral-400 mt-2">Distributed architecture</span>
+              </div>
+              <div className="clean-card p-6 rounded-xl flex flex-col justify-between">
+                <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Uptime Guarantee</span>
+                <span className="text-3xl font-bold text-primary mt-2">99.99%</span>
+                <span className="text-[10px] text-green-500 mt-2">Carrier-grade reliability</span>
+              </div>
+              <div className="clean-card p-6 rounded-xl flex flex-col justify-between">
+                <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Active Workflows</span>
+                <span className="text-3xl font-bold text-primary mt-2">{workflows.length}</span>
+                <span className="text-[10px] text-neutral-400 mt-2">Deployed in cluster</span>
+              </div>
+            </div>
 
-      {/* Bottom Panel: Historical Traces & Simulation Dashboards */}
-      <div className="h-64 bg-[#1a1a1a] border-t border-neutral-800 flex flex-col shrink-0">
-        
-        {/* Dashboard Tabs */}
-        <div className="flex border-b border-neutral-800 bg-neutral-900/50 shrink-0 text-xs font-bold text-neutral-400">
-          <button
-            onClick={() => setActiveTab('logs')}
-            className={`px-6 py-3 border-r border-neutral-800 transition flex items-center gap-1.5 ${
-              activeTab === 'logs' ? 'bg-[#1a1a1a] text-white border-t border-t-[#facc15]' : 'hover:bg-neutral-800/40'
-            }`}
-          >
-            <span className="material-symbols-outlined text-sm">history</span> Execution Logs
-          </button>
-          <button
-            onClick={() => setActiveTab('crm')}
-            className={`px-6 py-3 border-r border-neutral-800 transition flex items-center gap-1.5 ${
-              activeTab === 'crm' ? 'bg-[#1a1a1a] text-white border-t border-t-[#facc15]' : 'hover:bg-neutral-800/40'
-            }`}
-          >
-            <span className="material-symbols-outlined text-sm">contacts</span> Simulated CRM DB
-          </button>
-          <button
-            onClick={() => setActiveTab('emails')}
-            className={`px-6 py-3 border-r border-neutral-800 transition flex items-center gap-1.5 ${
-              activeTab === 'emails' ? 'bg-[#1a1a1a] text-white border-t border-t-[#facc15]' : 'hover:bg-neutral-800/40'
-            }`}
-          >
-            <span className="material-symbols-outlined text-sm">drafts</span> Simulated Sent Emails
-          </button>
-        </div>
+            {/* Double column list */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+              {/* Workflows List */}
+              <div className="clean-card p-8 rounded-xl flex flex-col text-left">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="font-headline-md text-headline-md text-white font-bold">Automation Pipelines</h3>
+                  <button onClick={handleCreateNew} className="text-xs text-primary hover:underline flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px]">add</span> Create New
+                  </button>
+                </div>
+                <div className="space-y-3 flex-1 overflow-y-auto max-h-[350px]">
+                  {workflows.length === 0 ? (
+                    <div className="text-center py-8 text-neutral-600">No pipelines registered. Go to templates to deploy one!</div>
+                  ) : (
+                    workflows.map(wf => (
+                      <div key={wf.id} className="p-4 bg-[#131313] border border-neutral-800 rounded-lg flex items-center justify-between hover:border-neutral-700 transition-all">
+                        <div className="flex flex-col text-left">
+                          <span className="font-medium text-white text-sm">{wf.name}</span>
+                          <span className="text-[10px] text-neutral-500 font-mono">ID: #{wf.id} • Active</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => {
+                              loadWorkflow(wf);
+                              setViewMode('canvas');
+                            }}
+                            className="px-3 py-1.5 bg-neutral-800 text-white rounded text-[11px] hover:bg-neutral-700 transition-colors"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => {
+                              loadWorkflow(wf);
+                              handleRunWorkflow();
+                            }}
+                            className="px-3 py-1.5 bg-primary-container text-black rounded text-[11px] font-bold hover:brightness-110 transition-all"
+                          >
+                            Trigger
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
 
-        {/* Tab Contents */}
-        <div className="flex-1 overflow-hidden flex">
-          
-          {activeTab === 'logs' && (
-            <div className="flex-1 flex overflow-hidden">
-              {/* Executions log left column */}
-              <div className="w-80 border-r border-neutral-800 overflow-y-auto shrink-0 p-2 flex flex-col gap-1.5">
-                {executions.length === 0 ? (
-                  <div className="text-center py-10 text-neutral-500 text-xs">No executions recorded.</div>
-                ) : (
-                  executions.map((exec) => {
-                    const dateStr = new Date(exec.startedAt).toLocaleTimeString();
-                    return (
+              {/* Execution logs overview */}
+              <div className="clean-card p-8 rounded-xl flex flex-col text-left">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="font-headline-md text-headline-md text-white font-bold">Recent System Activity</h3>
+                  <button onClick={() => { setViewMode('history'); setHistoryTab('logs'); }} className="text-xs text-primary hover:underline">
+                    View Outbox & Simulation DB
+                  </button>
+                </div>
+                <div className="space-y-3 flex-1 overflow-y-auto max-h-[350px] text-left">
+                  {executions.length === 0 ? (
+                    <div className="text-center py-8 text-neutral-600">No logs recorded. Trigger a workflow to start simulation.</div>
+                  ) : (
+                    executions.slice(0, 5).map(exec => (
                       <div
                         key={exec.id}
-                        onClick={() => setSelectedExecution(exec)}
-                        className={`p-2 rounded border cursor-pointer transition text-xs text-left ${
-                          selectedExecution?.id === exec.id
-                            ? 'bg-neutral-800 border-[#facc15]'
-                            : 'bg-neutral-900/30 border-neutral-800 hover:bg-neutral-800/40'
-                        }`}
+                        onClick={() => {
+                          setSelectedExecution(exec);
+                          setViewMode('history');
+                          setHistoryTab('logs');
+                        }}
+                        className="p-4 bg-[#131313] border border-neutral-800 rounded-lg flex items-center justify-between hover:border-neutral-700 transition-all cursor-pointer"
                       >
-                        <div className="flex justify-between items-center mb-1">
-                          <span className="font-bold font-mono">Run #{exec.id}</span>
-                          <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                            exec.status === 'success' ? 'bg-emerald-950 text-emerald-400' :
-                            exec.status === 'failed' ? 'bg-rose-950 text-rose-400' : 'bg-amber-950 text-amber-400 animate-pulse'
-                          }`}>
-                            {exec.status}
-                          </span>
+                        <div className="flex flex-col">
+                          <span className="font-bold text-white text-xs">Run ID #{exec.id}</span>
+                          <span className="text-[10px] text-neutral-500 font-mono">{new Date(exec.startedAt).toLocaleString()}</span>
                         </div>
-                        <div className="text-neutral-500 text-[10px]">{dateStr}</div>
+                        <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
+                          exec.status === 'success' ? 'bg-emerald-950/50 text-emerald-400 border border-emerald-900/30' :
+                          exec.status === 'failed' ? 'bg-rose-950/50 text-rose-400 border border-rose-900/30' : 'bg-amber-950/50 text-amber-400 border border-amber-900/30 animate-pulse'
+                        }`}>
+                          {exec.status}
+                        </span>
                       </div>
-                    );
-                  })
-                )}
-              </div>
-
-              {/* Execution log step trace list */}
-              <div className="flex-1 p-4 overflow-y-auto font-mono text-xs text-left bg-neutral-950 text-neutral-300">
-                {selectedExecution ? (
-                  <div>
-                    <h4 className="text-white font-bold mb-2 pb-1.5 border-b border-neutral-800 flex justify-between">
-                      <span>Detailed Trace for Log #{selectedExecution.id}</span>
-                      <span className="text-neutral-500">Started: {new Date(selectedExecution.startedAt).toLocaleString()}</span>
-                    </h4>
-                    <div className="flex flex-col gap-1">
-                      {selectedExecution.logs ? (
-                        JSON.parse(selectedExecution.logs).map((step: any, idx: number) => (
-                          <div key={idx} className="flex gap-4 hover:bg-neutral-900/50 p-0.5">
-                            <span className="text-neutral-600 shrink-0">[{new Date(step.time).toLocaleTimeString()}]</span>
-                            <span className="text-[#facc15] shrink-0 font-bold">{step.nodeType ? `[${step.nodeType.toUpperCase()}]` : '[SYSTEM]'}</span>
-                            <span className="text-neutral-200">{step.message}</span>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-neutral-600">No trace logs recorded.</div>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-neutral-600 text-center py-10">Select an execution from the left bar to inspect the runtime trace.</div>
-                )}
+                    ))
+                  )}
+                </div>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {activeTab === 'crm' && (
-            <div className="flex-1 flex overflow-hidden p-4 gap-6">
-              
-              {/* Simulate Contact insert form */}
-              <form onSubmit={handleCrmLeadTrigger} className="w-80 shrink-0 flex flex-col gap-3 text-xs bg-neutral-900 p-3 rounded border border-neutral-800 text-left">
-                <h4 className="font-bold text-[#facc15] mb-1">Simulate Lead Creation Event</h4>
-                <div>
-                  <label className="block text-neutral-400 mb-1">Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={newLeadName}
-                    onChange={(e) => setNewLeadName(e.target.value)}
-                    placeholder="John Doe"
-                    className="w-full bg-neutral-950 border border-neutral-800 rounded px-2.5 py-1.5 text-white outline-none focus:border-[#facc15]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-neutral-400 mb-1">Email</label>
-                  <input
-                    type="email"
-                    required
-                    value={newLeadEmail}
-                    onChange={(e) => setNewLeadEmail(e.target.value)}
-                    placeholder="john@example.com"
-                    className="w-full bg-neutral-950 border border-neutral-800 rounded px-2.5 py-1.5 text-white outline-none focus:border-[#facc15]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-neutral-400 mb-1">Lead Score: {newLeadScore}</label>
-                  <input
-                    type="range"
-                    min="1"
-                    max="100"
-                    value={newLeadScore}
-                    onChange={(e) => setNewLeadScore(parseInt(e.target.value, 10))}
-                    className="w-full accent-[#facc15]"
-                  />
+        {/* 2. WORKFLOWS (VISUAL CANVAS BUILDER) VIEW */}
+        {viewMode === 'canvas' && (
+          <div className="flex-1 flex flex-col overflow-hidden h-full">
+            {/* Topbar inside Canvas builder */}
+            <header className="h-16 border-b border-[#353534] bg-background/80 backdrop-blur-md flex items-center justify-between px-8 z-20 shrink-0 text-left">
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-3 text-[13px]">
+                  <span className="text-on-surface-variant/50 hover:text-on-surface cursor-pointer transition-colors" onClick={() => setViewMode('overview')}>Workflows</span>
+                  <span className="text-on-surface-variant/20">/</span>
+                  <h2 className="font-medium opacity-90">{currentWorkflow?.name || 'Unnamed Flow'}</h2>
                 </div>
                 <button
-                  type="submit"
-                  className="w-full bg-emerald-600 hover:bg-emerald-500 font-bold py-2 rounded text-black transition mt-auto"
+                  onClick={() => {
+                    const newName = prompt('Rename workflow:', currentWorkflow?.name);
+                    if (newName) setCurrentWorkflow({ ...currentWorkflow, name: newName });
+                  }}
+                  className="text-[10px] px-3 py-1 rounded-full border border-outline-variant/30 text-on-surface-variant/60 hover:text-on-surface hover:border-outline-variant/60 transition-all flex items-center gap-1.5"
                 >
-                  Create & Trigger CRM Workflow
+                  <span className="material-symbols-outlined !text-[12px]">tag</span>
+                  Rename
                 </button>
-              </form>
+                <div className="h-4 w-px bg-outline-variant/30 mx-2"></div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-neutral-500 font-bold">Select Active:</span>
+                  <select
+                    value={currentWorkflow?.id || ''}
+                    onChange={(e) => {
+                      const wf = workflows.find(w => w.id === parseInt(e.target.value, 10));
+                      if (wf) loadWorkflow(wf);
+                    }}
+                    className="bg-[#131313] border border-outline-variant/50 text-[12px] rounded-lg px-2.5 py-1 text-white outline-none cursor-pointer"
+                  >
+                    {workflows.map((w) => (
+                      <option key={w.id} value={w.id}>{w.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  onClick={handleCreateNew}
+                  className="text-xs text-primary font-bold hover:brightness-110 flex items-center gap-1 ml-2"
+                >
+                  <span className="material-symbols-outlined !text-[14px]">add</span> New Flow
+                </button>
+              </div>
 
-              {/* CRM DB Table */}
-              <div className="flex-1 overflow-y-auto rounded border border-neutral-800 bg-[#151515]">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="bg-neutral-900 text-neutral-400 border-b border-neutral-800">
-                      <th className="p-2.5">ID</th>
-                      <th className="p-2.5">Name</th>
-                      <th className="p-2.5">Email</th>
-                      <th className="p-2.5">Status</th>
-                      <th className="p-2.5">Lead Score</th>
-                      <th className="p-2.5">Created At</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {crmContacts.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} className="p-4 text-center text-neutral-500 font-bold">No simulated database contacts.</td>
-                      </tr>
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-3">
+                  <span className="text-[11px] font-medium text-[#ef4444] uppercase tracking-widest opacity-80">Live Engine</span>
+                  <div className="w-7 h-3.5 bg-[#ef4444]/10 rounded-full relative flex items-center px-0.5 border border-[#ef4444]/20">
+                    <div className="w-2.5 h-2.5 bg-[#ef4444] rounded-full ml-auto"></div>
+                  </div>
+                </div>
+                <div className="h-4 w-px bg-outline-variant/30 mx-2"></div>
+                
+                <button
+                  onClick={handleSave}
+                  className="text-[12px] font-bold text-[#facc15] hover:opacity-80 transition-opacity uppercase tracking-widest"
+                >
+                  Save Definition
+                </button>
+
+                <button
+                  onClick={handleDelete}
+                  className="text-[12px] font-bold text-rose-500 hover:text-rose-400 transition-colors uppercase tracking-widest"
+                >
+                  Delete Flow
+                </button>
+
+                <div className="flex items-center rounded-lg overflow-hidden border border-outline-variant/30 text-[11px]">
+                  <button
+                    onClick={() => alert(`Webhook endpoint: ${BACKEND_URL}/api/webhooks/${currentWorkflow?.id}`)}
+                    className="px-3 py-1.5 bg-surface-container-high/40 flex items-center gap-2 hover:bg-surface-container-high transition-colors text-white"
+                  >
+                    <span className="material-symbols-outlined !text-[14px] opacity-60">link</span>
+                    Webhook URL
+                  </button>
+                  <span className="px-3 py-1.5 bg-surface-container-lowest/50 font-mono text-[10px] opacity-40">POST</span>
+                </div>
+              </div>
+            </header>
+
+            {/* Canvas body layout */}
+            <div className="flex-1 relative flex overflow-hidden h-full w-full">
+              
+              {/* React Flow Workspace Canvas */}
+              <div className="flex-1 h-full bg-surface relative dot-grid">
+                <ReactFlow
+                  nodes={nodes}
+                  edges={edges}
+                  onNodesChange={onNodesChange}
+                  onEdgesChange={onEdgesChange}
+                  onConnect={onConnect}
+                  nodeTypes={nodeTypes}
+                  onNodeClick={onNodeClick}
+                  onPaneClick={onPaneClick}
+                  fitView
+                >
+                  <Background color="#ef4444" gap={32} size={1} />
+                </ReactFlow>
+
+                {/* View Controls Overlay (Bottom Left) */}
+                <div className="absolute bottom-10 left-10 z-20">
+                  <div className="flex bg-[#1c1b1b]/85 backdrop-blur-md border border-white/5 rounded-full p-1 shadow-2xl text-on-surface-variant/40">
+                    <button onClick={() => setNodes(nds => nds.map(n => ({...n, position: {x: n.position.x + 20, y: n.position.y}})))} className="p-2.5 hover:text-on-surface transition-colors" title="Refit canvas">
+                      <span className="material-symbols-outlined !text-[16px]">fit_screen</span>
+                    </button>
+                    <div className="w-px h-4 bg-white/5 my-auto"></div>
+                    <span className="px-4 flex items-center text-[10px] font-mono text-on-surface-variant/30">100%</span>
+                  </div>
+                </div>
+
+                {/* Primary Action Button (Bottom Center) */}
+                <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20">
+                  <button
+                    onClick={handleRunWorkflow}
+                    className="bg-white text-black px-10 py-3 rounded-full font-bold text-[13px] tracking-widest uppercase shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-3"
+                  >
+                    <span className="material-symbols-outlined !text-[18px]">play_arrow</span>
+                    Run Workflow
+                  </button>
+                </div>
+
+                {/* AI Copilot Floating Panel (Bottom Right) */}
+                <div className="absolute bottom-10 right-10 z-20 flex flex-col items-end">
+                  {isChatOpen && (
+                    <div className="w-80 h-[380px] bg-[#1c1b1b]/95 backdrop-blur-md border border-neutral-800 rounded-xl shadow-2xl flex flex-col overflow-hidden mb-3 text-left">
+                      {/* Header */}
+                      <div className="p-3 bg-[#262626] border-b border-neutral-800 flex items-center justify-between shrink-0">
+                        <div className="flex items-center gap-2">
+                          <span className="material-symbols-outlined text-[#facc15] text-lg">psychology</span>
+                          <span className="font-bold text-xs text-white">Neuron AI Copilot</span>
+                          <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                        </div>
+                        <button onClick={() => setIsChatOpen(false)} className="text-neutral-500 hover:text-white transition">
+                          <span className="material-symbols-outlined text-sm">close</span>
+                        </button>
+                      </div>
+
+                      {/* Messages list */}
+                      <div className="flex-1 overflow-y-auto p-3 space-y-3 font-sans text-xs">
+                        {chatMessages.map((msg) => (
+                          <div key={msg.id} className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}>
+                            <div className={`p-2.5 rounded-lg max-w-[85%] leading-relaxed ${
+                              msg.sender === 'user' 
+                                ? 'bg-[#facc15] text-black rounded-tr-none font-semibold' 
+                                : 'bg-[#262626] text-neutral-200 rounded-tl-none border border-neutral-800'
+                            }`}>
+                              <p className="whitespace-pre-wrap">{msg.text}</p>
+                              {msg.code && (
+                                <div className="mt-2 text-left">
+                                  <pre className="bg-black/40 p-2 rounded text-[10px] font-mono overflow-x-auto border border-neutral-800 text-teal-300">
+                                    <code>{msg.code}</code>
+                                  </pre>
+                                  <button
+                                    onClick={() => handleApplyCodeToNode(msg.code)}
+                                    className="mt-1.5 w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-1 px-2 rounded text-[10px] transition-colors flex items-center justify-center gap-1 border border-emerald-500/20"
+                                  >
+                                    <span className="material-symbols-outlined text-xs">code</span>
+                                    Apply to selected node
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                        {isTyping && (
+                          <div className="flex items-center gap-1 bg-[#262626] border border-neutral-800 text-neutral-400 p-2 rounded-lg w-14 justify-center">
+                            <span className="w-1.5 h-1.5 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                            <span className="w-1.5 h-1.5 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                            <span className="w-1.5 h-1.5 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Quick chips suggestions */}
+                      <div className="px-3 py-1.5 border-t border-neutral-800 bg-[#161616] flex gap-1.5 overflow-x-auto shrink-0">
+                        <button onClick={() => handleSendChatMessage("Write Lead Qualification Script")} className="px-2 py-1 rounded bg-[#262626] border border-neutral-800 text-neutral-400 hover:text-white transition whitespace-nowrap text-[9px] font-bold">
+                          Qualify Lead
+                        </button>
+                        <button onClick={() => handleSendChatMessage("Write Sentiment Classifier Script")} className="px-2 py-1 rounded bg-[#262626] border border-neutral-800 text-neutral-400 hover:text-white transition whitespace-nowrap text-[9px] font-bold">
+                          Sentiment
+                        </button>
+                        <button onClick={() => handleSendChatMessage("Write Slack Payload Formatter")} className="px-2 py-1 rounded bg-[#262626] border border-neutral-800 text-neutral-400 hover:text-white transition whitespace-nowrap text-[9px] font-bold">
+                          Slack Format
+                        </button>
+                      </div>
+
+                      {/* Input */}
+                      <div className="p-2 border-t border-neutral-800 flex gap-2 shrink-0 bg-[#262626]">
+                        <input
+                          type="text"
+                          value={chatInput}
+                          onChange={(e) => setChatInput(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && handleSendChatMessage(chatInput)}
+                          placeholder={selectedNode?.type === 'code' ? "Ask me to write a script..." : "Ask Copilot..."}
+                          className="flex-1 bg-[#0e0e0e] border border-neutral-800 rounded px-2.5 py-1 text-white text-xs outline-none focus:border-[#facc15]"
+                        />
+                        <button onClick={() => handleSendChatMessage(chatInput)} className="bg-[#facc15] hover:opacity-90 text-black px-3 py-1 rounded text-xs font-bold transition">
+                          Send
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={() => setIsChatOpen(!isChatOpen)}
+                    className="flex items-center gap-2 px-5 py-3 rounded-full bg-[#facc15] hover:opacity-95 text-black font-bold text-xs uppercase tracking-widest shadow-2xl transition-all border border-[#ffe083]/40"
+                  >
+                    <span className="material-symbols-outlined !text-[18px]">psychology</span>
+                    <span>AI Copilot</span>
+                    {isChatOpen ? (
+                      <span className="material-symbols-outlined !text-[14px]">keyboard_arrow_down</span>
                     ) : (
-                      crmContacts.map((c) => (
-                        <tr key={c.id} className="border-b border-neutral-800 hover:bg-neutral-800/10">
-                          <td className="p-2.5 font-mono">{c.id}</td>
-                          <td className="p-2.5 font-bold text-white">{c.name}</td>
-                          <td className="p-2.5 font-mono text-neutral-300">{c.email}</td>
-                          <td className="p-2.5">
-                            <span className="bg-neutral-800 text-neutral-300 px-2 py-0.5 rounded text-[10px] uppercase font-bold border border-neutral-700">
-                              {c.status}
-                            </span>
-                          </td>
-                          <td className="p-2.5 font-bold text-[#facc15]">{c.score}</td>
-                          <td className="p-2.5 text-neutral-500 text-[10px]">{new Date(c.createdAt).toLocaleTimeString()}</td>
+                      <span className="material-symbols-outlined !text-[14px]">keyboard_arrow_up</span>
+                    )}
+                  </button>
+                </div>
+
+                {/* Floating Node Palette Panel (Left side overlay on Canvas) */}
+                <div className="absolute top-8 left-8 z-20 w-52 bg-[#1c1b1b]/90 backdrop-blur-lg border border-neutral-800 rounded-xl p-4 shadow-2xl flex flex-col text-left">
+                  <h4 className="text-[10px] uppercase font-bold tracking-widest text-[#facc15] mb-3 flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[14px]">grid_view</span>
+                    Node Palette
+                  </h4>
+                  <div className="space-y-1.5 max-h-[300px] overflow-y-auto pr-1">
+                    <button
+                      onClick={() => addNode('trigger')}
+                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded border border-emerald-900/30 bg-emerald-950/10 hover:bg-emerald-950/20 text-emerald-400 text-[10px] font-bold text-left"
+                    >
+                      <span className="material-symbols-outlined !text-[13px]">bolt</span>
+                      <span>+ Webhook trigger</span>
+                    </button>
+
+                    <button
+                      onClick={() => addNode('crm_lead_trigger')}
+                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded border border-emerald-900/30 bg-emerald-950/10 hover:bg-emerald-950/20 text-emerald-400 text-[10px] font-bold text-left"
+                    >
+                      <span className="material-symbols-outlined !text-[13px]">group_add</span>
+                      <span>+ CRM Lead trigger</span>
+                    </button>
+
+                    <button
+                      onClick={() => addNode('marketing_email')}
+                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded border border-sky-900/30 bg-sky-950/10 hover:bg-sky-950/20 text-sky-400 text-[10px] font-bold text-left"
+                    >
+                      <span className="material-symbols-outlined !text-[13px]">mail</span>
+                      <span>+ Send Email</span>
+                    </button>
+
+                    <button
+                      onClick={() => addNode('crm_action')}
+                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded border border-indigo-900/30 bg-indigo-950/10 hover:bg-indigo-950/20 text-indigo-400 text-[10px] font-bold text-left"
+                    >
+                      <span className="material-symbols-outlined !text-[13px]">account_circle</span>
+                      <span>+ CRM Update</span>
+                    </button>
+
+                    <button
+                      onClick={() => addNode('ifelse')}
+                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded border border-fuchsia-900/30 bg-fuchsia-950/10 hover:bg-fuchsia-950/20 text-fuchsia-400 text-[10px] font-bold text-left"
+                    >
+                      <span className="material-symbols-outlined !text-[13px]">alt_route</span>
+                      <span>+ If / Else</span>
+                    </button>
+
+                    <button
+                      onClick={() => addNode('delay')}
+                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded border border-amber-900/30 bg-amber-950/10 hover:bg-amber-950/20 text-amber-400 text-[10px] font-bold text-left"
+                    >
+                      <span className="material-symbols-outlined !text-[13px]">schedule</span>
+                      <span>+ Delay Wait</span>
+                    </button>
+
+                    <button
+                      onClick={() => addNode('code')}
+                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded border border-teal-900/30 bg-teal-950/10 hover:bg-teal-950/20 text-teal-400 text-[10px] font-bold text-left"
+                    >
+                      <span className="material-symbols-outlined !text-[13px]">code</span>
+                      <span>+ Run Script</span>
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* NODE DETAILS CONFIG PANEL (Right side on Canvas) */}
+              <div className="w-80 bg-surface-container border-l border-[#353534] shrink-0 flex flex-col text-left">
+                <div className="p-5 border-b border-[#353534] flex items-center justify-between">
+                  <h3 className="font-bold text-xs uppercase tracking-wider text-accent-coral flex items-center gap-1.5">
+                    <span className="material-symbols-outlined !text-[16px]">settings</span>
+                    Config settings
+                  </h3>
+                  {selectedNode && (
+                    <button
+                      onClick={() => {
+                        setNodes(nds => nds.filter(n => n.id !== selectedNode.id));
+                        setEdges(eds => eds.filter(e => e.source !== selectedNode.id && e.target !== selectedNode.id));
+                        setSelectedNode(null);
+                      }}
+                      className="text-[10px] text-rose-400 hover:underline"
+                    >
+                      Delete
+                    </button>
+                  )}
+                </div>
+
+                <div className="p-6 flex-1 overflow-y-auto space-y-5 text-xs text-on-surface-variant">
+                  {selectedNode ? (
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-neutral-400 font-bold mb-1">Label</label>
+                        <input
+                          type="text"
+                          value={selectedNode.data?.label || ''}
+                          onChange={(e) => updateNodeData('label', e.target.value)}
+                          className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-3 py-2 text-white outline-none focus:border-accent-coral/50"
+                        />
+                      </div>
+
+                      {/* Trigger fields */}
+                      {selectedNode.type === 'trigger' && (
+                        <div>
+                          <label className="block text-neutral-400 font-bold mb-1">Webhook Target</label>
+                          <div className="bg-[#0a0a0a] p-2.5 rounded font-mono text-[9px] break-all select-all text-emerald-400 border border-neutral-800">
+                            {`${BACKEND_URL}/api/webhooks/${currentWorkflow?.id}`}
+                          </div>
+                          <span className="text-[9px] text-neutral-500 block mt-1">Triggers whenever a POST request lands.</span>
+                        </div>
+                      )}
+
+                      {/* Send Email Fields */}
+                      {selectedNode.type === 'marketing_email' && (
+                        <>
+                          <div>
+                            <label className="block text-neutral-400 font-bold mb-1">Recipient</label>
+                            <input
+                              type="text"
+                              value={selectedNode.data?.to || ''}
+                              onChange={(e) => updateNodeData('to', e.target.value)}
+                              className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none focus:border-accent-coral/50"
+                              placeholder="{{trigger.email}}"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-neutral-400 font-bold mb-1">Subject</label>
+                            <input
+                              type="text"
+                              value={selectedNode.data?.subject || ''}
+                              onChange={(e) => updateNodeData('subject', e.target.value)}
+                              className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none focus:border-accent-coral/50"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-neutral-400 font-bold mb-1">Email Body</label>
+                            <textarea
+                              value={selectedNode.data?.body || ''}
+                              onChange={(e) => updateNodeData('body', e.target.value)}
+                              rows={5}
+                              className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none focus:border-accent-coral/50 font-mono text-[10px]"
+                            />
+                          </div>
+                        </>
+                      )}
+
+                      {/* CRM Action Fields */}
+                      {selectedNode.type === 'crm_action' && (
+                        <>
+                          <div>
+                            <label className="block text-neutral-400 font-bold mb-1">Contact Email</label>
+                            <input
+                              type="text"
+                              value={selectedNode.data?.email || ''}
+                              onChange={(e) => updateNodeData('email', e.target.value)}
+                              className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none focus:border-accent-coral/50"
+                              placeholder="{{trigger.email}}"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-neutral-400 font-bold mb-1">Status</label>
+                            <select
+                              value={selectedNode.data?.status || 'lead'}
+                              onChange={(e) => updateNodeData('status', e.target.value)}
+                              className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none focus:border-accent-coral/50 cursor-pointer"
+                            >
+                              <option value="lead">Lead</option>
+                              <option value="contact">Contact</option>
+                              <option value="customer">Customer</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-neutral-400 font-bold mb-1">Score increment</label>
+                            <input
+                              type="number"
+                              value={selectedNode.data?.scoreChange || '0'}
+                              onChange={(e) => updateNodeData('scoreChange', e.target.value)}
+                              className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none focus:border-accent-coral/50"
+                            />
+                          </div>
+                        </>
+                      )}
+
+                      {/* If / Else Fields */}
+                      {selectedNode.type === 'ifelse' && (
+                        <div>
+                          <label className="block text-neutral-400 font-bold mb-1">Expression Condition</label>
+                          <input
+                            type="text"
+                            value={selectedNode.data?.condition || ''}
+                            onChange={(e) => updateNodeData('condition', e.target.value)}
+                            className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none focus:border-accent-coral/50 font-mono text-[10px]"
+                            placeholder="context.trigger.score > 50"
+                          />
+                        </div>
+                      )}
+
+                      {/* Delay timer fields */}
+                      {selectedNode.type === 'delay' && (
+                        <div>
+                          <label className="block text-neutral-400 font-bold mb-1">Delay Duration (Seconds)</label>
+                          <input
+                            type="number"
+                            value={selectedNode.data?.seconds || ''}
+                            onChange={(e) => updateNodeData('seconds', e.target.value)}
+                            className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none focus:border-accent-coral/50"
+                          />
+                        </div>
+                      )}
+
+                      {/* Code Block fields */}
+                      {selectedNode.type === 'code' && (
+                        <div>
+                          <label className="block text-neutral-400 font-bold mb-1">JavaScript Code</label>
+                          <textarea
+                            value={selectedNode.data?.code || ''}
+                            onChange={(e) => updateNodeData('code', e.target.value)}
+                            rows={8}
+                            className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none focus:border-accent-coral/50 font-mono text-[10px]"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 text-neutral-600 font-mono text-[10px]">
+                      <span className="material-symbols-outlined text-3xl block mb-2 opacity-30">gesture</span>
+                      Select a node in the graph builder to edit configurations.
+                    </div>
+                  )}
+                </div>
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* 3. TEMPLATES (TEMPLATE LIBRARY) VIEW */}
+        {viewMode === 'templates' && (
+          <div className="flex-1 flex flex-col overflow-y-auto workflow-dot-bg p-margin-lg">
+            {/* Template TopNavBar */}
+            <header className="flex justify-between items-center mb-16 shrink-0 text-left">
+              <div className="flex items-center gap-8">
+                <div className="relative group">
+                  <span className="absolute inset-y-0 left-0 flex items-center text-outline pl-2">
+                    <span className="material-symbols-outlined text-[20px]">search</span>
+                  </span>
+                  <input
+                    value={templateSearchQuery}
+                    onChange={(e) => setTemplateSearchQuery(e.target.value)}
+                    className="bg-[#1c1b1b] border border-[#353534] pl-10 pr-4 py-2 rounded-lg text-body-md focus:ring-0 w-80 placeholder:text-outline text-white focus:border-[#9a9078] transition-all"
+                    placeholder="Search templates..."
+                    type="text"
+                  />
+                </div>
+              </div>
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-9 h-9 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden">
+                    <img className="w-full h-full object-cover" alt="User Avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAznCpkzxOBwWw6Uow9lTnZUTS54sT5_UhNrx4sFKPIan91ipHR8AEUNv2x_0OEOK0Vv0z7kwGarYbz050YiygADlkAo1Ebu9qJZN2oaaNscJOrQ8U1PNNeyjw2XQJD-Zh1qYSVkpb6PfOVVH9OF4dZCS3n7wCugown-4iSzmS3ph6rmdlRR9qEz94cKwAPICfA8d0T3Yt97ql4KZ--ALLzy3lGiIEh8wMIAOqG9gOrTh5pPueEjtYgcQ"/>
+                  </div>
+                </div>
+              </div>
+            </header>
+
+            {/* Template Intro */}
+            <div className="flex flex-col gap-4 mb-16 text-left">
+              <h1 className="font-headline-xl text-headline-xl text-on-surface tracking-tight">Template Library</h1>
+              <p className="text-on-surface-variant text-body-lg max-w-2xl leading-relaxed">Curated automation workflows designed for high-scale enterprise operations. Deploy with one click.</p>
+            </div>
+
+            {/* Simplified Filters */}
+            <div className="flex gap-8 mb-12 border-b border-surface-variant/20 pb-4 shrink-0 text-left">
+              {['All', 'CRM', 'AI Agents', 'E-Commerce', 'Marketing', 'DevOps', 'Security'].map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedTemplateCategory(cat)}
+                  className={`filter-btn font-bold text-label-md uppercase tracking-widest ${
+                    selectedTemplateCategory === cat ? 'active text-on-surface' : 'text-on-surface-variant hover:text-on-surface'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+
+            {/* Template Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 text-left">
+              
+              {/* Featured Bento Card (Rendered if Inventory Balancer passes category check) */}
+              {(() => {
+                const featuredTemplate = TEMPLATES.find(t => t.featured);
+                if (!featuredTemplate) return null;
+                const matchesCategory = selectedTemplateCategory === 'All' || featuredTemplate.category === selectedTemplateCategory;
+                const matchesSearch = featuredTemplate.name.toLowerCase().includes(templateSearchQuery.toLowerCase()) || 
+                                      featuredTemplate.description.toLowerCase().includes(templateSearchQuery.toLowerCase());
+                if (!matchesCategory || !matchesSearch) return null;
+
+                return (
+                  <div className="lg:col-span-2 clean-card group cursor-pointer flex flex-row p-10 rounded-lg overflow-hidden min-h-[320px]">
+                    <div className="flex-1 flex flex-col">
+                      <div className="flex items-center gap-4 mb-8">
+                        <span className="text-label-sm font-label-sm text-outline uppercase tracking-[0.2em]">{featuredTemplate.category}</span>
+                        <span className="px-2 py-0.5 bg-primary-container/10 text-primary-container text-[10px] font-bold tracking-[0.1em] rounded">FEATURED</span>
+                      </div>
+                      <h3 className="font-headline-lg text-headline-lg text-on-surface mb-6">{featuredTemplate.name}</h3>
+                      <p className="text-on-surface-variant text-body-lg leading-relaxed mb-10 max-w-md">{featuredTemplate.description}</p>
+                      <div className="mt-auto">
+                        <button
+                          onClick={() => handleDeployTemplate(featuredTemplate)}
+                          className="px-10 py-3 bg-white text-black font-bold text-label-md uppercase tracking-widest hover:bg-primary-container hover:text-on-primary-container transition-all"
+                        >
+                          Deploy Template
+                        </button>
+                      </div>
+                    </div>
+                    <div className="w-1/3 flex items-center justify-center border-l border-surface-variant/20 ml-10 pl-10 opacity-40 group-hover:opacity-100 transition-opacity">
+                      <div className="relative">
+                        <div className="w-24 h-24 border border-outline rounded-full flex items-center justify-center">
+                          <span className="material-symbols-outlined text-[40px] text-primary-container">hub</span>
+                        </div>
+                        <div className="absolute -top-2 -right-2 w-4 h-4 bg-primary rounded-full animate-pulse"></div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Regular Cards */}
+              {filteredTemplates.filter(t => !t.featured).map((tpl) => (
+                <div
+                  key={tpl.id}
+                  onClick={() => handleDeployTemplate(tpl)}
+                  className="clean-card group cursor-pointer flex flex-col p-8 rounded-lg"
+                >
+                  <div className="flex justify-between items-start mb-10">
+                    <span className="text-label-sm font-label-sm text-outline uppercase tracking-[0.2em]">{tpl.category}</span>
+                    <span className="material-symbols-outlined text-outline group-hover:text-primary transition-colors">north_east</span>
+                  </div>
+                  <h3 className="font-headline-md text-headline-md text-on-surface mb-4">{tpl.name}</h3>
+                  <p className="text-on-surface-variant text-body-md leading-relaxed mb-12 flex-1">{tpl.description}</p>
+                  
+                  <div className="flex items-center gap-3 mt-auto">
+                    <div className="flex -space-x-1">
+                      {tpl.icons.map((icon, idx) => (
+                        <div key={idx} className="w-7 h-7 rounded bg-surface-container-high border border-outline-variant flex items-center justify-center">
+                          <span className="material-symbols-outlined text-[14px] text-neutral-400">{icon}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="h-px flex-1 bg-surface-variant/30 mx-4"></div>
+                    {tpl.popular && (
+                      <span className="text-label-sm font-label-sm text-primary uppercase tracking-widest">Popular</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 4. VARIABLES MANAGER VIEW */}
+        {viewMode === 'variables' && (
+          <div className="flex-1 flex flex-col overflow-y-auto workflow-dot-bg p-margin-lg">
+            {/* Header */}
+            <header className="flex justify-between items-center mb-16 shrink-0 text-left">
+              <div>
+                <h1 className="font-headline-xl text-headline-xl text-white tracking-tight mb-2">Environment Variables</h1>
+                <p className="text-on-surface-variant text-body-lg max-w-2xl">Manage environment variables accessible securely by execution engines and custom script runner nodes.</p>
+              </div>
+              <div className="w-9 h-9 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden">
+                <img className="w-full h-full object-cover" alt="User Avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAznCpkzxOBwWw6Uow9lTnZUTS54sT5_UhNrx4sFKPIan91ipHR8AEUNv2x_0OEOK0Vv0z7kwGarYbz050YiygADlkAo1Ebu9qJZN2oaaNscJOrQ8U1PNNeyjw2XQJD-Zh1qYSVkpb6PfOVVH9OF4dZCS3n7wCugown-4iSzmS3ph6rmdlRR9qEz94cKwAPICfA8d0T3Yt97ql4KZ--ALLzy3lGiIEh8wMIAOqG9gOrTh5pPueEjtYgcQ"/>
+              </div>
+            </header>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 text-left">
+              {/* Creator Form */}
+              <div className="clean-card p-6 rounded-xl h-fit">
+                <h3 className="font-bold text-[#facc15] text-xs uppercase tracking-wider mb-4">Add Variable</h3>
+                <form onSubmit={handleAddVar} className="space-y-4">
+                  <div>
+                    <label className="block text-neutral-400 text-xs mb-1 font-bold">Key / Variable Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={newVarKey}
+                      onChange={(e) => setNewVarKey(e.target.value.toUpperCase())}
+                      placeholder="MY_API_SECRET"
+                      className="w-full bg-[#131313] border border-[#353534] rounded-lg px-3 py-2 text-white outline-none focus:border-primary-container text-xs font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-neutral-400 text-xs mb-1 font-bold">Value</label>
+                    <textarea
+                      required
+                      value={newVarVal}
+                      onChange={(e) => setNewVarVal(e.target.value)}
+                      placeholder="xoxb-secret-token"
+                      rows={4}
+                      className="w-full bg-[#131313] border border-[#353534] rounded-lg px-3 py-2 text-white outline-none focus:border-primary-container text-xs font-mono"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="w-full bg-primary-container text-black font-bold py-2.5 rounded-lg hover:brightness-110 transition-colors uppercase tracking-widest text-[10px]"
+                  >
+                    Save Variable
+                  </button>
+                </form>
+              </div>
+
+              {/* Variables List Table */}
+              <div className="lg:col-span-2 clean-card p-8 rounded-xl">
+                <h3 className="font-headline-md text-headline-md text-white font-bold mb-6">Configured Values</h3>
+                <div className="overflow-x-auto rounded-lg border border-neutral-800">
+                  <table className="w-full border-collapse text-xs text-left">
+                    <thead>
+                      <tr className="bg-[#131313] text-neutral-400 border-b border-neutral-800">
+                        <th className="p-4 font-bold uppercase tracking-wider">Key</th>
+                        <th className="p-4 font-bold uppercase tracking-wider">Masked Value</th>
+                        <th className="p-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {variables.length === 0 ? (
+                        <tr>
+                          <td colSpan={3} className="p-6 text-center text-neutral-600 font-bold">No global variables configured.</td>
                         </tr>
+                      ) : (
+                        variables.map((v) => (
+                          <tr key={v.key} className="border-b border-neutral-800/50 hover:bg-white/[0.01]">
+                            <td className="p-4 font-mono font-bold text-white">{v.key}</td>
+                            <td className="p-4 font-mono text-neutral-400">
+                              {v.value.length > 20 ? `${v.value.substring(0, 15)}... [encrypted]` : v.value}
+                            </td>
+                            <td className="p-4 text-right">
+                              <button
+                                onClick={() => handleDeleteVar(v.key)}
+                                className="text-rose-400 hover:text-rose-300 font-bold hover:underline"
+                              >
+                                Delete
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 5. HISTORY & DB SIMULATIONS VIEW */}
+        {viewMode === 'history' && (
+          <div className="flex-1 flex flex-col h-full w-full bg-[#0e0e0e]">
+            
+            {/* Tab Selector */}
+            <div className="flex border-b border-outline-variant/30 text-xs font-bold text-on-surface-variant shrink-0 bg-[#0a0a0a]">
+              <button
+                onClick={() => setHistoryTab('logs')}
+                className={`px-8 py-4 border-r border-outline-variant/30 transition-all ${
+                  historyTab === 'logs' ? 'bg-[#0e0e0e] text-white border-b-2 border-b-accent-coral' : 'opacity-50 hover:opacity-100'
+                }`}
+              >
+                Execution History Logs
+              </button>
+              <button
+                onClick={() => setHistoryTab('crm')}
+                className={`px-8 py-4 border-r border-outline-variant/30 transition-all ${
+                  historyTab === 'crm' ? 'bg-[#0e0e0e] text-white border-b-2 border-b-accent-coral' : 'opacity-50 hover:opacity-100'
+                }`}
+              >
+                CRM Simulation DB
+              </button>
+              <button
+                onClick={() => setHistoryTab('emails')}
+                className={`px-8 py-4 border-r border-outline-variant/30 transition-all ${
+                  historyTab === 'emails' ? 'bg-[#0e0e0e] text-white border-b-2 border-b-accent-coral' : 'opacity-50 hover:opacity-100'
+                }`}
+              >
+                Emails Outbox Simulation
+              </button>
+            </div>
+
+            {/* Tab Contents container */}
+            <div className="flex-1 overflow-hidden flex">
+
+              {/* Sub Tab: Logs */}
+              {historyTab === 'logs' && (
+                <div className="flex-1 flex overflow-hidden h-full text-left">
+                  {/* Execution runs list */}
+                  <div className="w-80 border-r border-outline-variant/30 overflow-y-auto p-4 flex flex-col gap-2 bg-[#0a0a0a] shrink-0 text-left">
+                    <h4 className="text-[10px] uppercase font-bold tracking-wider text-neutral-500 px-1 mb-2">Execution Runs</h4>
+                    {executions.length === 0 ? (
+                      <div className="text-center py-8 text-neutral-600 text-xs">No runs recorded yet. Trigger a workflow to start.</div>
+                    ) : (
+                      executions.map((exec) => {
+                        const isSel = selectedExecution?.id === exec.id;
+                        return (
+                          <div
+                            key={exec.id}
+                            onClick={() => setSelectedExecution(exec)}
+                            className={`p-3 rounded-lg border transition-all cursor-pointer text-xs ${
+                              isSel
+                                ? 'bg-[#1c1b1b] border-accent-coral/50'
+                                : 'bg-[#131313]/60 border-white/5 hover:border-white/10'
+                            }`}
+                          >
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="font-bold text-white font-mono">Run ID #{exec.id}</span>
+                              <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                                exec.status === 'success' ? 'bg-emerald-950/50 text-emerald-400' :
+                                exec.status === 'failed' ? 'bg-rose-950/50 text-rose-400' : 'bg-amber-950/50 text-amber-400 animate-pulse'
+                              }`}>
+                                {exec.status}
+                              </span>
+                            </div>
+                            <div className="text-[10px] text-neutral-500 font-mono">
+                              {new Date(exec.startedAt).toLocaleString()}
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+
+                  {/* Step log list console */}
+                  <div className="flex-1 p-6 overflow-y-auto bg-[#050505] text-left font-mono text-xs">
+                    {selectedExecution ? (
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center border-b border-outline-variant/30 pb-3 mb-4">
+                          <span className="font-bold text-white">Console Output trace Log #{selectedExecution.id}</span>
+                          <span className="text-[10px] text-neutral-500">Status: {selectedExecution.status}</span>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          {selectedExecution.logs ? (
+                            JSON.parse(selectedExecution.logs).map((step: any, i: number) => (
+                              <div key={i} className="flex gap-4 p-1.5 hover:bg-white/5 rounded transition-colors text-neutral-300">
+                                <span className="text-neutral-600 shrink-0">[{new Date(step.time).toLocaleTimeString()}]</span>
+                                <span className="text-accent-coral font-bold shrink-0">{step.nodeType ? `[${step.nodeType.toUpperCase()}]` : '[SYSTEM]'}</span>
+                                <span className="text-white">{step.message}</span>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="text-neutral-700">Empty steps console output.</div>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-neutral-700 text-center py-20">Select an execution run from the left panel to review step-by-step logs.</div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Sub Tab: CRM Database */}
+              {historyTab === 'crm' && (
+                <div className="flex-1 flex overflow-hidden p-6 gap-6 h-full text-left">
+                  
+                  {/* Simulator lead create form */}
+                  <form onSubmit={handleCrmLeadTrigger} className="w-80 shrink-0 flex flex-col gap-4 bg-[#0a0a0a] p-5 rounded-xl border border-outline-variant/30 h-fit">
+                    <h4 className="font-bold text-accent-coral text-sm mb-1 uppercase tracking-wider">Trigger Lead event</h4>
+                    <div>
+                      <label className="block text-neutral-400 text-xs mb-1 font-bold">Contact Name</label>
+                      <input
+                        type="text"
+                        required
+                        value={newLeadName}
+                        onChange={(e) => setNewLeadName(e.target.value)}
+                        placeholder="Jonas Scholz"
+                        className="w-full bg-[#131313] border border-outline-variant/60 rounded-lg px-3 py-2 text-white outline-none focus:border-accent-coral/50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-neutral-400 text-xs mb-1 font-bold">Contact Email</label>
+                      <input
+                        type="email"
+                        required
+                        value={newLeadEmail}
+                        onChange={(e) => setNewLeadEmail(e.target.value)}
+                        placeholder="jonas@example.com"
+                        className="w-full bg-[#131313] border border-outline-variant/60 rounded-lg px-3 py-2 text-white outline-none focus:border-accent-coral/50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-neutral-400 text-xs mb-1 font-bold">Lead Score: {newLeadScore}</label>
+                      <input
+                        type="range"
+                        min="1"
+                        max="100"
+                        value={newLeadScore}
+                        onChange={(e) => setNewLeadScore(parseInt(e.target.value, 10))}
+                        className="w-full accent-accent-coral bg-neutral-800"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      className="w-full bg-[#ef4444] text-white font-bold py-2.5 rounded-lg hover:bg-[#ef4444]/90 transition-colors uppercase tracking-widest text-[10px]"
+                    >
+                      Fire CRM Event
+                    </button>
+                  </form>
+
+                  {/* CRM Table */}
+                  <div className="flex-1 overflow-y-auto rounded-xl border border-outline-variant/30 bg-[#0a0a0a]">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="bg-[#131313] text-neutral-400 border-b border-outline-variant/30">
+                          <th className="p-3">ID</th>
+                          <th className="p-3">Name</th>
+                          <th className="p-3">Email</th>
+                          <th className="p-3">Status</th>
+                          <th className="p-3">Score</th>
+                          <th className="p-3">Created</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {crmContacts.length === 0 ? (
+                          <tr>
+                            <td colSpan={6} className="p-6 text-center text-neutral-600 font-bold">No contacts registered in CRM DB.</td>
+                          </tr>
+                        ) : (
+                          crmContacts.map((c) => (
+                            <tr key={c.id} className="border-b border-outline-variant/20 hover:bg-white/5">
+                              <td className="p-3 font-mono text-neutral-600">{c.id}</td>
+                              <td className="p-3 font-bold text-white">{c.name}</td>
+                              <td className="p-3 font-mono text-neutral-400">{c.email}</td>
+                              <td className="p-3">
+                                <span className="bg-[#1c1b1b] text-neutral-300 px-2.5 py-0.5 rounded-full text-[9px] uppercase border border-outline-variant/50">
+                                  {c.status}
+                                </span>
+                              </td>
+                              <td className="p-3 font-bold text-accent-coral">{c.score}</td>
+                              <td className="p-3 text-neutral-500 text-[10px]">{new Date(c.createdAt).toLocaleTimeString()}</td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Sub Tab: Outbox Emails */}
+              {historyTab === 'emails' && (
+                <div className="flex-1 p-6 overflow-y-auto text-left h-full bg-[#0e0e0e]">
+                  <h3 className="text-xs uppercase font-bold text-neutral-500 tracking-wider mb-4">Simulated Outbox</h3>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {simulatedEmails.length === 0 ? (
+                      <div className="lg:col-span-2 text-center py-12 text-neutral-600 font-bold">Outbox index empty. Action email trigger has not fired yet.</div>
+                    ) : (
+                      simulatedEmails.map((email) => (
+                        <div key={email.id} className="bg-[#0a0a0a] border border-outline-variant/30 rounded-xl p-4 flex flex-col gap-2">
+                          <div className="flex justify-between items-center border-b border-outline-variant/20 pb-2 mb-1">
+                            <div>
+                              <span className="text-neutral-500">To:</span> <span className="font-bold text-sky-400 font-mono">{email.to}</span>
+                            </div>
+                            <span className="text-[10px] text-neutral-500 font-mono">{new Date(email.sentAt).toLocaleTimeString()}</span>
+                          </div>
+                          <div className="font-bold text-white text-xs">Subject: {email.subject}</div>
+                          <p className="text-neutral-400 font-mono text-[10px] bg-black/40 p-3 rounded-lg border border-outline-variant/10 whitespace-pre-wrap">
+                            {email.body}
+                          </p>
+                        </div>
                       ))
                     )}
-                  </tbody>
-                </table>
-              </div>
+                  </div>
+                </div>
+              )}
 
             </div>
-          )}
+          </div>
+        )}
 
-          {activeTab === 'emails' && (
-            <div className="flex-1 p-4 overflow-y-auto">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {simulatedEmails.length === 0 ? (
-                  <div className="col-span-2 text-center py-10 text-neutral-500 font-bold text-xs">Simulated mail inbox is empty. Send email nodes to generate mails here.</div>
-                ) : (
-                  simulatedEmails.map((email) => (
-                    <div key={email.id} className="bg-neutral-900 border border-neutral-800 rounded p-3 text-left text-xs">
-                      <div className="flex justify-between items-center pb-2 border-b border-neutral-800 mb-2">
+        {/* 6. SETTINGS VIEW */}
+        {viewMode === 'settings' && (
+          <div className="flex-1 flex flex-col overflow-y-auto workflow-dot-bg p-margin-lg">
+            {/* Header */}
+            <header className="flex justify-between items-center mb-16 shrink-0 text-left">
+              <div>
+                <h1 className="font-headline-xl text-headline-xl text-white tracking-tight mb-2">System Settings</h1>
+                <p className="text-on-surface-variant text-body-lg max-w-2xl">Configure platform features, databases, cluster variables, and user credentials.</p>
+              </div>
+              <div className="w-9 h-9 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden">
+                <img className="w-full h-full object-cover" alt="User Avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAznCpkzxOBwWw6Uow9lTnZUTS54sT5_UhNrx4sFKPIan91ipHR8AEUNv2x_0OEOK0Vv0z7kwGarYbz050YiygADlkAo1Ebu9qJZN2oaaNscJOrQ8U1PNNeyjw2XQJD-Zh1qYSVkpb6PfOVVH9OF4dZCS3n7wCugown-4iSzmS3ph6rmdlRR9qEz94cKwAPICfA8d0T3Yt97ql4KZ--ALLzy3lGiIEh8wMIAOqG9gOrTh5pPueEjtYgcQ"/>
+              </div>
+            </header>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 text-left">
+              {/* User profile details */}
+              <div className="clean-card p-8 rounded-xl flex flex-col gap-6">
+                <h3 className="font-bold text-[#facc15] text-xs uppercase tracking-wider">Account Credentials</h3>
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center font-bold text-white text-xl">
+                    JS
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-white text-base">Jonas Scholz</h4>
+                    <p className="text-xs text-neutral-400">Enterprise Administrator</p>
+                  </div>
+                </div>
+                <div className="space-y-3 pt-4 border-t border-neutral-800 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-neutral-500 font-bold">Role Access</span>
+                    <span className="text-white">Superuser (Admin)</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-neutral-500 font-bold">Authorized Keys</span>
+                    <span className="text-white font-mono">SSH v2 RSA-SHA256</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-neutral-500 font-bold">Workspace Directory</span>
+                    <span className="text-white font-mono">/home/jonas/workflows</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Maintenance Actions */}
+              <div className="clean-card p-8 rounded-xl flex flex-col justify-between">
+                <div>
+                  <h3 className="font-bold text-[#facc15] text-xs uppercase tracking-wider mb-4">Platform Maintenance</h3>
+                  <p className="text-xs text-neutral-400 mb-6">Perform administrative operations to purge the sqlite state data. This deletes execution logs, CRM simulation lists, and sent email records.</p>
+                </div>
+                <div className="flex flex-col gap-3">
+                  <button
+                    onClick={handleResetDb}
+                    className="w-full bg-[#ef4444] text-white font-bold py-3 rounded-lg hover:bg-[#ef4444]/90 transition-all uppercase tracking-widest text-[10px]"
+                  >
+                    Reset Simulation DB
+                  </button>
+                  <button
+                    onClick={() => alert(`Active Engine Endpoint: ${BACKEND_URL}`)}
+                    className="w-full bg-neutral-800 text-white font-bold py-3 rounded-lg hover:bg-neutral-700 transition-all uppercase tracking-widest text-[10px]"
+                  >
+                    Inspect Cluster Connection
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 7. EXECUTIONS HISTORY LOGS VIEW */}
+        {viewMode === 'executions' && (
+          <div className="flex-1 flex flex-col h-full w-full bg-surface-container-lowest overflow-hidden">
+            {/* TopNavBar */}
+            <header className="flex justify-between items-center px-gutter w-full shrink-0 bg-[#0e0e0e] border-b border-neutral-900 h-16 z-20 text-left">
+              <div className="flex items-center gap-8">
+                <div className="relative group">
+                  <span className="absolute inset-y-0 left-3 flex items-center text-on-surface-variant/70">
+                    <span className="material-symbols-outlined text-[18px]">search</span>
+                  </span>
+                  <input
+                    value={executionsSearchQuery}
+                    onChange={(e) => setExecutionsSearchQuery(e.target.value)}
+                    className="bg-[#1c1b1b] border border-transparent group-hover:border-neutral-800 rounded-lg pl-10 pr-4 py-1.5 text-body-md focus:ring-0 focus:border-primary-container/50 transition-all w-72 placeholder:text-on-surface-variant/40 text-white"
+                    placeholder="Search logs..."
+                    type="text"
+                  />
+                </div>
+                <nav className="hidden lg:flex items-center gap-6 text-xs font-bold uppercase tracking-wider">
+                  <div className="relative">
+                    <span className="text-primary cursor-default text-[12px]">History</span>
+                    <div className="absolute -bottom-[21px] left-0 right-0 h-0.5 bg-primary-container rounded-full"></div>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-on-surface-variant">
+                    <span className="text-[12px]">Real-time</span>
+                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                  </div>
+                </nav>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 pr-4 border-r border-neutral-900">
+                  <button
+                    onClick={handleTestRun}
+                    className="bg-primary-container hover:brightness-110 text-on-primary-container font-bold px-4 py-2 rounded-lg transition-all text-label-md flex items-center gap-2"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">play_arrow</span>
+                    Test Run
+                  </button>
+                  <button
+                    onClick={handleExportExecutions}
+                    className="bg-[#1c1b1b] hover:bg-neutral-800 text-on-surface font-medium px-4 py-2 rounded-lg transition-all text-label-md"
+                  >
+                    Export
+                  </button>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button className="text-on-surface-variant hover:text-primary transition-colors"><span className="material-symbols-outlined text-[20px]">notifications</span></button>
+                  <button className="text-on-surface-variant hover:text-primary transition-colors"><span className="material-symbols-outlined text-[20px]">share</span></button>
+                  <div className="w-8 h-8 rounded-full overflow-hidden border border-neutral-800 ml-2">
+                    <img className="w-full h-full object-cover" alt="User Avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAznCpkzxOBwWw6Uow9lTnZUTS54sT5_UhNrx4sFKPIan91ipHR8AEUNv2x_0OEOK0Vv0z7kwGarYbz050YiygADlkAo1Ebu9qJZN2oaaNscJOrQ8U1PNNeyjw2XQJD-Zh1qYSVkpb6PfOVVH9OF4dZCS3n7wCugown-4iSzmS3ph6rmdlRR9qEz94cKwAPICfA8d0T3Yt97ql4KZ--ALLzy3lGiIEh8wMIAOqG9gOrTh5pPueEjtYgcQ"/>
+                  </div>
+                </div>
+              </div>
+            </header>
+
+            <div className="flex-1 flex overflow-hidden">
+              {/* List View Section */}
+              <section className="flex-1 flex flex-col overflow-hidden text-left bg-[#0c0c0c]">
+                <div className="px-gutter py-6 flex items-center justify-between shrink-0">
+                  <div className="flex items-baseline gap-4">
+                    <h1 className="font-headline-md text-[24px] font-bold tracking-tight text-white">Execution History</h1>
+                    <span className="text-on-surface-variant text-body-md opacity-60">{filteredAllExecutions.length} total runs</span>
+                  </div>
+                  <div className="flex gap-2">
+                    {/* Status filter selection */}
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      className="bg-[#1c1b1b] border border-neutral-800 text-[11px] rounded-lg px-2.5 py-1 text-white outline-none cursor-pointer"
+                    >
+                      <option value="All">All Statuses</option>
+                      <option value="Success">Success</option>
+                      <option value="Failed">Failed</option>
+                      <option value="Running">Running</option>
+                    </select>
+
+                    {/* Time filter selection */}
+                    <select
+                      value={timeRangeFilter}
+                      onChange={(e) => setTimeRangeFilter(e.target.value)}
+                      className="bg-[#1c1b1b] border border-neutral-800 text-[11px] rounded-lg px-2.5 py-1 text-white outline-none cursor-pointer"
+                    >
+                      <option value="all">All Time</option>
+                      <option value="24h">Past 24 Hours</option>
+                      <option value="7d">Past 7 Days</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto px-gutter pb-8">
+                  <table className="w-full text-left border-separate border-spacing-0">
+                    <thead className="sticky top-0 bg-[#0c0c0c] z-10">
+                      <tr className="text-label-sm text-neutral-500 uppercase tracking-[0.1em] text-[10px]">
+                        <th className="py-4 pr-6 font-semibold border-b border-neutral-900">Status</th>
+                        <th className="py-4 px-6 font-semibold border-b border-neutral-900">Workflow</th>
+                        <th className="py-4 px-6 font-semibold border-b border-neutral-900">Execution ID</th>
+                        <th className="py-4 px-6 font-semibold border-b border-neutral-900">Started</th>
+                        <th className="py-4 pl-6 font-semibold border-b border-neutral-900">Duration</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-body-md text-neutral-300">
+                      {filteredAllExecutions.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="py-12 text-center text-neutral-600 font-mono text-xs">
+                            No matching executions found.
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredAllExecutions.map((exec) => {
+                          const isSelected = selectedAllExecution?.id === exec.id;
+                          const durationMs = exec.finishedAt
+                            ? new Date(exec.finishedAt).getTime() - new Date(exec.startedAt).getTime()
+                            : null;
+                          const formattedDuration = durationMs !== null ? `${durationMs}ms` : '—';
+                          
+                          return (
+                            <tr
+                              key={exec.id}
+                              onClick={() => {
+                                setSelectedAllExecution(exec);
+                                setInspectorTab('output');
+                              }}
+                              className={`execution-row group cursor-pointer ${isSelected ? 'selected' : ''}`}
+                            >
+                              <td className="py-5 pr-6 pl-4">
+                                <div className="flex items-center gap-2">
+                                  {exec.status === 'success' ? (
+                                    <>
+                                      <div className="w-1.5 h-1.5 rounded-full bg-[#facc15] shadow-[0_0_8px_rgba(250,204,21,0.4)]"></div>
+                                      <span className="text-[#facc15] font-bold text-label-md uppercase tracking-wider">SUCCESS</span>
+                                    </>
+                                  ) : exec.status === 'failed' ? (
+                                    <>
+                                      <div className="w-1.5 h-1.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]"></div>
+                                      <span className="text-rose-400 font-bold text-label-md uppercase tracking-wider">FAILED</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <span className="material-symbols-outlined text-sky-400 animate-spin text-[14px]">progress_activity</span>
+                                      <span className="text-sky-400 font-bold text-label-md uppercase tracking-wider">RUNNING</span>
+                                    </>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="py-5 px-6 font-medium text-white">{exec.workflow?.name || 'Deleted Workflow'}</td>
+                              <td className="py-5 px-6 font-label-sm text-neutral-500 font-mono">#EXE-{exec.id}</td>
+                              <td className="py-5 px-6 text-neutral-400">{new Date(exec.startedAt).toLocaleString()}</td>
+                              <td className="py-5 pl-6 font-label-md text-neutral-400">{formattedDuration}</td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              {/* Detail Inspector Panel */}
+              <aside className="w-[520px] flex flex-col bg-[#0e0e0e] border-l border-neutral-900 shadow-2xl shrink-0 text-left overflow-hidden">
+                {selectedAllExecution ? (
+                  <>
+                    <div className="p-8 pb-6 border-b border-neutral-900">
+                      <div className="flex justify-between items-start mb-8">
                         <div>
-                          <span className="text-neutral-500">To:</span> <span className="font-bold text-sky-400 font-mono">{email.to}</span>
+                          <div className="text-label-sm text-neutral-500 uppercase tracking-[0.2em] mb-2 opacity-50 text-[10px]">Log Inspector</div>
+                          <h2 className="text-[28px] font-bold tracking-tight text-white flex items-center gap-3">
+                            #EXE-{selectedAllExecution.id}
+                            <span
+                              onClick={() => {
+                                navigator.clipboard.writeText(`#EXE-${selectedAllExecution.id}`);
+                                alert("Copied Execution ID to clipboard!");
+                              }}
+                              className="material-symbols-outlined text-neutral-500 text-[20px] opacity-40 cursor-pointer hover:opacity-100 transition-opacity"
+                            >
+                              content_copy
+                            </span>
+                          </h2>
                         </div>
-                        <span className="text-[10px] text-neutral-500">{new Date(email.sentAt).toLocaleTimeString()}</span>
+                        <button
+                          onClick={() => setSelectedAllExecution(null)}
+                          className="p-2 text-neutral-500 hover:text-white transition-colors hover:bg-neutral-800 rounded-full"
+                        >
+                          <span className="material-symbols-outlined">close</span>
+                        </button>
                       </div>
-                      <div className="font-bold text-white mb-1">Subject: {email.subject}</div>
-                      <p className="text-neutral-300 font-mono text-[11px] bg-black/30 p-2 rounded whitespace-pre-wrap">{email.body}</p>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
 
-        </div>
+                      <div className="flex gap-4 mb-8">
+                        <div className="flex-1 bg-[#151515] p-4 rounded-xl border border-neutral-850">
+                          <div className="text-[10px] text-neutral-500 uppercase font-bold tracking-widest mb-1.5 opacity-50">Status</div>
+                          <div className="flex items-center gap-2 font-bold">
+                            {selectedAllExecution.status === 'success' ? (
+                              <>
+                                <div className="w-1.5 h-1.5 rounded-full bg-[#facc15] shadow-[0_0_8px_rgba(250,204,21,0.6)]"></div>
+                                <span className="text-[#facc15]">Successful Run</span>
+                              </>
+                            ) : selectedAllExecution.status === 'failed' ? (
+                              <>
+                                <div className="w-1.5 h-1.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]"></div>
+                                <span className="text-rose-400">Failed Run</span>
+                              </>
+                            ) : (
+                              <>
+                                <div className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse"></div>
+                                <span className="text-sky-400">Running...</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex-1 bg-[#151515] p-4 rounded-xl border border-neutral-850">
+                          <div className="text-[10px] text-neutral-500 uppercase font-bold tracking-widest mb-1.5 opacity-50">Performance</div>
+                          <div className="font-label-md text-white font-semibold text-lg">
+                            {selectedAllExecution.finishedAt
+                              ? `${new Date(selectedAllExecution.finishedAt).getTime() - new Date(selectedAllExecution.startedAt).getTime()}ms`
+                              : 'Pending...'}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Minimal Canvas Node Preview */}
+                      {(() => {
+                        let nodesList: any[] = [];
+                        try {
+                          if (selectedAllExecution?.workflow?.definition) {
+                            const def = typeof selectedAllExecution.workflow.definition === 'string'
+                              ? JSON.parse(selectedAllExecution.workflow.definition)
+                              : selectedAllExecution.workflow.definition;
+                            nodesList = def.nodes || [];
+                          }
+                        } catch (e) {
+                          console.error(e);
+                        }
+
+                        return (
+                          <div className="relative h-44 bg-[#080808] border border-neutral-900 rounded-xl overflow-hidden group">
+                            <div className="absolute inset-0 opacity-10 pointer-events-none dot-grid"></div>
+                            <div className="absolute inset-0 flex items-center justify-center gap-4 overflow-x-auto px-6 py-2">
+                              {nodesList.length === 0 ? (
+                                <span className="text-neutral-600 text-xs">No nodes in this workflow definition</span>
+                              ) : (
+                                nodesList.map((node, index) => {
+                                  const nodeType = node.type || 'action';
+                                  let isSuccess = false;
+                                  let isFailed = false;
+                                  
+                                  if (selectedAllExecution?.logs) {
+                                    try {
+                                      const stepLogs = JSON.parse(selectedAllExecution.logs);
+                                      const nodeLogEntries = stepLogs.filter((l: any) => l.nodeId === node.id);
+                                      if (nodeLogEntries.length > 0) {
+                                        const hasFailure = nodeLogEntries.some((l: any) => l.message?.toLowerCase().includes('failed') || l.message?.toLowerCase().includes('error'));
+                                        if (hasFailure) {
+                                          isFailed = true;
+                                        } else {
+                                          isSuccess = true;
+                                        }
+                                      }
+                                    } catch(err) {}
+                                  }
+
+                                  let iconName = 'bolt';
+                                  if (nodeType.includes('email') || nodeType.includes('marketing')) iconName = 'mail';
+                                  else if (nodeType.includes('crm')) iconName = 'person';
+                                  else if (nodeType.includes('ifelse') || nodeType.includes('logic')) iconName = 'alt_route';
+                                  else if (nodeType.includes('delay')) iconName = 'schedule';
+                                  else if (nodeType.includes('code')) iconName = 'code';
+
+                                  return (
+                                    <React.Fragment key={node.id}>
+                                      {index > 0 && (
+                                        <div className="flex items-center shrink-0">
+                                          <span className="material-symbols-outlined text-neutral-700 text-[14px]">arrow_forward</span>
+                                        </div>
+                                      )}
+                                      <div className={`flex flex-col items-center justify-center p-2.5 rounded bg-[#131313] border transition-all shrink-0 w-24 h-24 ${
+                                        isFailed ? 'border-red-500/40 text-red-400 bg-red-950/5' :
+                                        isSuccess ? 'border-[#facc15]/40 text-[#facc15] bg-[#facc15]/5' :
+                                        'border-neutral-800 text-neutral-500'
+                                      }`}>
+                                        <span className="material-symbols-outlined text-[20px] mb-1">{iconName}</span>
+                                        <span className="text-[9px] font-bold truncate w-full text-center">{node.data?.label || node.id}</span>
+                                      </div>
+                                    </React.Fragment>
+                                  );
+                                })
+                              )}
+                            </div>
+                            <button
+                              onClick={() => {
+                                if (selectedAllExecution?.workflow) {
+                                  loadWorkflow(selectedAllExecution.workflow);
+                                  setViewMode('canvas');
+                                }
+                              }}
+                              className="absolute inset-0 flex items-center justify-center bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[2px] cursor-pointer"
+                            >
+                              <span className="text-label-sm font-bold text-[#facc15] tracking-widest text-[10px]">OPEN CANVAS EDITOR</span>
+                            </button>
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                    {/* Data Tabs */}
+                    <div className="flex-1 flex flex-col overflow-hidden bg-[#0a0a0a]">
+                      <div className="flex px-8 border-b border-neutral-900">
+                        <button
+                          onClick={() => setInspectorTab('output')}
+                          className={`px-4 py-4 relative font-bold text-label-md transition-colors text-xs uppercase tracking-wider ${
+                            inspectorTab === 'output' ? 'text-primary font-bold' : 'text-neutral-500 hover:text-neutral-300'
+                          }`}
+                        >
+                          Output
+                          {inspectorTab === 'output' && (
+                            <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-[#facc15]"></div>
+                          )}
+                        </button>
+                        <button
+                          onClick={() => setInspectorTab('input')}
+                          className={`px-4 py-4 relative font-bold text-label-md transition-colors text-xs uppercase tracking-wider ${
+                            inspectorTab === 'input' ? 'text-primary font-bold' : 'text-neutral-500 hover:text-neutral-300'
+                          }`}
+                        >
+                          Input
+                          {inspectorTab === 'input' && (
+                            <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-[#facc15]"></div>
+                          )}
+                        </button>
+                        <button
+                          onClick={() => setInspectorTab('logs')}
+                          className={`px-4 py-4 relative font-bold text-label-md transition-colors text-xs uppercase tracking-wider ${
+                            inspectorTab === 'logs' ? 'text-primary font-bold' : 'text-neutral-500 hover:text-neutral-300'
+                          }`}
+                        >
+                          Node Logs
+                          {inspectorTab === 'logs' && (
+                            <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-[#facc15]"></div>
+                          )}
+                        </button>
+                      </div>
+
+                      <div className="flex-1 p-8 overflow-auto">
+                        <div className="p-6 bg-black border border-neutral-900 rounded-xl shadow-inner text-left font-mono">
+                          {inspectorTab === 'output' && (
+                            <pre className="text-xs text-[#d1c6ab] leading-relaxed overflow-x-auto whitespace-pre-wrap">
+                              {selectedAllExecution.responseData ? (
+                                JSON.stringify(JSON.parse(selectedAllExecution.responseData), null, 2)
+                              ) : (
+                                "{\n  \"message\": \"No response data recorded for this run\"\n}"
+                              )}
+                            </pre>
+                          )}
+                          {inspectorTab === 'input' && (
+                            <pre className="text-xs text-[#d1c6ab] leading-relaxed overflow-x-auto whitespace-pre-wrap">
+                              {selectedAllExecution.triggerData ? (
+                                JSON.stringify(JSON.parse(selectedAllExecution.triggerData), null, 2)
+                              ) : (
+                                "{\n  \"message\": \"No trigger payload recorded for this run\"\n}"
+                              )}
+                            </pre>
+                          )}
+                          {inspectorTab === 'logs' && (
+                            <div className="flex flex-col gap-2 font-mono text-xs text-neutral-300">
+                              {selectedAllExecution.logs ? (
+                                JSON.parse(selectedAllExecution.logs).map((step: any, idx: number) => (
+                                  <div key={idx} className="flex gap-4 p-1 rounded hover:bg-neutral-900 transition-colors">
+                                    <span className="text-neutral-600 shrink-0">[{new Date(step.time).toLocaleTimeString()}]</span>
+                                    {step.nodeType && (
+                                      <span className="text-[#facc15] font-bold shrink-0">[{step.nodeType.toUpperCase()}]</span>
+                                    )}
+                                    <span className="text-neutral-200">{step.message}</span>
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="text-neutral-600">No trace logs recorded.</div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Footer */}
+                    <div className="p-8 pt-0 border-t border-neutral-900 flex gap-3 bg-[#0a0a0a]">
+                      <button
+                        onClick={() => handleRerunExecution(selectedAllExecution.id)}
+                        className="flex-1 flex items-center justify-center gap-2 bg-[#facc15] text-[#3c2f00] hover:brightness-110 active:scale-[0.98] font-bold py-3 rounded-xl transition-all text-label-md"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">replay</span>
+                        Rerun Execution
+                      </button>
+                      <button
+                        onClick={() => handleDeleteExecution(selectedAllExecution.id)}
+                        className="px-4 border border-neutral-800 hover:bg-rose-500/10 hover:border-rose-500/40 text-neutral-400 hover:text-rose-500 rounded-xl transition-all flex items-center justify-center cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-[20px]">delete_outline</span>
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center text-neutral-500 p-8">
+                    <span className="material-symbols-outlined text-4xl mb-2 opacity-30">troubleshoot</span>
+                    <p className="text-xs">Select an execution from the history log to view detailed parameters and trace steps.</p>
+                  </div>
+                )}
+              </aside>
+            </div>
+            
+            {/* Global Footer placeholder */}
+            <footer className="flex justify-between items-center z-10 shrink-0 h-10 px-6 bg-[#0e0e0e] border-t border-neutral-900 font-label-md text-[11px] text-neutral-500">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                  <span className="font-bold tracking-widest uppercase">System Operational</span>
+                </div>
+                <span className="opacity-40">|</span>
+                <span>Cloud Node: AWS-US-EAST-1</span>
+              </div>
+              <div className="flex gap-6 items-center">
+                <a className="hover:text-primary transition-colors" href="#">API Reference</a>
+                <a className="hover:text-primary transition-colors" href="#">Status Page</a>
+                <span className="opacity-40">v2.4.12-pro</span>
+              </div>
+            </footer>
+          </div>
+        )}
+
       </div>
+
+      {/* Footer */}
+      <footer className="fixed bottom-0 left-64 right-0 h-10 px-8 bg-[#131313] flex justify-between items-center z-45 border-t border-neutral-900">
+        <div className="flex items-center gap-3">
+          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+          <span className="font-label-md text-label-md text-neutral-400 tracking-wider uppercase">Systems Operational</span>
+        </div>
+        <div className="flex gap-8">
+          <a className="font-label-md text-label-md text-[#9a9078] hover:text-on-surface transition-colors uppercase tracking-widest" href="#">Privacy</a>
+          <a className="font-label-md text-label-md text-[#9a9078] hover:text-on-surface transition-colors uppercase tracking-widest" href="#">API Docs</a>
+          <a className="font-label-md text-label-md text-[#9a9078] hover:text-on-surface transition-colors uppercase tracking-widest" href="#">Support</a>
+        </div>
+      </footer>
+
+      {/* Connection Stream Popup Modal */}
+      {isExecModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 backdrop-blur-sm text-left">
+          <div className="w-[500px] bg-[#1c1b1b] border border-neutral-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col h-[520px]">
+            {/* Header */}
+            <div className="p-4 bg-[#262626] border-b border-neutral-800 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#facc15] text-xl animate-pulse">hub</span>
+                <span className="font-bold text-sm text-white">Active Connection Stream</span>
+              </div>
+              {execStatus !== 'running' && execStatus !== 'paused' && (
+                <button onClick={() => setIsExecModalOpen(false)} className="text-neutral-500 hover:text-white transition">
+                  <span className="material-symbols-outlined text-sm">close</span>
+                </button>
+              )}
+            </div>
+
+            {/* Modal content */}
+            <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-4">
+              
+              {/* Setup / Configuration Form (if Idle) */}
+              {execStatus === 'idle' && (
+                <div className="flex flex-col gap-4 text-xs flex-1 justify-center">
+                  <h3 className="font-bold text-neutral-300 text-sm mb-2 text-center">Configure Stream Test Trigger</h3>
+                  <div>
+                    <label className="block text-neutral-400 mb-1 font-bold">Lead Email</label>
+                    <input
+                      type="email"
+                      value={execEmail}
+                      onChange={(e) => setExecEmail(e.target.value)}
+                      className="w-full bg-[#0e0e0e] border border-neutral-800 rounded px-3 py-2 text-white outline-none focus:border-[#facc15]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-neutral-400 mb-1 font-bold">Lead Name</label>
+                    <input
+                      type="text"
+                      value={execName}
+                      onChange={(e) => setExecName(e.target.value)}
+                      className="w-full bg-[#0e0e0e] border border-neutral-800 rounded px-3 py-2 text-white outline-none focus:border-[#facc15]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-neutral-400 mb-1 font-bold">Lead Score: {execScore}</label>
+                    <input
+                      type="range"
+                      min="1"
+                      max="100"
+                      value={execScore}
+                      onChange={(e) => setExecScore(parseInt(e.target.value, 10))}
+                      className="w-full accent-[#facc15]"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 mt-2 bg-neutral-900 p-2.5 rounded border border-neutral-800">
+                    <input
+                      type="checkbox"
+                      id="manual-approval-toggle"
+                      checked={manualApprovalEnabled}
+                      onChange={(e) => setManualApprovalEnabled(e.target.checked)}
+                      className="accent-[#facc15]"
+                    />
+                    <label htmlFor="manual-approval-toggle" className="text-[10px] text-neutral-400 cursor-pointer select-none">
+                      Enable <strong className="text-white">Human-in-the-Loop</strong> step verification & approval
+                    </label>
+                  </div>
+                  <button
+                    onClick={() => startConnectionStream(execEmail, execName, execScore)}
+                    className="w-full bg-[#facc15] hover:opacity-90 font-bold py-3 rounded-lg text-black transition uppercase tracking-widest text-[11px] mt-4 shadow-lg shadow-amber-500/10"
+                  >
+                    Start Connection Stream
+                  </button>
+                </div>
+              )}
+
+              {/* Running State Visualizer */}
+              {execStatus !== 'idle' && (
+                <div className="flex flex-col gap-4 flex-1">
+                  
+                  {/* Visual Stream Graph Slices */}
+                  <div className="p-3 bg-[#0e0e0e] rounded-xl border border-neutral-800 flex items-center justify-center gap-2 overflow-x-auto min-h-[64px]">
+                    {nodes.filter(n => n.type === 'trigger' || n.type === 'crm_lead_trigger' || n.type === 'ifelse' || n.type === 'delay' || n.type === 'marketing_email' || n.type === 'crm_action' || n.type === 'code').slice(0, 5).map((node, index, arr) => {
+                      const isActive = execActiveNodeId === node.id;
+                      const isNodeExecuted = execLogs.some(l => l.message.includes(`Processing node: ${node.data?.label || node.id}`) || l.message.includes(`🤖 [TRIGGER]`) || l.message.includes(`🤖 [DECISION]`) || l.message.includes(`⏰ [TIMER]`) || l.message.includes(`📧 [EMAIL]`) || l.message.includes(`👤 [CRM]`) || l.message.includes(`💻 [CODE]`));
+                      const isCompleted = isNodeExecuted && !isActive;
+
+                      return (
+                        <React.Fragment key={node.id}>
+                          <div className={`p-2 rounded-lg border text-[10px] font-bold flex flex-col items-center gap-1 transition-all ${
+                            isActive ? 'bg-[#facc15]/10 border-[#facc15] shadow-lg shadow-[#facc15]/10 text-white' :
+                            isCompleted ? 'bg-emerald-950/20 border-emerald-500/50 text-emerald-400' :
+                            'bg-[#131313] border-neutral-800 text-neutral-500'
+                          }`}>
+                            <span className="material-symbols-outlined text-xs">
+                              {node.type === 'trigger' || node.type === 'crm_lead_trigger' ? 'bolt' :
+                               node.type === 'ifelse' ? 'alt_route' :
+                               node.type === 'delay' ? 'schedule' :
+                               node.type === 'marketing_email' ? 'mail' :
+                               node.type === 'crm_action' ? 'account_circle' : 'code'}
+                            </span>
+                            <span className="text-[8px] max-w-[60px] truncate">{node.data?.label || node.id}</span>
+                          </div>
+                          {index < arr.length - 1 && (
+                            <span className={`material-symbols-outlined text-[14px] ${isCompleted ? 'text-emerald-500' : 'text-neutral-700'}`}>
+                              arrow_forward
+                            </span>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
+                  </div>
+
+                  {/* Console log terminal */}
+                  <div className="flex-1 bg-black/60 rounded-xl border border-neutral-800 p-3 font-mono text-[10px] overflow-y-auto flex flex-col gap-1.5 h-[160px]">
+                    {execLogs.map((log, i) => (
+                      <div key={i} className="text-neutral-300 leading-relaxed text-left">
+                        <span className="text-neutral-600">[{new Date(log.time).toLocaleTimeString()}]</span> {log.message}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Human-in-the-loop verification prompt */}
+                  {humanApprovalRequired && pendingNode && (
+                    <div className="p-4 bg-amber-950/15 border border-amber-900/30 rounded-xl flex flex-col gap-3 text-left">
+                      <div className="flex items-start gap-2.5">
+                        <span className="material-symbols-outlined text-[#facc15] text-lg shrink-0 mt-0.5">security_update_warning</span>
+                        <div>
+                          <h4 className="font-bold text-xs text-white">Manual Verification Requested</h4>
+                          <p className="text-[10px] text-neutral-400 mt-1 leading-relaxed">
+                            Agent is waiting to execute: <strong className="text-[#facc15]">"{pendingNode.data?.label || pendingNode.id}"</strong>. 
+                            Please review details and approve target.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 justify-end">
+                        <button
+                          onClick={() => (window as any).resumeExecution?.(false)}
+                          className="px-3 py-1.5 rounded bg-rose-950/40 border border-rose-900/40 text-rose-400 font-bold text-[10px] hover:bg-rose-950/60 transition"
+                        >
+                          Reject Step
+                        </button>
+                        <button
+                          onClick={() => (window as any).resumeExecution?.(true)}
+                          className="px-4 py-1.5 rounded bg-emerald-600 text-black font-bold text-[10px] hover:bg-emerald-500 transition border border-emerald-500/20"
+                        >
+                          Approve & Dispatch
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Status footer inside popup */}
+                  <div className="mt-auto shrink-0 flex items-center justify-between border-t border-neutral-800 pt-4 text-xs">
+                    <div className="flex items-center gap-1.5">
+                      <span className={`w-2.5 h-2.5 rounded-full ${
+                        execStatus === 'running' ? 'bg-amber-500 animate-pulse' :
+                        execStatus === 'success' ? 'bg-green-500' :
+                        execStatus === 'failed' ? 'bg-red-500' : 'bg-blue-500 animate-pulse'
+                      }`}></span>
+                      <span className="font-bold uppercase tracking-wider text-[9px] text-neutral-400">
+                        Status: {execStatus}
+                      </span>
+                    </div>
+                    {execStatus !== 'running' && execStatus !== 'paused' && (
+                      <button
+                        onClick={() => setIsExecModalOpen(false)}
+                        className="bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 px-4 py-2 rounded text-[10px] font-bold text-white transition"
+                      >
+                        Close Stream Panel
+                      </button>
+                    )}
+                  </div>
+
+                </div>
+              )}
+
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

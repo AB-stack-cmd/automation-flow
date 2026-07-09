@@ -71,6 +71,14 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
 
     const { nodes, edges } = JSON.parse(workflow.definition);
 
+    // Update execution log with initial trigger data
+    await prisma.executionLog.update({
+      where: { id: executionId },
+      data: {
+        triggerData: JSON.stringify(context.trigger || {})
+      }
+    });
+
     // Build map for quick lookups
     const nodesMap = new Map(nodes.map(n => [n.id, n]));
 
@@ -237,7 +245,8 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
         await prisma.executionLog.update({
           where: { id: executionId },
           data: {
-            logs: JSON.stringify(stepLogs)
+            logs: JSON.stringify(stepLogs),
+            responseData: JSON.stringify(context.steps || {})
           }
         });
 
@@ -298,7 +307,8 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
       data: {
         status: 'success',
         finishedAt: new Date(),
-        logs: JSON.stringify(stepLogs)
+        logs: JSON.stringify(stepLogs),
+        responseData: JSON.stringify(context.steps || {})
       }
     });
 
@@ -314,7 +324,8 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
       data: {
         status: 'failed',
         finishedAt: new Date(),
-        logs: JSON.stringify(stepLogs)
+        logs: JSON.stringify(stepLogs),
+        responseData: JSON.stringify(context.steps || {})
       }
     });
   }

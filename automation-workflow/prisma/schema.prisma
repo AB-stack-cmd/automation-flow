@@ -35,6 +35,8 @@ model ExecutionLog {
   startedAt   DateTime  @default(now())
   finishedAt  DateTime?
   logs        String?   // JSON string of step actions and results
+  triggerData String?
+  responseData String?
 }
 
 model CRMContact {

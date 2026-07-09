@@ -127,7 +127,8 @@ app.post('/api/workflows/:id/execute', async (req, res) => {
       data: {
         workflowId: workflow.id,
         status: 'running',
-        logs: JSON.stringify([{ time: new Date().toISOString(), message: 'Triggered manually' }])
+        logs: JSON.stringify([{ time: new Date().toISOString(), message: 'Triggered manually' }]),
+        triggerData: JSON.stringify(triggerData)
       }
     });
 
@@ -158,7 +159,8 @@ app.post('/api/webhooks/:workflowId', async (req, res) => {
       data: {
         workflowId: workflow.id,
         status: 'running',
-        logs: JSON.stringify([{ time: new Date().toISOString(), message: 'Triggered via incoming Webhook' }])
+        logs: JSON.stringify([{ time: new Date().toISOString(), message: 'Triggered via incoming Webhook' }]),
+        triggerData: JSON.stringify(triggerData)
       }
     });
 
@@ -178,7 +180,21 @@ app.get('/api/workflows/:id/executions', async (req, res) => {
     const executions = await prisma.executionLog.findMany({
       where: { workflowId: parseInt(id, 10) },
       orderBy: { startedAt: 'desc' },
-      take: 20
+      take: 50
+    });
+    res.json(executions);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get all execution logs across all workflows
+app.get('/api/executions', async (req, res) => {
+  try {
+    const executions = await prisma.executionLog.findMany({
+      include: { workflow: true },
+      orderBy: { startedAt: 'desc' },
+      take: 100
     });
     res.json(executions);
   } catch (err) {
@@ -191,10 +207,56 @@ app.get('/api/executions/:executionId', async (req, res) => {
   try {
     const { executionId } = req.params;
     const execution = await prisma.executionLog.findUnique({
-      where: { id: parseInt(executionId, 10) }
+      where: { id: parseInt(executionId, 10) },
+      include: { workflow: true }
     });
     if (!execution) return res.status(404).json({ error: 'Execution log not found' });
     res.json(execution);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Delete an execution log
+app.delete('/api/executions/:executionId', async (req, res) => {
+  try {
+    const { executionId } = req.params;
+    await prisma.executionLog.delete({
+      where: { id: parseInt(executionId, 10) }
+    });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Rerun a specific execution log
+app.post('/api/executions/:executionId/rerun', async (req, res) => {
+  try {
+    const { executionId } = req.params;
+    const oldExecution = await prisma.executionLog.findUnique({
+      where: { id: parseInt(executionId, 10) }
+    });
+    if (!oldExecution) {
+      return res.status(404).json({ error: 'Execution not found' });
+    }
+    const triggerData = oldExecution.triggerData ? JSON.parse(oldExecution.triggerData) : {};
+    
+    // Create a new execution log entry
+    const execution = await prisma.executionLog.create({
+      data: {
+        workflowId: oldExecution.workflowId,
+        status: 'running',
+        logs: JSON.stringify([{ time: new Date().toISOString(), message: `Rerun of execution #${oldExecution.id}` }]),
+        triggerData: oldExecution.triggerData
+      }
+    });
+    
+    // Start background execution
+    const context = { trigger: triggerData, steps: {} };
+    executeWorkflow(oldExecution.workflowId, execution.id, null, context);
+    
+    res.json({ success: true, executionId: execution.id });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -243,6 +305,7 @@ app.post('/api/crm/contacts', async (req, res) => {
 
     // TRIGGER ANY ACTIVE WORKFLOW THAT HAS A TRIGGER ON CRM
     const activeWorkflows = await prisma.workflow.findMany({ where: { isActive: true } });
+    let latestExecutionId = null;
     for (const workflow of activeWorkflows) {
       try {
         const { nodes } = JSON.parse(workflow.definition);
@@ -253,9 +316,11 @@ app.post('/api/crm/contacts', async (req, res) => {
             data: {
               workflowId: workflow.id,
               status: 'running',
-              logs: JSON.stringify([{ time: new Date().toISOString(), message: `Triggered by CRM Contact event: ${email}` }])
+              logs: JSON.stringify([{ time: new Date().toISOString(), message: `Triggered by CRM Contact event: ${email}` }]),
+              triggerData: JSON.stringify(contact)
             }
           });
+          latestExecutionId = execution.id;
           const context = { trigger: contact, steps: {} };
           executeWorkflow(workflow.id, execution.id, null, context);
         }
@@ -264,7 +329,7 @@ app.post('/api/crm/contacts', async (req, res) => {
       }
     }
 
-    res.json(contact);
+    res.json({ ...contact, executionId: latestExecutionId });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
