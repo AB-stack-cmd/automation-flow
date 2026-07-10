@@ -124,6 +124,14 @@ export default function App() {
   // Navigation layout state
   const [viewMode, setViewMode] = useState<'overview' | 'canvas' | 'templates' | 'variables' | 'settings' | 'history' | 'executions'>('overview');
 
+  // User Profile States
+  const DEFAULT_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="avatarGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="%23ef4444"/><stop offset="100%" stop-color="%23facc15"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(%23avatarGrad)"/><circle cx="50" cy="40" r="18" fill="%23131313"/><path d="M18 78 C 18 58, 82 58, 82 78" fill="%23131313"/></svg>`;
+  const [profilePic, setProfilePic] = useState<string>(() => {
+    return localStorage.getItem('neuron_profile_pic') || DEFAULT_AVATAR;
+  });
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+  const [avatarInputUrl, setAvatarInputUrl] = useState('');
+
   // AI Chat States
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState('');
@@ -989,8 +997,12 @@ return {
                   <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></div>
                   <span className="font-label-md text-label-md uppercase tracking-wider">Systems Operational</span>
                 </div>
-                <div className="w-9 h-9 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden">
-                  <img className="w-full h-full object-cover" alt="User Avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAznCpkzxOBwWw6Uow9lTnZUTS54sT5_UhNrx4sFKPIan91ipHR8AEUNv2x_0OEOK0Vv0z7kwGarYbz050YiygADlkAo1Ebu9qJZN2oaaNscJOrQ8U1PNNeyjw2XQJD-Zh1qYSVkpb6PfOVVH9OF4dZCS3n7wCugown-4iSzmS3ph6rmdlRR9qEz94cKwAPICfA8d0T3Yt97ql4KZ--ALLzy3lGiIEh8wMIAOqG9gOrTh5pPueEjtYgcQ"/>
+                <div 
+                  onClick={() => setIsAvatarModalOpen(true)}
+                  className="w-9 h-9 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden cursor-pointer hover:opacity-85 transition-opacity"
+                  title="Change Profile Picture"
+                >
+                  <img className="w-full h-full object-cover" alt="User Avatar" src={profilePic} />
                 </div>
               </div>
             </header>
@@ -1581,8 +1593,12 @@ return {
               </div>
               <div className="flex items-center gap-6">
                 <div className="flex items-center gap-4">
-                  <div className="w-9 h-9 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden">
-                    <img className="w-full h-full object-cover" alt="User Avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAznCpkzxOBwWw6Uow9lTnZUTS54sT5_UhNrx4sFKPIan91ipHR8AEUNv2x_0OEOK0Vv0z7kwGarYbz050YiygADlkAo1Ebu9qJZN2oaaNscJOrQ8U1PNNeyjw2XQJD-Zh1qYSVkpb6PfOVVH9OF4dZCS3n7wCugown-4iSzmS3ph6rmdlRR9qEz94cKwAPICfA8d0T3Yt97ql4KZ--ALLzy3lGiIEh8wMIAOqG9gOrTh5pPueEjtYgcQ"/>
+                  <div 
+                    onClick={() => setIsAvatarModalOpen(true)}
+                    className="w-9 h-9 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden cursor-pointer hover:opacity-85 transition-opacity"
+                    title="Change Profile Picture"
+                  >
+                    <img className="w-full h-full object-cover" alt="User Avatar" src={profilePic} />
                   </div>
                 </div>
               </div>
@@ -1693,8 +1709,12 @@ return {
                 <h1 className="font-headline-xl text-headline-xl text-white tracking-tight mb-2">Environment Variables</h1>
                 <p className="text-on-surface-variant text-body-lg max-w-2xl">Manage environment variables accessible securely by execution engines and custom script runner nodes.</p>
               </div>
-              <div className="w-9 h-9 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden">
-                <img className="w-full h-full object-cover" alt="User Avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAznCpkzxOBwWw6Uow9lTnZUTS54sT5_UhNrx4sFKPIan91ipHR8AEUNv2x_0OEOK0Vv0z7kwGarYbz050YiygADlkAo1Ebu9qJZN2oaaNscJOrQ8U1PNNeyjw2XQJD-Zh1qYSVkpb6PfOVVH9OF4dZCS3n7wCugown-4iSzmS3ph6rmdlRR9qEz94cKwAPICfA8d0T3Yt97ql4KZ--ALLzy3lGiIEh8wMIAOqG9gOrTh5pPueEjtYgcQ"/>
+              <div 
+                onClick={() => setIsAvatarModalOpen(true)}
+                className="w-9 h-9 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden cursor-pointer hover:opacity-85 transition-opacity"
+                title="Change Profile Picture"
+              >
+                <img className="w-full h-full object-cover" alt="User Avatar" src={profilePic} />
               </div>
             </header>
 
@@ -2008,8 +2028,12 @@ return {
                 <h1 className="font-headline-xl text-headline-xl text-white tracking-tight mb-2">System Settings</h1>
                 <p className="text-on-surface-variant text-body-lg max-w-2xl">Configure platform features, databases, cluster variables, and user credentials.</p>
               </div>
-              <div className="w-9 h-9 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden">
-                <img className="w-full h-full object-cover" alt="User Avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAznCpkzxOBwWw6Uow9lTnZUTS54sT5_UhNrx4sFKPIan91ipHR8AEUNv2x_0OEOK0Vv0z7kwGarYbz050YiygADlkAo1Ebu9qJZN2oaaNscJOrQ8U1PNNeyjw2XQJD-Zh1qYSVkpb6PfOVVH9OF4dZCS3n7wCugown-4iSzmS3ph6rmdlRR9qEz94cKwAPICfA8d0T3Yt97ql4KZ--ALLzy3lGiIEh8wMIAOqG9gOrTh5pPueEjtYgcQ"/>
+              <div 
+                onClick={() => setIsAvatarModalOpen(true)}
+                className="w-9 h-9 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden cursor-pointer hover:opacity-85 transition-opacity"
+                title="Change Profile Picture"
+              >
+                <img className="w-full h-full object-cover" alt="User Avatar" src={profilePic} />
               </div>
             </header>
 
@@ -2018,8 +2042,12 @@ return {
               <div className="clean-card p-8 rounded-xl flex flex-col gap-6">
                 <h3 className="font-bold text-[#facc15] text-xs uppercase tracking-wider">Account Credentials</h3>
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center font-bold text-white text-xl">
-                    JS
+                  <div 
+                    onClick={() => setIsAvatarModalOpen(true)}
+                    className="w-16 h-16 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden cursor-pointer hover:opacity-85 transition-all flex items-center justify-center"
+                    title="Change Profile Picture"
+                  >
+                    <img className="w-full h-full object-cover" alt="User Avatar" src={profilePic} />
                   </div>
                   <div>
                     <h4 className="font-bold text-white text-base">Jonas Scholz</h4>
@@ -2116,8 +2144,12 @@ return {
                 <div className="flex items-center gap-3">
                   <button className="text-on-surface-variant hover:text-primary transition-colors"><span className="material-symbols-outlined text-[20px]">notifications</span></button>
                   <button className="text-on-surface-variant hover:text-primary transition-colors"><span className="material-symbols-outlined text-[20px]">share</span></button>
-                  <div className="w-8 h-8 rounded-full overflow-hidden border border-neutral-800 ml-2">
-                    <img className="w-full h-full object-cover" alt="User Avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAznCpkzxOBwWw6Uow9lTnZUTS54sT5_UhNrx4sFKPIan91ipHR8AEUNv2x_0OEOK0Vv0z7kwGarYbz050YiygADlkAo1Ebu9qJZN2oaaNscJOrQ8U1PNNeyjw2XQJD-Zh1qYSVkpb6PfOVVH9OF4dZCS3n7wCugown-4iSzmS3ph6rmdlRR9qEz94cKwAPICfA8d0T3Yt97ql4KZ--ALLzy3lGiIEh8wMIAOqG9gOrTh5pPueEjtYgcQ"/>
+                  <div 
+                    onClick={() => setIsAvatarModalOpen(true)}
+                    className="w-8 h-8 rounded-full overflow-hidden border border-neutral-800 ml-2 cursor-pointer hover:opacity-85 transition-opacity"
+                    title="Change Profile Picture"
+                  >
+                    <img className="w-full h-full object-cover" alt="User Avatar" src={profilePic} />
                   </div>
                 </div>
               </div>
@@ -2684,6 +2716,112 @@ return {
                 </div>
               )}
 
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Profile Picture Update Popup Modal */}
+      {isAvatarModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 backdrop-blur-sm text-left">
+          <div className="w-[450px] bg-[#1c1b1b] border border-neutral-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="p-4 bg-[#262626] border-b border-neutral-800 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#facc15] text-xl">account_circle</span>
+                <span className="font-bold text-sm text-white">Update Profile Picture</span>
+              </div>
+              <button onClick={() => setIsAvatarModalOpen(false)} className="text-neutral-500 hover:text-white transition">
+                <span className="material-symbols-outlined text-sm">close</span>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 flex flex-col gap-6">
+              {/* Current Preview */}
+              <div className="flex flex-col items-center gap-2">
+                <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Preview</span>
+                <div className="w-24 h-24 rounded-full border border-neutral-800 overflow-hidden bg-surface-container-high shadow-inner flex items-center justify-center">
+                  <img src={profilePic} alt="Avatar Preview" className="w-full h-full object-cover" />
+                </div>
+              </div>
+
+              {/* Presets */}
+              <div className="flex flex-col gap-2">
+                <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Select SVG Preset Avatar</span>
+                <div className="flex justify-between gap-3">
+                  {[
+                    `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="avatarGrad1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="%23ef4444"/><stop offset="100%" stop-color="%23facc15"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(%23avatarGrad1)"/><circle cx="50" cy="40" r="18" fill="%23131313"/><path d="M18 78 C 18 58, 82 58, 82 78" fill="%23131313"/></svg>`,
+                    `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="avatarGrad2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="%23eec200"/><stop offset="100%" stop-color="%23ffe083"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(%23avatarGrad2)"/><circle cx="50" cy="40" r="18" fill="%23131313"/><path d="M18 78 C 18 58, 82 58, 82 78" fill="%23131313"/></svg>`,
+                    `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="avatarGrad3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="%2306b6d4"/><stop offset="100%" stop-color="%2367e8f9"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(%23avatarGrad3)"/><circle cx="50" cy="40" r="18" fill="%23131313"/><path d="M18 78 C 18 58, 82 58, 82 78" fill="%23131313"/></svg>`,
+                    `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="avatarGrad4" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="%238b5cf6"/><stop offset="100%" stop-color="%23c084fc"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(%23avatarGrad4)"/><circle cx="50" cy="40" r="18" fill="%23131313"/><path d="M18 78 C 18 58, 82 58, 82 78" fill="%23131313"/></svg>`
+                  ].map((presetUrl, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        setProfilePic(presetUrl);
+                        localStorage.setItem('neuron_profile_pic', presetUrl);
+                        setAvatarInputUrl('');
+                      }}
+                      className={`w-12 h-12 rounded-full overflow-hidden border-2 transition-all hover:scale-105 ${
+                        profilePic === presetUrl ? 'border-[#facc15]' : 'border-transparent'
+                      }`}
+                    >
+                      <img src={presetUrl} alt={`Preset ${idx + 1}`} className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Custom URL Input */}
+              <div className="flex flex-col gap-2">
+                <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Or Use Custom Image URL</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={avatarInputUrl}
+                    onChange={(e) => setAvatarInputUrl(e.target.value)}
+                    placeholder="https://example.com/avatar.jpg"
+                    className="flex-1 bg-[#0e0e0e] border border-neutral-800 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-[#facc15] transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (avatarInputUrl.trim()) {
+                        setProfilePic(avatarInputUrl.trim());
+                        localStorage.setItem('neuron_profile_pic', avatarInputUrl.trim());
+                      }
+                    }}
+                    disabled={!avatarInputUrl.trim()}
+                    className="bg-[#facc15] hover:bg-[#ffe083] disabled:opacity-50 text-black font-bold px-4 py-2 rounded-lg transition-all text-xs"
+                  >
+                    Apply
+                  </button>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-between items-center border-t border-neutral-800 pt-4 mt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProfilePic(DEFAULT_AVATAR);
+                    localStorage.setItem('neuron_profile_pic', DEFAULT_AVATAR);
+                    setAvatarInputUrl('');
+                  }}
+                  className="text-neutral-500 hover:text-white transition text-xs"
+                >
+                  Reset Default
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsAvatarModalOpen(false)}
+                  className="bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 px-4 py-2 rounded-lg text-xs font-bold text-white transition-all"
+                >
+                  Done
+                </button>
+              </div>
             </div>
           </div>
         </div>
