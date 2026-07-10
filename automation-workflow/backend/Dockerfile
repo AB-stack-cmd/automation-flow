@@ -2,11 +2,25 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm ci --only=production
+# Install openssl for prisma engine
+RUN apk add --no-cache openssl
 
-COPY . .
+# Copy dependency manifests
+COPY backend/package*.json ./backend/
+COPY prisma ./prisma/
+
+# Install backend dependencies
+RUN cd backend && npm ci
+
+# Copy backend source code
+COPY backend ./backend/
+
+# Generate prisma client based on the copied schema
+RUN cd backend && npx prisma generate --schema=../prisma/schema.prisma
+
+WORKDIR /app/backend
 
 EXPOSE 4000
 
-CMD ["node", "server.js"]
+# Push migrations/database push to SQLite, then start the Express server
+CMD ["sh", "-c", "npx prisma db push --schema=../prisma/schema.prisma && node server.js"]
