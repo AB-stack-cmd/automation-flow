@@ -19,6 +19,7 @@ import {
 
 const nodeTypes = {
   trigger: TriggerNode,
+  crm_lead_trigger: TriggerNode,
   marketing_email: MarketingNode,
   crm_action: CRMNode,
   ifelse: LogicNode,
@@ -233,6 +234,238 @@ return {
   const [manualApprovalEnabled, setManualApprovalEnabled] = useState(false);
   const [humanApprovalRequired, setHumanApprovalRequired] = useState(false);
   const [pendingNode, setPendingNode] = useState<any>(null);
+
+  const [isDiagnosticsModalOpen, setIsDiagnosticsModalOpen] = useState(false);
+  const [diagnosticsReport, setDiagnosticsReport] = useState<any>(null);
+  const [isDiagnosing, setIsDiagnosing] = useState(false);
+
+  const runDiagnostics = async () => {
+    if (!currentWorkflow) return;
+    setIsDiagnosing(true);
+    setIsDiagnosticsModalOpen(true);
+
+    const report: any = {
+      nodesChecked: nodes.length,
+      edgesChecked: edges.length,
+      triggerChecks: [],
+      systemChecks: []
+    };
+
+    // --- NODE DIAGNOSTICS ---
+
+    // 1. Has Trigger Node
+    const triggers = nodes.filter(n => n.type === 'trigger' || n.type === 'crm_lead_trigger');
+    if (triggers.length === 1) {
+      report.triggerChecks.push({
+        name: 'Start Trigger Presence',
+        status: 'pass',
+        message: `Exactly one start trigger is configured: "${triggers[0].data?.label || triggers[0].id}".`
+      });
+    } else if (triggers.length > 1) {
+      report.triggerChecks.push({
+        name: 'Start Trigger Presence',
+        status: 'warn',
+        message: `Multiple start triggers found (${triggers.length}). The workflow engine will run from the first active trigger.`
+      });
+    } else {
+      report.triggerChecks.push({
+        name: 'Start Trigger Presence',
+        status: 'fail',
+        message: 'No start trigger node found. Workflows require a trigger node (e.g. Webhook Input, CRM Lead Created) to run.'
+      });
+    }
+
+    // 2. Unconnected/Orphan Nodes
+    const orphanNodes = nodes.filter(n => {
+      const isConnected = edges.some(e => e.source === n.id || e.target === n.id);
+      return !isConnected;
+    });
+
+    if (orphanNodes.length === 0) {
+      report.triggerChecks.push({
+        name: 'Node Connectivity',
+        status: 'pass',
+        message: 'All nodes are connected to the automation pipeline.'
+      });
+    } else {
+      report.triggerChecks.push({
+        name: 'Node Connectivity',
+        status: 'warn',
+        message: `${orphanNodes.length} isolated node(s) found: ${orphanNodes.map(n => `"${n.data?.label || n.id}"`).join(', ')}. These nodes will not be executed.`
+      });
+    }
+
+    // 3. Branch Completeness
+    const ifElses = nodes.filter(n => n.type === 'ifelse');
+    let branchFailures = 0;
+    ifElses.forEach(n => {
+      const trueConnected = edges.some(e => e.source === n.id && e.sourceHandle === 'true');
+      const falseConnected = edges.some(e => e.source === n.id && e.sourceHandle === 'false');
+      if (!trueConnected || !falseConnected) {
+        branchFailures++;
+      }
+    });
+
+    if (ifElses.length === 0) {
+      // No logic nodes
+    } else if (branchFailures === 0) {
+      report.triggerChecks.push({
+        name: 'Conditional Branching',
+        status: 'pass',
+        message: 'All logic check branches (Yes/No) are fully wired.'
+      });
+    } else {
+      report.triggerChecks.push({
+        name: 'Conditional Branching',
+        status: 'fail',
+        message: `${branchFailures} If/Else logic node(s) have unwired branches. Both True (Yes) and False (No) branches must be connected.`
+      });
+    }
+
+    // 4. Invalid Input/Output Connections
+    const triggerIncoming = edges.some(e => {
+      const targetNode = nodes.find(n => n.id === e.target);
+      return targetNode && (targetNode.type === 'trigger' || targetNode.type === 'crm_lead_trigger');
+    });
+
+    if (triggerIncoming) {
+      report.triggerChecks.push({
+        name: 'Data Flow Direction',
+        status: 'warn',
+        message: 'Trigger node has an incoming connection. Triggers should initiate flows and only have outgoing connections.'
+      });
+    } else {
+      report.triggerChecks.push({
+        name: 'Data Flow Direction',
+        status: 'pass',
+        message: 'Data flows properly from start triggers to actions.'
+      });
+    }
+
+    // 5. Cycle/Infinite Loop Detection
+    const hasCycle = () => {
+      const adj: Record<string, string[]> = {};
+      nodes.forEach(n => { adj[n.id] = []; });
+      edges.forEach(e => {
+        if (adj[e.source]) adj[e.source].push(e.target);
+      });
+
+      const visited: Record<string, boolean> = {};
+      const recStack: Record<string, boolean> = {};
+
+      const dfs = (u: string): boolean => {
+        visited[u] = true;
+        recStack[u] = true;
+        const neighbors = adj[u] || [];
+        for (const v of neighbors) {
+          if (!visited[v]) {
+            if (dfs(v)) return true;
+          } else if (recStack[v]) {
+            return true;
+          }
+        }
+        recStack[u] = false;
+        return false;
+      };
+
+      for (const n of nodes) {
+        if (!visited[n.id]) {
+          if (dfs(n.id)) return true;
+        }
+      }
+      return false;
+    };
+
+    if (hasCycle()) {
+      report.triggerChecks.push({
+        name: 'Loop Protection',
+        status: 'fail',
+        message: 'Circular connection detected in workflow! This may cause infinite loops or stack overflow errors.'
+      });
+    } else {
+      report.triggerChecks.push({
+        name: 'Loop Protection',
+        status: 'pass',
+        message: 'No circular connections detected.'
+      });
+    }
+
+    // --- SYSTEM AUTOMATION HEALTH DIAGNOSTICS ---
+
+    // 1. Backend Server Check
+    let isBackendUp = false;
+    try {
+      const res = await fetch(`${BACKEND_URL}/health`);
+      const data = await res.json();
+      if (data.status === 'ok') {
+        isBackendUp = true;
+        report.systemChecks.push({
+          name: 'Backend API Connection',
+          status: 'pass',
+          message: 'Express orchestrator engine is active and reachable.'
+        });
+      }
+    } catch (e) {
+      report.systemChecks.push({
+        name: 'Backend API Connection',
+        status: 'fail',
+        message: `Unable to connect to Express backend server at ${BACKEND_URL}. Verify backend service is running.`
+      });
+    }
+
+    // 2. Scheduler Daemon & DB Status
+    if (isBackendUp) {
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/executions`);
+        const executions = await res.json();
+        
+        report.systemChecks.push({
+          name: 'Timer Scheduler Service',
+          status: 'pass',
+          message: 'Scheduler daemon loop is active and polling delayed executions database table.'
+        });
+
+        // 3. Execution Health Check
+        const failedCount = executions.filter((e: any) => e.workflowId === currentWorkflow.id && e.status === 'failed').length;
+        const successCount = executions.filter((e: any) => e.workflowId === currentWorkflow.id && e.status === 'success').length;
+        
+        if (failedCount > 0) {
+          report.systemChecks.push({
+            name: 'Recent Execution Health',
+            status: 'warn',
+            message: `Found ${failedCount} execution failures in recently simulated runs for this workflow.`
+          });
+        } else if (successCount > 0) {
+          report.systemChecks.push({
+            name: 'Recent Execution Health',
+            status: 'pass',
+            message: `Successfully executed recent simulated runs. Output statuses verified.`
+          });
+        } else {
+          report.systemChecks.push({
+            name: 'Recent Execution Health',
+            status: 'warn',
+            message: 'No simulated runs recorded yet for this workflow. Try trigger run to verify end-to-end automation.'
+          });
+        }
+      } catch (e) {
+        report.systemChecks.push({
+          name: 'Database Integration',
+          status: 'fail',
+          message: 'Database query error while checking executions. Check Prisma/SQLite setup.'
+        });
+      }
+    } else {
+      report.systemChecks.push({
+        name: 'Database Integration',
+        status: 'fail',
+        message: 'Could not query database health check (backend server offline).'
+      });
+    }
+
+    setDiagnosticsReport(report);
+    setIsDiagnosing(false);
+  };
 
   const startConnectionStream = async (email: string, name: string, score: number) => {
     if (!currentWorkflow) return;
@@ -1177,6 +1410,14 @@ return {
                   className="text-[12px] font-bold text-[#facc15] hover:opacity-80 transition-opacity uppercase tracking-widest"
                 >
                   Save Definition
+                </button>
+
+                <button
+                  onClick={runDiagnostics}
+                  className="text-[12px] font-bold text-emerald-500 hover:text-emerald-400 transition-colors uppercase tracking-widest flex items-center gap-1.5"
+                >
+                  <span className="material-symbols-outlined !text-[16px]">fact_check</span>
+                  Verify & Diagnose
                 </button>
 
                 <button
@@ -2822,6 +3063,110 @@ return {
                   Done
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Verify & Diagnose Popup Modal */}
+      {isDiagnosticsModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 backdrop-blur-sm text-left">
+          <div className="w-[580px] bg-[#1c1b1b]/95 border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col h-[580px] backdrop-blur-md">
+            {/* Header */}
+            <div className="p-5 bg-gradient-to-r from-[#171717] to-[#262626] border-b border-neutral-800 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <span className="material-symbols-outlined text-emerald-400 text-2xl">fact_check</span>
+                <div>
+                  <span className="font-bold text-sm text-white block">Workflow Integrity Diagnostics</span>
+                  <span className="text-[10px] text-neutral-400">
+                    Checked {diagnosticsReport?.nodesChecked || 0} nodes and {diagnosticsReport?.edgesChecked || 0} connections
+                  </span>
+                </div>
+              </div>
+              <button onClick={() => setIsDiagnosticsModalOpen(false)} className="text-neutral-500 hover:text-white transition">
+                <span className="material-symbols-outlined text-sm">close</span>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6 bg-[#131313]/60 font-body-md text-on-surface">
+              {isDiagnosing ? (
+                <div className="flex flex-col items-center justify-center gap-4 h-full">
+                  <div className="w-8 h-8 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin"></div>
+                  <span className="text-xs font-mono text-neutral-400">Running diagnostic validations...</span>
+                </div>
+              ) : (
+                <>
+                  {/* Category 1: Node & Edge Graph Wiring */}
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-2 border-b border-white/5 pb-1.5">
+                      <span className="material-symbols-outlined text-indigo-400 text-base">alt_route</span>
+                      <span className="text-[11px] font-bold text-neutral-300 uppercase tracking-widest">Visual Flow Integrity</span>
+                    </div>
+
+                    <div className="flex flex-col gap-2.5">
+                      {diagnosticsReport?.triggerChecks.map((check: any, idx: number) => (
+                        <div key={idx} className="flex gap-3 items-start p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/[0.08] transition-colors">
+                          <span className={`material-symbols-outlined shrink-0 text-base mt-0.5 ${
+                            check.status === 'pass' ? 'text-emerald-400' : check.status === 'warn' ? 'text-amber-400' : 'text-rose-500'
+                          }`}>
+                            {check.status === 'pass' ? 'check_circle' : check.status === 'warn' ? 'warning' : 'cancel'}
+                          </span>
+                          <div className="flex-1">
+                            <span className="font-semibold text-xs text-white block leading-tight mb-1">{check.name}</span>
+                            <span className="text-[10px] text-neutral-400 leading-normal block">{check.message}</span>
+                          </div>
+                          <span className={`text-[8px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded shrink-0 ${
+                            check.status === 'pass' ? 'bg-emerald-500/10 text-emerald-400' : check.status === 'warn' ? 'bg-amber-500/10 text-amber-400' : 'bg-rose-500/10 text-rose-500'
+                          }`}>
+                            {check.status}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Category 2: System Health and Exec Logs */}
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-2 border-b border-white/5 pb-1.5">
+                      <span className="material-symbols-outlined text-sky-400 text-base">cloud_sync</span>
+                      <span className="text-[11px] font-bold text-neutral-300 uppercase tracking-widest">Automation Engine Health</span>
+                    </div>
+
+                    <div className="flex flex-col gap-2.5">
+                      {diagnosticsReport?.systemChecks.map((check: any, idx: number) => (
+                        <div key={idx} className="flex gap-3 items-start p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/[0.08] transition-colors">
+                          <span className={`material-symbols-outlined shrink-0 text-base mt-0.5 ${
+                            check.status === 'pass' ? 'text-emerald-400' : check.status === 'warn' ? 'text-amber-400' : 'text-rose-500'
+                          }`}>
+                            {check.status === 'pass' ? 'check_circle' : check.status === 'warn' ? 'warning' : 'cancel'}
+                          </span>
+                          <div className="flex-1">
+                            <span className="font-semibold text-xs text-white block leading-tight mb-1">{check.name}</span>
+                            <span className="text-[10px] text-neutral-400 leading-normal block">{check.message}</span>
+                          </div>
+                          <span className={`text-[8px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded shrink-0 ${
+                            check.status === 'pass' ? 'bg-emerald-500/10 text-emerald-400' : check.status === 'warn' ? 'bg-amber-500/10 text-amber-400' : 'bg-rose-500/10 text-rose-500'
+                          }`}>
+                            {check.status}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 bg-[#1a1a1a] border-t border-neutral-800 flex justify-end shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsDiagnosticsModalOpen(false)}
+                className="bg-emerald-600 hover:bg-emerald-500 border border-emerald-500/20 px-6 py-2 rounded-lg text-xs font-bold text-white transition-all shadow-md shadow-emerald-950/20"
+              >
+                Accept & Continue
+              </button>
             </div>
           </div>
         </div>

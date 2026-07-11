@@ -170,38 +170,54 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
         const status = node.data?.status || 'lead';
         const scoreChange = parseInt(node.data?.scoreChange || '0', 10);
 
-        if (!email) {
+        const renderText = (text) => {
+          if (typeof text !== 'string') return text;
+          return text.replace(/\{\{([^}]+)\}\}/g, (_, path) => {
+            const parts = path.trim().split('.');
+            let val = context;
+            for (const part of parts) {
+              val = val?.[part];
+            }
+            return val ?? '';
+          });
+        };
+
+        const resolvedEmail = renderText(email);
+        const resolvedName = renderText(name);
+        const resolvedStatus = renderText(status);
+
+        if (!resolvedEmail) {
           throw new Error('Email is required for CRM lead actions');
         }
 
-        let contact = await prisma.cRMContact.findUnique({ where: { email } });
+        let contact = await prisma.cRMContact.findUnique({ where: { email: resolvedEmail } });
         if (contact) {
           contact = await prisma.cRMContact.update({
-            where: { email },
+            where: { email: resolvedEmail },
             data: {
-              name: name !== 'Anonymous' ? name : contact.name,
-              status: status !== 'lead' ? status : contact.status,
+              name: resolvedName !== 'Anonymous' ? resolvedName : contact.name,
+              status: resolvedStatus !== 'lead' ? resolvedStatus : contact.status,
               score: contact.score + scoreChange
             }
           });
           stepLogs.push({
             time: new Date().toISOString(),
             nodeId: node.id,
-            message: `Updated existing CRM contact ${email}. New score: ${contact.score}`
+            message: `Updated existing CRM contact ${resolvedEmail}. New score: ${contact.score}`
           });
         } else {
           contact = await prisma.cRMContact.create({
             data: {
-              name,
-              email,
-              status,
+              name: resolvedName,
+              email: resolvedEmail,
+              status: resolvedStatus,
               score: Math.max(0, scoreChange)
             }
           });
           stepLogs.push({
             time: new Date().toISOString(),
             nodeId: node.id,
-            message: `Created new CRM contact: ${email} with score: ${contact.score}`
+            message: `Created new CRM contact: ${resolvedEmail} with score: ${contact.score}`
           });
         }
 
