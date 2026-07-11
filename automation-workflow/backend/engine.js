@@ -86,7 +86,7 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
     let currentNodeId = startNodeId;
     if (!currentNodeId) {
       // Find a trigger node as fallback
-      const triggerNode = nodes.find(n => n.type === 'trigger' || n.data?.category === 'trigger');
+      const triggerNode = nodes.find(n => n.type === 'trigger' || n.type === 'crm_lead_trigger' || n.data?.category === 'trigger');
       if (!triggerNode) {
         throw new Error('No starting node or trigger node found in workflow.');
       }

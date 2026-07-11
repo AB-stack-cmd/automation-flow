@@ -235,6 +235,20 @@ return {
   const [humanApprovalRequired, setHumanApprovalRequired] = useState(false);
   const [pendingNode, setPendingNode] = useState<any>(null);
 
+  const [simulatedExecutionData, setSimulatedExecutionData] = useState<any>(null);
+  const [showSimulatedJson, setShowSimulatedJson] = useState(false);
+
+  const fetchSimulatedJson = async (execId: number) => {
+    try {
+      await new Promise(r => setTimeout(r, 1000)); // allow server to finish execution writing to DB
+      const res = await fetch(`${BACKEND_URL}/api/executions/${execId}`);
+      const data = await res.json();
+      setSimulatedExecutionData(data);
+    } catch (e) {
+      console.error("Failed to fetch simulated JSON outputs:", e);
+    }
+  };
+
   const [isDiagnosticsModalOpen, setIsDiagnosticsModalOpen] = useState(false);
   const [diagnosticsReport, setDiagnosticsReport] = useState<any>(null);
   const [isDiagnosing, setIsDiagnosing] = useState(false);
@@ -472,13 +486,21 @@ return {
     setExecStatus('running');
     setExecLogs([{ time: new Date().toISOString(), message: "🤖 Connection established. Initializing agent orchestrator..." }]);
 
+    setSimulatedExecutionData(null);
+    setShowSimulatedJson(false);
+
     // Trigger backend execute call to persist in SQLite database
+    let triggerExecutionId: number | null = null;
     try {
-      await fetch(`${BACKEND_URL}/api/workflows/${currentWorkflow.id}/execute`, {
+      const res = await fetch(`${BACKEND_URL}/api/workflows/${currentWorkflow.id}/execute`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, name, score })
       });
+      const data = await res.json();
+      if (data.success && data.executionId) {
+        triggerExecutionId = data.executionId;
+      }
     } catch (e) {
       console.error("Backend trigger failed:", e);
     }
@@ -523,6 +545,9 @@ return {
         setExecActiveNodeId(null);
         setExecLogs(prev => [...prev, { time: new Date().toISOString(), message: "✅ Execution completed. Pipeline closed successfully." }]);
         fetchMockData();
+        if (triggerExecutionId) {
+          fetchSimulatedJson(triggerExecutionId);
+        }
         return;
       }
 
@@ -578,6 +603,9 @@ return {
               time: new Date().toISOString(),
               message: `❌ [REJECTED] User rejected step execution. Workflow aborted.`
             }]);
+            if (triggerExecutionId) {
+              fetchSimulatedJson(triggerExecutionId);
+            }
           }
         };
         return;
@@ -2785,7 +2813,7 @@ return {
       {/* Connection Stream Popup Modal */}
       {isExecModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 backdrop-blur-sm text-left">
-          <div className="w-[500px] bg-[#1c1b1b] border border-neutral-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col h-[520px]">
+          <div className="w-[500px] bg-[#1c1b1b] border border-neutral-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] h-[600px]">
             {/* Header */}
             <div className="p-4 bg-[#262626] border-b border-neutral-800 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
@@ -2901,6 +2929,46 @@ return {
                       </div>
                     ))}
                   </div>
+
+                  {/* JSON Output Viewer Section */}
+                  {simulatedExecutionData && (
+                    <div className="mt-3 flex flex-col border border-neutral-850 rounded-xl overflow-hidden bg-[#0c0c0c] shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setShowSimulatedJson(!showSimulatedJson)}
+                        className="w-full flex items-center justify-between px-4 py-3 bg-neutral-900 border-b border-neutral-850 text-[10px] uppercase font-bold text-neutral-300 hover:text-white transition"
+                      >
+                        <span className="flex items-center gap-1.5 font-label-md tracking-wider">
+                          <span className="material-symbols-outlined text-[#facc15] text-[14px]">code</span>
+                          Workflow JSON Output Audit
+                        </span>
+                        <span className="material-symbols-outlined text-xs">
+                          {showSimulatedJson ? 'expand_less' : 'expand_more'}
+                        </span>
+                      </button>
+                      
+                      {showSimulatedJson && (
+                        <div className="p-4 text-left font-mono text-[9px] leading-relaxed max-h-[180px] overflow-y-auto flex flex-col gap-3">
+                          <div>
+                            <div className="text-neutral-500 font-bold mb-1.5 uppercase tracking-wider">Trigger Payload</div>
+                            <pre className="p-2 bg-neutral-950 rounded border border-neutral-850 text-neutral-300 overflow-x-auto">
+                              {simulatedExecutionData.triggerData
+                                ? JSON.stringify(JSON.parse(simulatedExecutionData.triggerData), null, 2)
+                                : '{}'}
+                            </pre>
+                          </div>
+                          <div>
+                            <div className="text-neutral-500 font-bold mb-1.5 uppercase tracking-wider">Response Node Outputs</div>
+                            <pre className="p-2 bg-neutral-950 rounded border border-neutral-850 text-emerald-400 overflow-x-auto whitespace-pre-wrap">
+                              {simulatedExecutionData.responseData
+                                ? JSON.stringify(JSON.parse(simulatedExecutionData.responseData), null, 2)
+                                : '{}'}
+                            </pre>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Human-in-the-loop verification prompt */}
                   {humanApprovalRequired && pendingNode && (

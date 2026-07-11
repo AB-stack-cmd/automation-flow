@@ -1,0 +1,116 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  name         String?
+  projects     Project[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Project {
+  id          String       @id @default(uuid())
+  name        String
+  ownerId     String
+  owner       User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  workflows   Workflow[]
+  credentials Credential[]
+  variables   Variable[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Workflow {
+  id          String      @id @default(uuid())
+  name        String
+  definition  String      // JSON graph storing nodes and connections (edges)
+  isActive    Boolean     @default(false)
+  projectId   String
+  project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  executions  Execution[]
+  webhooks    Webhook[]
+  schedules   Schedule[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Execution {
+  id            String         @id @default(uuid())
+  workflowId    String
+  workflow      Workflow       @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  status        String         // pending, running, success, failed, waiting
+  startedAt     DateTime       @default(now())
+  finishedAt    DateTime?
+  triggerData   String?
+  executionData ExecutionData?
+  createdAt     DateTime       @default(now())
+}
+
+model ExecutionData {
+  id          String    @id @default(uuid())
+  executionId String    @unique
+  execution   Execution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+  steps       String    // Store of individual step logs/data
+  logs        String?   // Execution trace logs Array
+}
+
+model Credential {
+  id            String   @id @default(uuid())
+  name          String
+  type          String   // e.g., basic_auth, api_key, oauth2
+  encryptedData String   // AES-256 encrypted payload
+  iv            String   // AES initialization vector
+  authTag       String   // AES authentication tag
+  projectId     String
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Webhook {
+  id         String   @id @default(uuid())
+  path       String   @unique
+  workflowId String
+  workflow   Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+}
+
+model Schedule {
+  id         String   @id @default(uuid())
+  cron       String
+  timezone   String   @default("UTC")
+  workflowId String
+  workflow   Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+}
+
+model Variable {
+  id        String   @id @default(uuid())
+  key       String
+  value     String
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([projectId, key])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  action    String
+  details   String?
+  createdAt DateTime @default(now())
+}

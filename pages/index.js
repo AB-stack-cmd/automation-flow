@@ -296,14 +296,42 @@ export default function Home() {
               Build complex automations in minutes with our visual node-based engine. 
               Experience unparalleled precision in logic deployment and data flow management.
             </p>
-            <div className="flex flex-col sm:flex-row gap-gutter items-center">
-              <a href="http://localhost:5173/" className="w-full sm:w-auto px-10 py-4 bg-primary-container text-black font-headline-md text-headline-md rounded hover:brightness-110 active:scale-95 transition-all shadow-xl shadow-primary-container/10 flex items-center justify-center">
-                Get Started Free
-              </a>
-              <button className="w-full sm:w-auto px-10 py-4 bg-transparent border border-outline-variant text-on-surface font-headline-md text-headline-md rounded hover:bg-surface-container-high active:scale-95 transition-all flex items-center justify-center gap-2 group">
-                <span className="material-symbols-outlined text-secondary-container group-hover:scale-110 transition-transform" data-icon="play_circle">play_circle</span>
-                Watch Demo
-              </button>
+            <div className="flex flex-col md:flex-row gap-8 justify-center items-stretch w-full max-w-4xl mt-6">
+              {/* Launcher Card 1: SQLite UI */}
+              <div className="flex-1 glass-panel p-8 rounded-2xl flex flex-col justify-between items-center text-center relative overflow-hidden group hover:border-[#facc15]/30 transition-all duration-300">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-[#facc15]/5 rounded-full blur-2xl"></div>
+                <div>
+                  <div className="w-12 h-12 rounded-full bg-[#facc15]/10 flex items-center justify-center mb-6 mx-auto">
+                    <span className="material-symbols-outlined text-[#facc15] text-2xl">bubble_chart</span>
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-2">Visual Neuron Flow</h3>
+                  <p className="text-xs text-neutral-400 max-w-xs mb-6">
+                    A visual, drag-and-drop workflow designer utilizing React Flow canvas with embedded SQLite DB storage.
+                  </p>
+                </div>
+                <a href="http://localhost:5173/" className="w-full py-3 bg-[#facc15] hover:opacity-90 active:scale-95 text-black font-bold text-sm rounded-lg transition-all flex items-center justify-center gap-2">
+                  <span className="material-symbols-outlined text-base font-bold">open_in_new</span>
+                  Launch Visual Editor
+                </a>
+              </div>
+
+              {/* Launcher Card 2: Monorepo */}
+              <div className="flex-1 glass-panel p-8 rounded-2xl flex flex-col justify-between items-center text-center relative overflow-hidden group hover:border-emerald-500/30 transition-all duration-300">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl"></div>
+                <div>
+                  <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center mb-6 mx-auto">
+                    <span className="material-symbols-outlined text-emerald-400 text-2xl">token</span>
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-2">n8n Production Monorepo</h3>
+                  <p className="text-xs text-neutral-400 max-w-xs mb-6">
+                    Production-grade distributed automation engine backed by PostgreSQL, Redis queue workers, and sandboxed runtimes.
+                  </p>
+                </div>
+                <a href="http://localhost:5174/" className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold text-sm rounded-lg transition-all flex items-center justify-center gap-2 border border-emerald-500/30 shadow-lg shadow-emerald-500/10">
+                  <span className="material-symbols-outlined text-base">lan</span>
+                  Launch Production Engine
+                </a>
+              </div>
             </div>
 
             {/* Orchestration Visualization */}
