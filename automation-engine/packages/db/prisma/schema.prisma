@@ -13,6 +13,8 @@ model User {
   passwordHash String
   name         String?
   projects     Project[]
+  sessions     Session[]
+  accounts     Account[]
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 }
@@ -39,8 +41,20 @@ model Workflow {
   executions  Execution[]
   webhooks    Webhook[]
   schedules   Schedule[]
+  form        Form?
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
+}
+
+model Form {
+  id              String   @id @default(uuid())
+  name            String
+  definition      String   // JSON array of form fields
+  workflowId      String?  @unique
+  workflow        Workflow? @relation(fields: [workflowId], references: [id], onDelete: SetNull)
+  triggerNodeName String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model Execution {
@@ -113,4 +127,25 @@ model AuditLog {
   action    String
   details   String?
   createdAt DateTime @default(now())
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Account {
+  id           String    @id @default(uuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  providerId   String
+  accountId    String
+  accessToken  String?
+  refreshToken String?
+  expiresAt    DateTime?
+  createdAt    DateTime  @default(now())
 }

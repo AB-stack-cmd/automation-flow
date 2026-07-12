@@ -14,7 +14,12 @@ import {
   CRMNode,
   LogicNode,
   DelayNode,
-  CodeNode
+  CodeNode,
+  EndNode,
+  StartNode,
+  GoogleFormTriggerNode,
+  ScheduleTriggerNode,
+  GoogleSheetsNode
 } from './CustomNode';
 
 const nodeTypes = {
@@ -24,13 +29,78 @@ const nodeTypes = {
   crm_action: CRMNode,
   ifelse: LogicNode,
   delay: DelayNode,
-  code: CodeNode
+  code: CodeNode,
+  end: EndNode,
+  start_trigger: StartNode,
+  google_form_trigger: GoogleFormTriggerNode,
+  schedule_trigger: ScheduleTriggerNode,
+  google_sheets: GoogleSheetsNode
 };
 
 const BACKEND_URL = 'http://localhost:4000';
 
 // Template Definitions from user request & HTML template
 const TEMPLATES = [
+  {
+    id: 'scheduled-google-sheets-summarizer',
+    name: 'Scheduled Google Sheets Blog Summarizer',
+    category: 'AI Agents',
+    description: 'Triggered periodically on a timer, this workflow reads blog articles from Google Sheets, runs an OpenAI model to summarize the contents, and posts them to Slack/Discord.',
+    icons: ['alarm', 'table_chart', 'psychology', 'forum'],
+    popular: true,
+    definition: {
+      nodes: [
+        { 
+          id: 'schedule_node', 
+          type: 'schedule_trigger', 
+          position: { x: 100, y: 200 }, 
+          data: { 
+            label: 'Trigger Hourly', 
+            scheduleType: 'interval',
+            intervalValue: 10,
+            intervalUnit: 'seconds'
+          } 
+        },
+        { 
+          id: 'sheets_node', 
+          type: 'google_sheets', 
+          position: { x: 300, y: 200 }, 
+          data: { 
+            label: 'Read Draft Articles', 
+            action: 'read',
+            sheetName: 'Sheet1',
+            mockDataType: 'blog_news',
+            triggerForEachRow: true
+          } 
+        },
+        { 
+          id: 'openai_node', 
+          type: 'openai', 
+          position: { x: 550, y: 200 }, 
+          data: { 
+            label: 'GPT Summarizer', 
+            prompt: 'Please write a concise 2-sentence summary of this article:\nTitle: {{trigger.title}}\nContent: {{trigger.content}}',
+            model: 'gpt-4o'
+          } 
+        },
+        { 
+          id: 'slack_node', 
+          type: 'slack', 
+          position: { x: 800, y: 200 }, 
+          data: { 
+            label: 'Post to Slack', 
+            webhookUrl: 'https://hooks.slack.com/services/mock-webhook-url',
+            text: '📢 *New Article Summary:* \n\n*Title:* {{trigger.title}}\n*Summary:* {{steps.openai_node.result}}'
+          } 
+        }
+      ],
+      edges: [
+        { id: 'e1-2', source: 'schedule_node', target: 'sheets_node', animated: true, style: { stroke: '#facc15' } },
+        { id: 'e2-3', source: 'sheets_node', target: 'openai_node', animated: true, style: { stroke: '#facc15' } },
+        { id: 'e3-4', source: 'openai_node', target: 'slack_node', animated: true, style: { stroke: '#facc15' } }
+      ]
+    }
+  },
   {
     id: 'slack-postgres-sync',
     name: 'Slack to PostgreSQL Sync',
@@ -237,6 +307,8 @@ return {
 
   const [simulatedExecutionData, setSimulatedExecutionData] = useState<any>(null);
   const [showSimulatedJson, setShowSimulatedJson] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [showStartPopup, setShowStartPopup] = useState(false);
 
   const fetchSimulatedJson = async (execId: number) => {
     try {
@@ -488,6 +560,10 @@ return {
 
     setSimulatedExecutionData(null);
     setShowSimulatedJson(false);
+    setShowStartPopup(true);
+    setTimeout(() => {
+      setShowStartPopup(false);
+    }, 3000);
 
     // Trigger backend execute call to persist in SQLite database
     let triggerExecutionId: number | null = null;
@@ -506,7 +582,13 @@ return {
     }
 
     // Trace the execution path on the frontend
-    const triggerNode = nodes.find(n => n.type === 'trigger' || n.type === 'crm_lead_trigger');
+    const triggerNode = nodes.find(n => 
+      n.type === 'trigger' || 
+      n.type === 'crm_lead_trigger' || 
+      n.type === 'schedule_trigger' || 
+      n.type === 'google_form_trigger' ||
+      n.type === 'webhook'
+    );
     if (!triggerNode) {
       setExecLogs(prev => [...prev, { time: new Date().toISOString(), message: "❌ Error: No starting trigger node found in this workflow." }]);
       setExecStatus('failed');
@@ -554,10 +636,17 @@ return {
       const node = path[pathIndex];
       setExecActiveNodeId(node.id);
 
-      // Generate Agent dialogue & log details
       let msg = `Processing node: ${node.data?.label || node.id}`;
       if (node.type === 'trigger' || node.type === 'crm_lead_trigger') {
         msg = `🤖 [TRIGGER] Agent: Trigger event parsed. Contact = ${email}, Score = ${score}. Checking paths.`;
+      } else if (node.type === 'schedule_trigger') {
+        msg = `⏰ [TRIGGER] Agent: Schedule timer interval elapsed. Checking path.`;
+      } else if (node.type === 'google_form_trigger') {
+        msg = `📋 [TRIGGER] Agent: Google Form submission received. Processing form payload.`;
+      } else if (node.type === 'webhook') {
+        msg = `🔌 [TRIGGER] Agent: Webhook request captured. Payload ingested.`;
+      } else if (node.type === 'google_sheets') {
+        msg = `📊 [SHEETS] Agent: Google Sheets operation executed.`;
       } else if (node.type === 'ifelse') {
         const isTrue = score > 50;
         msg = `🤖 [DECISION] Agent: Evaluated condition "score > 50" (value: ${score}). Branching to ${isTrue ? 'TRUE' : 'FALSE'} handle.`;
@@ -570,6 +659,8 @@ return {
         msg = `👤 [CRM] Agent: Updated CRM record for ${email}. Incrementing score.`;
       } else if (node.type === 'code') {
         msg = `💻 [CODE] Agent: Custom JS script executed. Context output parsed successfully.`;
+      } else if (node.type === 'end') {
+        msg = `🏁 [END] Agent: Pipeline reached terminal point. Shutting down execution flow.`;
       }
 
       // Check human-in-the-loop approval
@@ -912,6 +1003,44 @@ return {
         label = 'Run script';
         extraData = { code: 'context.trigger.score += 5;\nreturn context.trigger;' };
         break;
+      case 'end':
+        label = 'End workflow';
+        extraData = {};
+        break;
+      case 'start_trigger':
+        label = 'Start';
+        extraData = {};
+        break;
+      case 'google_form_trigger':
+        label = 'Google Form Hook';
+        extraData = {
+          webhookUrl: `${BACKEND_URL}/api/webhooks/google-form/${currentWorkflow?.id || '1'}`
+        };
+        break;
+      case 'schedule_trigger':
+        label = 'Schedule Timer';
+        extraData = {
+          scheduleType: 'interval',
+          intervalValue: 10,
+          intervalUnit: 'seconds',
+          cronExpression: '*/10 * * * * *',
+          customDate: '',
+          lastRun: '',
+          nextRun: ''
+        };
+        break;
+      case 'google_sheets':
+        label = 'Google Sheet';
+        extraData = {
+          action: 'read',
+          sheetId: '1X3-mock-spreadsheet-id',
+          sheetName: 'Sheet1',
+          mockDataType: 'blog_news',
+          customJson: '[\n  {"id": 1, "title": "Custom Post", "content": "Hello World"}\n]',
+          triggerForEachRow: true,
+          rowData: '{\n  "email": "{{trigger.email}}",\n  "name": "{{trigger.name}}",\n  "status": "synchronized"\n}'
+        };
+        break;
     }
 
     const newNode = {
@@ -947,9 +1076,7 @@ return {
   const handleCreateNew = async () => {
     try {
       const defaultDef = {
-        nodes: [
-          { id: 'start_node', type: 'trigger', position: { x: 100, y: 200 }, data: { label: 'Webhook input', triggerType: 'webhook' } }
-        ],
+        nodes: [],
         edges: []
       };
 
@@ -957,7 +1084,7 @@ return {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: `Flow Engine #${workflows.length + 1}`,
+          name: `Fresh Canvas #${workflows.length + 1}`,
           definition: defaultDef
         })
       });
@@ -993,12 +1120,29 @@ return {
 
   const handleRunWorkflow = async () => {
     if (!currentWorkflow) return;
+    
+    const triggerNode = nodes.find(n => 
+      n.type === 'trigger' || 
+      n.type === 'crm_lead_trigger' || 
+      n.type === 'schedule_trigger' || 
+      n.type === 'google_form_trigger' ||
+      n.type === 'webhook'
+    );
+
+    const requiresLeadConfig = triggerNode && (triggerNode.type === 'crm_lead_trigger' || triggerNode.type === 'trigger');
+
     setExecStatus('idle');
     setExecLogs([]);
     setExecActiveNodeId(null);
     setHumanApprovalRequired(false);
     setPendingNode(null);
-    setIsExecModalOpen(true);
+
+    if (requiresLeadConfig) {
+      setIsExecModalOpen(true);
+    } else {
+      setIsExecModalOpen(true);
+      startConnectionStream('system@neuron.flow', 'System Agent', 100);
+    }
   };
 
   const handleCrmLeadTrigger = async (e: React.FormEvent) => {
@@ -1299,7 +1443,7 @@ return {
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="font-headline-md text-headline-md text-white font-bold">Automation Pipelines</h3>
                   <button onClick={handleCreateNew} className="text-xs text-primary hover:underline flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[14px]">add</span> Create New
+                    <span className="material-symbols-outlined text-[14px]">add</span> Create Fresh Canvas
                   </button>
                 </div>
                 <div className="space-y-3 flex-1 overflow-y-auto max-h-[350px]">
@@ -1420,7 +1564,7 @@ return {
                   onClick={handleCreateNew}
                   className="text-xs text-primary font-bold hover:brightness-110 flex items-center gap-1 ml-2"
                 >
-                  <span className="material-symbols-outlined !text-[14px]">add</span> New Flow
+                  <span className="material-symbols-outlined !text-[14px]">add</span> New Fresh Canvas
                 </button>
               </div>
 
@@ -1471,8 +1615,156 @@ return {
             {/* Canvas body layout */}
             <div className="flex-1 relative flex overflow-hidden h-full w-full">
               
+              {/* Dedicated Node Palette Sidebar */}
+              <div className={`shrink-0 bg-[#131313] border-r border-neutral-900 flex flex-col text-left h-full z-10 transition-all duration-300 ${
+                isSidebarOpen ? 'w-56 p-4 opacity-100' : 'w-0 p-0 opacity-0 overflow-hidden'
+              }`}>
+                {isSidebarOpen && (
+                  <>
+                    <div className="flex items-center justify-between mb-4 shrink-0">
+                      <h4 className="text-[10px] uppercase font-bold tracking-widest text-[#facc15] flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-[14px]">grid_view</span>
+                        Node Palette
+                      </h4>
+                      <button 
+                        onClick={() => setIsSidebarOpen(false)}
+                        className="text-neutral-500 hover:text-white transition-colors"
+                        title="Collapse Node Palette"
+                      >
+                        <span className="material-symbols-outlined text-[15px]">menu_open</span>
+                      </button>
+                    </div>
+                    
+                    <div className="space-y-4 flex-grow overflow-y-auto pr-1">
+                      {/* On Event (Triggers) Section */}
+                      <div>
+                        <div className="text-[8px] font-bold text-neutral-500 uppercase tracking-widest mb-2 px-1">
+                          On Event (Triggers)
+                        </div>
+                        <div className="space-y-2">
+                          <button
+                            onClick={() => addNode('start_trigger')}
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-amber-900/30 bg-amber-950/10 hover:bg-amber-950/20 text-amber-400 text-[10px] font-bold text-left transition-all"
+                          >
+                            <span className="material-symbols-outlined !text-[13px]">play_circle</span>
+                            <span>Start Trigger</span>
+                          </button>
+
+                          <button
+                            onClick={() => addNode('schedule_trigger')}
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-amber-900/30 bg-amber-950/10 hover:bg-amber-950/20 text-amber-400 text-[10px] font-bold text-left transition-all"
+                          >
+                            <span className="material-symbols-outlined !text-[13px]">alarm</span>
+                            <span>Schedule Trigger</span>
+                          </button>
+
+                          <button
+                            onClick={() => addNode('google_form_trigger')}
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-green-900/30 bg-green-950/10 hover:bg-green-950/20 text-green-400 text-[10px] font-bold text-left transition-all"
+                          >
+                            <span className="material-symbols-outlined !text-[13px]">description</span>
+                            <span>Google Form Trigger</span>
+                          </button>
+
+                          <button
+                            onClick={() => addNode('trigger')}
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-emerald-900/30 bg-emerald-950/10 hover:bg-emerald-950/20 text-emerald-400 text-[10px] font-bold text-left transition-all"
+                          >
+                            <span className="material-symbols-outlined !text-[13px]">bolt</span>
+                            <span>Webhook Trigger</span>
+                          </button>
+
+                          <button
+                            onClick={() => addNode('crm_lead_trigger')}
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-emerald-900/30 bg-emerald-950/10 hover:bg-emerald-950/20 text-emerald-400 text-[10px] font-bold text-left transition-all"
+                          >
+                            <span className="material-symbols-outlined !text-[13px]">group_add</span>
+                            <span>CRM Lead Trigger</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* App Actions Section */}
+                      <div>
+                        <div className="text-[8px] font-bold text-neutral-500 uppercase tracking-widest mb-2 px-1">
+                          App Actions
+                        </div>
+                        <div className="space-y-2">
+                          <button
+                            onClick={() => addNode('marketing_email')}
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-sky-900/30 bg-sky-950/10 hover:bg-sky-950/20 text-sky-400 text-[10px] font-bold text-left transition-all"
+                          >
+                            <span className="material-symbols-outlined !text-[13px]">mail</span>
+                            <span>Send Email</span>
+                          </button>
+
+                          <button
+                            onClick={() => addNode('crm_action')}
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-indigo-900/30 bg-indigo-950/10 hover:bg-indigo-950/20 text-indigo-400 text-[10px] font-bold text-left transition-all"
+                          >
+                            <span className="material-symbols-outlined !text-[13px]">account_circle</span>
+                            <span>CRM Update</span>
+                          </button>
+
+                          <button
+                            onClick={() => addNode('google_sheets')}
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-green-900/30 bg-green-950/10 hover:bg-green-950/20 text-green-400 text-[10px] font-bold text-left transition-all"
+                          >
+                            <span className="material-symbols-outlined !text-[13px]">table_chart</span>
+                            <span>Google Sheet</span>
+                          </button>
+
+                          <button
+                            onClick={() => addNode('ifelse')}
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-fuchsia-900/30 bg-fuchsia-950/10 hover:bg-fuchsia-950/20 text-fuchsia-400 text-[10px] font-bold text-left transition-all"
+                          >
+                            <span className="material-symbols-outlined !text-[13px]">alt_route</span>
+                            <span>If / Else</span>
+                          </button>
+
+                          <button
+                            onClick={() => addNode('delay')}
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-amber-900/30 bg-amber-950/10 hover:bg-amber-950/20 text-amber-400 text-[10px] font-bold text-left transition-all"
+                          >
+                            <span className="material-symbols-outlined !text-[13px]">schedule</span>
+                            <span>Delay Wait</span>
+                          </button>
+
+                          <button
+                            onClick={() => addNode('code')}
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-teal-900/30 bg-teal-950/10 hover:bg-teal-950/20 text-teal-400 text-[10px] font-bold text-left transition-all"
+                          >
+                            <span className="material-symbols-outlined !text-[13px]">code</span>
+                            <span>Run Script</span>
+                          </button>
+
+                          <button
+                            onClick={() => addNode('end')}
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-rose-900/30 bg-rose-950/10 hover:bg-rose-950/20 text-rose-400 text-[10px] font-bold text-left transition-all"
+                          >
+                            <span className="material-symbols-outlined !text-[13px]">stop_circle</span>
+                            <span>End Workflow</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
               {/* React Flow Workspace Canvas */}
               <div className="flex-1 h-full bg-surface relative dot-grid">
+                
+                {/* Floating expand toggle for collapsed Node Palette */}
+                {!isSidebarOpen && (
+                  <button
+                    onClick={() => setIsSidebarOpen(true)}
+                    className="absolute top-8 left-4 z-20 w-8 h-8 rounded-lg bg-[#1c1b1b] border border-neutral-800 flex items-center justify-center text-[#facc15] hover:text-white transition shadow-lg cursor-pointer"
+                    title="Expand Node Palette"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">menu</span>
+                  </button>
+                )}
                 <ReactFlow
                   nodes={nodes}
                   edges={edges}
@@ -1605,70 +1897,7 @@ return {
                   </button>
                 </div>
 
-                {/* Floating Node Palette Panel (Left side overlay on Canvas) */}
-                <div className="absolute top-8 left-8 z-20 w-52 bg-[#1c1b1b]/90 backdrop-blur-lg border border-neutral-800 rounded-xl p-4 shadow-2xl flex flex-col text-left">
-                  <h4 className="text-[10px] uppercase font-bold tracking-widest text-[#facc15] mb-3 flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[14px]">grid_view</span>
-                    Node Palette
-                  </h4>
-                  <div className="space-y-1.5 max-h-[300px] overflow-y-auto pr-1">
-                    <button
-                      onClick={() => addNode('trigger')}
-                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded border border-emerald-900/30 bg-emerald-950/10 hover:bg-emerald-950/20 text-emerald-400 text-[10px] font-bold text-left"
-                    >
-                      <span className="material-symbols-outlined !text-[13px]">bolt</span>
-                      <span>+ Webhook trigger</span>
-                    </button>
 
-                    <button
-                      onClick={() => addNode('crm_lead_trigger')}
-                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded border border-emerald-900/30 bg-emerald-950/10 hover:bg-emerald-950/20 text-emerald-400 text-[10px] font-bold text-left"
-                    >
-                      <span className="material-symbols-outlined !text-[13px]">group_add</span>
-                      <span>+ CRM Lead trigger</span>
-                    </button>
-
-                    <button
-                      onClick={() => addNode('marketing_email')}
-                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded border border-sky-900/30 bg-sky-950/10 hover:bg-sky-950/20 text-sky-400 text-[10px] font-bold text-left"
-                    >
-                      <span className="material-symbols-outlined !text-[13px]">mail</span>
-                      <span>+ Send Email</span>
-                    </button>
-
-                    <button
-                      onClick={() => addNode('crm_action')}
-                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded border border-indigo-900/30 bg-indigo-950/10 hover:bg-indigo-950/20 text-indigo-400 text-[10px] font-bold text-left"
-                    >
-                      <span className="material-symbols-outlined !text-[13px]">account_circle</span>
-                      <span>+ CRM Update</span>
-                    </button>
-
-                    <button
-                      onClick={() => addNode('ifelse')}
-                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded border border-fuchsia-900/30 bg-fuchsia-950/10 hover:bg-fuchsia-950/20 text-fuchsia-400 text-[10px] font-bold text-left"
-                    >
-                      <span className="material-symbols-outlined !text-[13px]">alt_route</span>
-                      <span>+ If / Else</span>
-                    </button>
-
-                    <button
-                      onClick={() => addNode('delay')}
-                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded border border-amber-900/30 bg-amber-950/10 hover:bg-amber-950/20 text-amber-400 text-[10px] font-bold text-left"
-                    >
-                      <span className="material-symbols-outlined !text-[13px]">schedule</span>
-                      <span>+ Delay Wait</span>
-                    </button>
-
-                    <button
-                      onClick={() => addNode('code')}
-                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded border border-teal-900/30 bg-teal-950/10 hover:bg-teal-950/20 text-teal-400 text-[10px] font-bold text-left"
-                    >
-                      <span className="material-symbols-outlined !text-[13px]">code</span>
-                      <span>+ Run Script</span>
-                    </button>
-                  </div>
-                </div>
 
               </div>
 
@@ -1826,6 +2055,190 @@ return {
                             className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none focus:border-accent-coral/50 font-mono text-[10px]"
                           />
                         </div>
+                      )}
+
+                      {/* Schedule Trigger fields */}
+                      {selectedNode.type === 'schedule_trigger' && (
+                        <>
+                          <div>
+                            <label className="block text-neutral-400 font-bold mb-1">Schedule Type</label>
+                            <select
+                              value={selectedNode.data?.scheduleType || 'interval'}
+                              onChange={(e) => updateNodeData('scheduleType', e.target.value)}
+                              className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none cursor-pointer"
+                            >
+                              <option value="interval">Interval (Recurring)</option>
+                              <option value="cron">Cron Expression (Advanced)</option>
+                              <option value="date">Specific Date/Time (Once)</option>
+                            </select>
+                          </div>
+
+                          {selectedNode.data?.scheduleType === 'interval' && (
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label className="block text-neutral-400 font-bold mb-1">Interval Value</label>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  value={selectedNode.data?.intervalValue || 10}
+                                  onChange={(e) => updateNodeData('intervalValue', parseInt(e.target.value, 10))}
+                                  className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-neutral-400 font-bold mb-1">Unit</label>
+                                <select
+                                  value={selectedNode.data?.intervalUnit || 'seconds'}
+                                  onChange={(e) => updateNodeData('intervalUnit', e.target.value)}
+                                  className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none"
+                                >
+                                  <option value="seconds">Seconds</option>
+                                  <option value="minutes">Minutes</option>
+                                  <option value="hours">Hours</option>
+                                  <option value="days">Days</option>
+                                  <option value="weeks">Weeks</option>
+                                  <option value="months">Months</option>
+                                  <option value="years">Years</option>
+                                </select>
+                              </div>
+                            </div>
+                          )}
+
+                          {selectedNode.data?.scheduleType === 'cron' && (
+                            <div>
+                              <label className="block text-neutral-400 font-bold mb-1">Cron Expression</label>
+                              <input
+                                type="text"
+                                value={selectedNode.data?.cronExpression || '*/10 * * * * *'}
+                                onChange={(e) => updateNodeData('cronExpression', e.target.value)}
+                                placeholder="*/10 * * * * *"
+                                className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none font-mono text-[10px]"
+                              />
+                              <p className="text-[9px] text-neutral-500 mt-1">
+                                Standard: `min hr dom mon dow` or 6-field: `sec min hr dom mon dow`
+                              </p>
+                            </div>
+                          )}
+
+                          {selectedNode.data?.scheduleType === 'date' && (
+                            <div>
+                              <label className="block text-neutral-400 font-bold mb-1">Run Date & Time</label>
+                              <input
+                                type="datetime-local"
+                                value={selectedNode.data?.customDate || ''}
+                                onChange={(e) => updateNodeData('customDate', e.target.value)}
+                                className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none text-[10px] cursor-pointer"
+                              />
+                            </div>
+                          )}
+
+                          <div className="pt-2 border-t border-neutral-800 space-y-1">
+                            <span className="text-[9px] text-neutral-400 block font-mono">
+                              Last Run: {selectedNode.data?.lastRun ? new Date(selectedNode.data.lastRun).toLocaleString() : 'Never'}
+                            </span>
+                            <span className="text-[9px] text-amber-500 block font-mono">
+                              Next Run: {selectedNode.data?.nextRun ? new Date(selectedNode.data.nextRun).toLocaleString() : 'Upon activation'}
+                            </span>
+                          </div>
+                        </>
+                      )}
+
+                      {/* Google Sheets Action Fields */}
+                      {selectedNode.type === 'google_sheets' && (
+                        <>
+                          <div>
+                            <label className="block text-neutral-400 font-bold mb-1">Action Type</label>
+                            <select
+                              value={selectedNode.data?.action || 'read'}
+                              onChange={(e) => updateNodeData('action', e.target.value)}
+                              className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none cursor-pointer"
+                            >
+                              <option value="read">Read Spreadsheet Rows</option>
+                              <option value="write">Write Row (Append)</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-neutral-400 font-bold mb-1">Spreadsheet ID/URL</label>
+                            <input
+                              type="text"
+                              value={selectedNode.data?.sheetId || '1X3-mock-spreadsheet-id'}
+                              onChange={(e) => updateNodeData('sheetId', e.target.value)}
+                              className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none"
+                              placeholder="Google Sheet ID"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-neutral-400 font-bold mb-1">Sheet Name</label>
+                            <input
+                              type="text"
+                              value={selectedNode.data?.sheetName || 'Sheet1'}
+                              onChange={(e) => updateNodeData('sheetName', e.target.value)}
+                              className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none"
+                              placeholder="Sheet1"
+                            />
+                          </div>
+
+                          {selectedNode.data?.action === 'read' ? (
+                            <>
+                              <div>
+                                <label className="block text-neutral-400 font-bold mb-1">Mock Dataset</label>
+                                <select
+                                  value={selectedNode.data?.mockDataType || 'blog_news'}
+                                  onChange={(e) => updateNodeData('mockDataType', e.target.value)}
+                                  className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none cursor-pointer"
+                                >
+                                  <option value="blog_news">Blog News Articles (Title, Summary, Content, Platform)</option>
+                                  <option value="crm_leads">CRM Leads List (Name, Email, Status, Score)</option>
+                                  <option value="custom">Custom JSON Data</option>
+                                </select>
+                              </div>
+
+                              {selectedNode.data?.mockDataType === 'custom' && (
+                                <div>
+                                  <label className="block text-neutral-400 font-bold mb-1">Custom JSON Array</label>
+                                  <textarea
+                                    value={selectedNode.data?.customJson || '[\n  {"id": 1, "title": "Custom Post", "content": "Hello World"}\n]'}
+                                    onChange={(e) => updateNodeData('customJson', e.target.value)}
+                                    rows={4}
+                                    className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none font-mono text-[9px]"
+                                  />
+                                </div>
+                              )}
+
+                              <div className="flex items-center gap-2 mt-2">
+                                <input
+                                  type="checkbox"
+                                  id="triggerForEachRow"
+                                  checked={selectedNode.data?.triggerForEachRow !== false}
+                                  onChange={(e) => updateNodeData('triggerForEachRow', e.target.checked)}
+                                  className="rounded border-neutral-800 bg-[#0e0e0e] text-[#facc15] focus:ring-0 cursor-pointer"
+                                />
+                                <label htmlFor="triggerForEachRow" className="text-neutral-400 font-bold cursor-pointer selection:bg-transparent">
+                                  Trigger workflow for each row
+                                </label>
+                              </div>
+                              <span className="text-[9px] text-neutral-500 block leading-normal">
+                                If enabled, downstream nodes will execute independently for each row, with columns available as {"{{trigger.column_name}}"} (e.g. {"{{trigger.title}}"}).
+                              </span>
+                            </>
+                          ) : (
+                            <div>
+                              <label className="block text-neutral-400 font-bold mb-1">Row Data (JSON Object)</label>
+                              <textarea
+                                value={selectedNode.data?.rowData || '{\n  "email": "{{trigger.email}}",\n  "name": "{{trigger.name}}",\n  "status": "synchronized"\n}'}
+                                onChange={(e) => updateNodeData('rowData', e.target.value)}
+                                rows={4}
+                                className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none font-mono text-[9px]"
+                                placeholder='{"column1": "value1", "column2": "{{trigger.email}}"}'
+                              />
+                              <p className="text-[9px] text-neutral-500 leading-normal mt-1">
+                                Define columns as keys and cells as values. Supports variable references like {"{{trigger.field}}"} and {"{{steps.nodeId.field}}"}.
+                              </p>
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   ) : (
@@ -2809,6 +3222,17 @@ return {
           <a className="font-label-md text-label-md text-[#9a9078] hover:text-on-surface transition-colors uppercase tracking-widest" href="#">Support</a>
         </div>
       </footer>
+
+      {/* Dynamic Workflow Run Toast Alert Popup */}
+      {showStartPopup && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[120] flex items-center gap-3 px-5 py-3 rounded-full bg-[#1c1b1b]/95 border border-[#facc15]/30 shadow-2xl backdrop-blur-md">
+          <span className="material-symbols-outlined text-[#facc15] text-lg animate-spin">autorenew</span>
+          <div className="flex flex-col text-left">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-white">Execution Stream Initialized</span>
+            <span className="text-[9px] text-neutral-400">Target lead: {execEmail} (Score: {execScore})</span>
+          </div>
+        </div>
+      )}
 
       {/* Connection Stream Popup Modal */}
       {isExecModalOpen && (

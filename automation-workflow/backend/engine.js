@@ -37,12 +37,30 @@ function evaluateCondition(expression, context) {
 }
 
 /**
+ * Resolves double curly templates resolving path items in execution context.
+ */
+function interpolateTemplate(template, context) {
+  if (typeof template !== 'string') return template;
+  return template.replace(/\{\{([^}]+)\}\}/g, (_, path) => {
+    const parts = path.trim().replace(/^\$/, '').split('.');
+    let val = context;
+    for (const part of parts) {
+      if (part === 'json') continue;
+      val = val?.[part];
+    }
+    return val !== undefined ? String(val) : '';
+  });
+}
+
+/**
  * Safely evaluates custom JavaScript code.
  */
 function evaluateCode(codeString, context) {
   try {
     const run = new Function('context', `
       try {
+        const trigger = context.trigger || {};
+        const steps = context.steps || {};
         ${codeString}
       } catch(e) {
         return { error: e.message };
@@ -126,6 +144,124 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
       // Process Node Types
       if (node.type === 'trigger' || node.type === 'webhook' || node.type === 'crm_lead_trigger') {
         nodeOutput = { status: 'triggered', data: context.trigger };
+      } 
+      else if (node.type === 'schedule_trigger') {
+        nodeOutput = { status: 'triggered', triggeredAt: context.trigger?.triggeredAt || new Date().toISOString() };
+      }
+      else if (node.type === 'google_sheets') {
+        const action = node.data?.action || 'read';
+        const mockDataType = node.data?.mockDataType || 'blog_news';
+        const sheetName = node.data?.sheetName || 'Sheet1';
+        const triggerForEachRow = node.data?.triggerForEachRow !== false;
+
+        if (action === 'read') {
+          let rows = [];
+          if (mockDataType === 'blog_news') {
+            rows = [
+              {
+                id: 1,
+                title: 'AI Revolution in Marketing',
+                summary: 'Discover how artificial intelligence is transforming marketing strategies in 2026.',
+                content: 'Artificial intelligence is changing how we communicate with leads. By using automated agents and dynamic analysis, companies can scale operations while remaining personal. This summary details how NEURON_FLOW enables AI-driven lead scoring and automated engagement.',
+                platform: 'Slack & Twitter',
+                status: 'Draft'
+              },
+              {
+                id: 2,
+                title: 'Building Scalable Workflows',
+                summary: 'Best practices for designing node-based automation pipelines without code.',
+                content: 'Scalable workflows require clear visual components, robust data propagation, and state preservation. Using sqlite databases and polling schedulers ensures no jobs are lost even during server restarts.',
+                platform: 'Discord & Slack',
+                status: 'Published'
+              },
+              {
+                id: 3,
+                title: 'CRM Lead Conversion Rates',
+                summary: 'Analyzing CRM contact score impact on overall business conversion.',
+                content: 'By integrating webhook triggers and automated scoring, CRM platforms can increase conversion rates by 40%. Real-time routing to active sales channels ensures timely follow-up.',
+                platform: 'Email & Slack',
+                status: 'Draft'
+              }
+            ];
+          } else if (mockDataType === 'crm_leads') {
+            rows = [
+              { name: 'Sarah Connor', email: 'sarah@resistance.io', status: 'lead', score: 85 },
+              { name: 'John Doe', email: 'john.doe@example.com', status: 'contact', score: 60 },
+              { name: 'Alice Smith', email: 'alice@cloud.com', status: 'customer', score: 95 }
+            ];
+          } else {
+            try {
+              rows = JSON.parse(node.data?.customJson || '[]');
+            } catch (e) {
+              rows = [{ error: 'Invalid custom JSON' }];
+            }
+          }
+
+          stepLogs.push({
+            time: new Date().toISOString(),
+            nodeId: node.id,
+            message: `Fetched ${rows.length} rows from Google Sheet: "${sheetName}"`
+          });
+
+          if (triggerForEachRow) {
+            const childEdges = edges.filter(e => e.source === node.id);
+            stepLogs.push({
+              time: new Date().toISOString(),
+              nodeId: node.id,
+              message: `Triggering ${rows.length} separate workflow execution threads (one for each sheet row)...`
+            });
+
+            for (const row of rows) {
+              const subExec = await prisma.executionLog.create({
+                data: {
+                  workflowId,
+                  status: 'running',
+                  logs: JSON.stringify([{ time: new Date().toISOString(), message: `Triggered by Google Sheet row: ${JSON.stringify(row)}` }]),
+                  triggerData: JSON.stringify(row)
+                }
+              });
+
+              for (const edge of childEdges) {
+                executeWorkflow(workflowId, subExec.id, edge.target, { trigger: row, steps: {} })
+                  .catch(err => {
+                    console.error(`Error executing sheet sub-workflow:`, err);
+                  });
+              }
+            }
+
+            await prisma.executionLog.update({
+              where: { id: executionId },
+              data: {
+                status: 'success',
+                finishedAt: new Date(),
+                logs: JSON.stringify(stepLogs),
+                responseData: JSON.stringify({ triggeredSubflowsCount: rows.length })
+              }
+            });
+            return;
+          } else {
+            nodeOutput = { rows };
+          }
+        } else {
+          const rowDataStr = node.data?.rowData || '{"email": "{{trigger.email}}"}';
+          let interpolatedRow = {};
+          try {
+            const parsedRow = JSON.parse(rowDataStr);
+            for (const [key, val] of Object.entries(parsedRow)) {
+              interpolatedRow[key] = interpolateTemplate(val, context);
+            }
+          } catch (e) {
+            interpolatedRow = { raw: interpolateTemplate(rowDataStr, context) };
+          }
+
+          stepLogs.push({
+            time: new Date().toISOString(),
+            nodeId: node.id,
+            message: `Simulated appending row to Google Sheet "${sheetName}": ${JSON.stringify(interpolatedRow)}`
+          });
+
+          nodeOutput = { success: true, appendedRow: interpolatedRow };
+        }
       } 
       else if (node.type === 'email_marketing' || node.type === 'marketing_email') {
         const to = node.data?.to || context.trigger?.email || 'test@example.com';
@@ -301,6 +437,129 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
           message: `Custom script execution complete. Result: ${JSON.stringify(codeResult)}`
         });
       }
+      else if (node.type === 'respond_to_webhook' || node.type === 'action.respondToWebhook') {
+        const responseMode = node.data?.responseMode || 'json';
+        const statusCode = parseInt(node.data?.statusCode || '200', 10);
+        const headersStr = node.data?.headers || '{}';
+        const responseBody = node.data?.responseBody || '{"success": true}';
+        const redirectUrl = node.data?.redirectUrl || '';
+
+        let resolvedHeaders = {};
+        try {
+          const parsedHeaders = typeof headersStr === 'string' ? JSON.parse(headersStr) : headersStr;
+          for (const [k, v] of Object.entries(parsedHeaders)) {
+            resolvedHeaders[k] = interpolateTemplate(v, context);
+          }
+        } catch (e) {
+          resolvedHeaders = {};
+        }
+
+        let resolvedBody = '';
+        if (responseMode === 'json') {
+          resolvedBody = interpolateTemplate(responseBody, context);
+          try {
+            resolvedBody = JSON.parse(resolvedBody);
+          } catch (e) {}
+        } else if (responseMode === 'redirect') {
+          resolvedBody = interpolateTemplate(redirectUrl, context);
+        } else {
+          resolvedBody = interpolateTemplate(responseBody, context);
+        }
+
+        context.webhookResponse = {
+          responseMode,
+          statusCode,
+          headers: resolvedHeaders,
+          body: resolvedBody
+        };
+
+        nodeOutput = { status: 'responded', statusCode };
+        stepLogs.push({
+          time: new Date().toISOString(),
+          nodeId: node.id,
+          message: `Captured custom webhook response configuration (Status: ${statusCode}, Mode: ${responseMode})`
+        });
+      }
+      else if (node.type === 'end') {
+        nodeOutput = { status: 'completed' };
+        stepLogs.push({
+          time: new Date().toISOString(),
+          nodeId: node.id,
+          message: '🏁 [END] Pipeline execution terminated at End Node.'
+        });
+      }
+      else if (node.type === 'openai' || node.type === 'action.openai') {
+        const prompt = interpolateTemplate(node.data?.prompt || '', context);
+        const apiKey = process.env.OPENAI_API_KEY || 'mock-key';
+        let resultText = "Mock OpenAI completion success!";
+        if (apiKey && apiKey !== 'mock-key') {
+          try {
+            const res = await fetch('https://api.openai.com/v1/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                model: node.data?.model || 'gpt-4o',
+                messages: [{ role: 'user', content: prompt }]
+              })
+            });
+            const resJson = await res.json();
+            resultText = resJson.choices?.[0]?.message?.content || resultText;
+          } catch (e) {
+            console.error('Real OpenAI call failed, falling back to mock:', e.message);
+          }
+        }
+        nodeOutput = { result: resultText, prompt };
+        stepLogs.push({
+          time: new Date().toISOString(),
+          nodeId: node.id,
+          message: `OpenAI execution complete. Result: ${resultText}`
+        });
+      }
+      else if (node.type === 'slack' || node.type === 'action.slack') {
+        const webhookUrl = interpolateTemplate(node.data?.webhookUrl || '', context);
+        const text = interpolateTemplate(node.data?.text || '', context);
+        if (webhookUrl && webhookUrl.startsWith('http')) {
+          try {
+            await fetch(webhookUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ text })
+            });
+          } catch (e) {
+            console.error('Slack publish failed:', e.message);
+          }
+        }
+        nodeOutput = { success: true, text };
+        stepLogs.push({
+          time: new Date().toISOString(),
+          nodeId: node.id,
+          message: `Slack message published to webhook: ${webhookUrl}`
+        });
+      }
+      else if (node.type === 'discord' || node.type === 'action.discord') {
+        const webhookUrl = interpolateTemplate(node.data?.webhookUrl || '', context);
+        const content = interpolateTemplate(node.data?.content || '', context);
+        if (webhookUrl && webhookUrl.startsWith('http')) {
+          try {
+            await fetch(webhookUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ content })
+            });
+          } catch (e) { 
+            console.error('Discord publish failed:', e.message);
+          }
+        }
+        nodeOutput = { success: true, content };
+        stepLogs.push({
+          time: new Date().toISOString(),
+          nodeId: node.id,
+          message: `Discord message published to webhook: ${webhookUrl}`
+        });
+      }
 
       // Record output in context
       context.steps[node.id] = nodeOutput;
@@ -328,6 +587,8 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
       }
     });
 
+    return { success: true, webhookResponse: context.webhookResponse, steps: context.steps };
+
   } catch (error) {
     console.error('Workflow Execution Error:', error);
     stepLogs.push({
@@ -344,5 +605,7 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
         responseData: JSON.stringify(context.steps || {})
       }
     });
+
+    return { success: false, error: error.message };
   }
 }

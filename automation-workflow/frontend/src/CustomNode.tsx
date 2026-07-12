@@ -179,3 +179,153 @@ export const CodeNode = memo(({ data, selected }: any) => {
     </div>
   );
 });
+
+// Circle end node trigger style
+export const EndNode = memo(({ data, selected }: any) => {
+  return (
+    <div className="relative group flex flex-col items-center">
+      <div className={`w-14 h-14 rounded-full bg-[#0a0a0a] border flex items-center justify-center relative transition-all duration-300 ${
+        selected ? 'border-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.2)]' : 'border-white/5 hover:border-rose-500/30'
+      }`}>
+        <span className="material-symbols-outlined !text-xl opacity-60 text-white">
+          stop_circle
+        </span>
+      </div>
+      <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] uppercase tracking-widest font-medium opacity-40">
+        {data.label || 'End'}
+      </div>
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="input"
+        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !left-[-4px] hover:!bg-[#ef4444]"
+      />
+    </div>
+  );
+});
+
+// Circle start node trigger style
+export const StartNode = memo(({ data, selected }: any) => {
+  return (
+    <div className="relative group flex flex-col items-center">
+      <div className={`w-14 h-14 rounded-full bg-[#0a0a0a] border flex items-center justify-center relative transition-all duration-300 ${
+        selected ? 'border-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.2)]' : 'border-white/5 hover:border-amber-500/30'
+      }`}>
+        <span className="material-symbols-outlined !text-xl opacity-60 text-white">
+          play_arrow
+        </span>
+      </div>
+      <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] uppercase tracking-widest font-medium opacity-40">
+        {data.label || 'Start Trigger'}
+      </div>
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="output"
+        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !right-[-4px] hover:!bg-amber-500"
+      />
+    </div>
+  );
+});
+
+// Google Form Webhook Trigger card style
+export const GoogleFormTriggerNode = memo(({ data, selected }: any) => {
+  return (
+    <div className={`node-card w-56 p-4 rounded-xl relative group cursor-pointer text-[#e5e2e1] text-left transition-all duration-300 ${
+      selected
+        ? 'bg-[#131313]/90 border-green-500 shadow-[0_0_12px_rgba(22,163,74,0.15)]'
+        : 'bg-[#131313]/90 border-green-600/30 hover:border-green-600/50 shadow-[0_0_12px_rgba(22,163,74,0.05)]'
+    }`}>
+      <div className="flex items-center gap-3 mb-2.5">
+        <span className="material-symbols-outlined text-green-400 !text-[18px]">description</span>
+        <span className="text-[11px] font-bold tracking-tight opacity-80">{data.label || 'Google Form Trigger'}</span>
+      </div>
+      <div className="text-[8px] font-mono text-neutral-400 flex flex-col gap-1">
+        <div className="text-[7px] uppercase tracking-widest text-green-400 font-bold mb-1">Webhook Endpoint</div>
+        <div className="bg-black/60 p-1.5 rounded truncate text-[7px]" title={data.webhookUrl}>
+          {data.webhookUrl || 'Generate after save'}
+        </div>
+        <p className="text-[7px] leading-normal opacity-60 mt-1">
+          💡 Paste this URL into Google Apps Script `onSubmit` event trigger to link form submissions!
+        </p>
+      </div>
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="output"
+        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !right-[-4px] hover:!bg-green-500"
+      />
+    </div>
+  );
+});
+
+// Schedule Trigger node style
+export const ScheduleTriggerNode = memo(({ data, selected }: any) => {
+  const type = data?.scheduleType || 'interval';
+  const val = data?.intervalValue || 10;
+  const unit = data?.intervalUnit || 'seconds';
+  const cron = data?.cronExpression || '*/10 * * * * *';
+  const cDate = data?.customDate ? new Date(data.customDate).toLocaleString() : '';
+
+  let scheduleText = `Every ${val} ${unit}`;
+  if (type === 'cron') scheduleText = `Cron: ${cron}`;
+  if (type === 'date') scheduleText = `Once: ${cDate || 'Not Set'}`;
+
+  return (
+    <div className="relative group flex flex-col items-center">
+      <div className={`w-14 h-14 rounded-full bg-[#0a0a0a] border flex items-center justify-center relative transition-all duration-300 ${
+        selected ? 'border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.2)]' : 'border-white/5 hover:border-amber-400/30'
+      }`}>
+        <span className="material-symbols-outlined !text-xl opacity-60 text-amber-400" data-icon="alarm">
+          alarm
+        </span>
+      </div>
+      <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] uppercase tracking-widest font-semibold text-neutral-400">
+        {data.label || 'Schedule'}
+      </div>
+      <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 whitespace-nowrap text-[7px] text-neutral-500">
+        {scheduleText}
+      </div>
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="output"
+        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !right-[-4px] hover:!bg-amber-400 hover:!border-amber-400"
+      />
+    </div>
+  );
+});
+
+// Google Sheets action/read/write card style
+export const GoogleSheetsNode = memo(({ data, selected }: any) => {
+  const action = data?.action || 'read';
+  const sheetName = data?.sheetName || 'Sheet1';
+  const mockType = data?.mockDataType || 'blog_news';
+  const isRead = action === 'read';
+
+  return (
+    <div className={nodeCardClass(selected)}>
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="input"
+        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !left-[-4px] hover:!bg-green-500"
+      />
+      <div className="flex items-center gap-3 mb-2.5">
+        <span className="material-symbols-outlined opacity-50 !text-[18px] text-emerald-500" data-icon="table_chart">table_chart</span>
+        <span className="text-[11px] font-bold tracking-tight opacity-90 text-white">{data.label || 'Google Sheets'}</span>
+      </div>
+      <div className="text-[9px] font-mono text-neutral-400 flex flex-col gap-0.5 text-left">
+        <div>Action: <span className="text-emerald-400 font-bold uppercase text-[8px]">{action}</span></div>
+        <div>Sheet: <span className="opacity-80 text-white">{sheetName}</span></div>
+        {isRead && <div>Data: <span className="opacity-60">{mockType === 'blog_news' ? 'Blog Posts' : mockType === 'crm_leads' ? 'CRM Leads' : 'Custom JSON'}</span></div>}
+      </div>
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="output"
+        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !right-[-4px] hover:!bg-green-500"
+      />
+    </div>
+  );
+});

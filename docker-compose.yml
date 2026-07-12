@@ -7,8 +7,8 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"  # Next.js Port
-      - "4001:4001"  # Companion Express API Port (Avoids conflict on 4000)
+      - "3000:3000" # Next.js Port
+      - "4001:4001" # Companion Express API Port (Avoids conflict on 4000)
     environment:
       - PORT=4001
       - NODE_ENV=production
@@ -20,12 +20,12 @@ services:
       context: ./automation-workflow
       dockerfile: backend/Dockerfile
     ports:
-      - "4000:4000"  # REST Engine API Port
+      - "4000:4000" # REST Engine API Port
     environment:
       - PORT=4000
-      - DATABASE_URL=file:../dev.db
+      - DATABASE_URL=file:/app/database/dev.db
     volumes:
-      - db-data:/app
+      - db-data:/app/database
     restart: always
 
   # 3. Automation Workflow React Flow Frontend Canvas
@@ -34,7 +34,7 @@ services:
       context: ./automation-workflow/frontend
       dockerfile: Dockerfile
     ports:
-      - "5173:80"   # Vite UI dev port proxy mapping (Nginx hosts index)
+      - "5173:80" # Vite UI dev port proxy mapping (Nginx hosts index)
     depends_on:
       - automation-backend
     restart: always

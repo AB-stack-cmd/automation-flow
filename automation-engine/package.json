@@ -20,5 +20,8 @@
     "turbo": "^1.10.15",
     "typescript": "^5.2.2"
   },
-  "packageManager": "pnpm@8.15.4"
+  "packageManager": "pnpm@8.15.4",
+  "dependencies": {
+    "zod": "^4.4.3"
+  }
 }

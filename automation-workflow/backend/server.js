@@ -142,6 +142,129 @@ app.post('/api/workflows/:id/execute', async (req, res) => {
   }
 });
 
+// --- VALIDATION & SANITIZATION HELPERS ---
+function sanitizeValue(val, type) {
+  if (typeof val !== 'string') return val;
+  let cleaned = val.trim();
+  cleaned = cleaned.replace(/\s+/g, ' ');
+  if (type === 'email') {
+    cleaned = cleaned.toLowerCase();
+  } else if (type === 'phone') {
+    cleaned = cleaned.replace(/[^\d+]/g, '');
+  }
+  // Remove scripts & escape HTML to shield against XSS/script injection
+  cleaned = cleaned
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/javascript:/gi, '')
+    .replace(/on\w+\s*=/gi, '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .replace(/\//g, '&#x2F;');
+  return cleaned;
+}
+
+function validateAndSanitizePayload(body, nodeFields) {
+  const sanitized = {};
+  const errors = {};
+  
+  if (nodeFields && Array.isArray(nodeFields)) {
+    for (const field of nodeFields) {
+      const name = field.name || field.id;
+      if (!name) continue;
+      
+      let val = body[name];
+      if (field.required && (val === undefined || val === null || val === '')) {
+        errors[name] = `${field.label || name} is required.`;
+        continue;
+      }
+      
+      if (val === undefined || val === null || val === '') {
+        sanitized[name] = field.defaultValue || '';
+        continue;
+      }
+      
+      sanitized[name] = sanitizeValue(val, field.type);
+    }
+    return { success: Object.keys(errors).length === 0, errors, data: sanitized };
+  }
+  
+  // Default: sanitize everything
+  for (const [key, val] of Object.entries(body)) {
+    if (typeof val === 'string') {
+      let type = 'text';
+      if (key.toLowerCase().includes('email')) type = 'email';
+      else if (key.toLowerCase().includes('phone') || key.toLowerCase().includes('mobile')) type = 'phone';
+      sanitized[key] = sanitizeValue(val, type);
+    } else {
+      sanitized[key] = val;
+    }
+  }
+  return { success: true, errors: {}, data: sanitized };
+}
+
+// Google Form Webhook execution endpoint
+app.post('/api/webhooks/google-form/:workflowId', async (req, res) => {
+  try {
+    const { workflowId } = req.params;
+    const triggerData = req.body || {};
+
+    const workflow = await prisma.workflow.findUnique({
+      where: { id: parseInt(workflowId, 10) }
+    });
+
+    if (!workflow) return res.status(404).json({ error: 'Workflow not found' });
+    if (!workflow.isActive) return res.status(400).json({ error: 'Workflow is inactive' });
+
+    const { nodes } = JSON.parse(workflow.definition);
+    const formTriggerNode = nodes.find(n => n.type === 'google_form_trigger');
+
+    // Run custom form validations if fields are declared in the trigger
+    const fields = formTriggerNode?.data?.fields || null;
+    const valResult = validateAndSanitizePayload(triggerData, fields);
+    if (!valResult.success) {
+      return res.status(400).json({
+        error: 'Validation failed.',
+        validationErrors: valResult.errors
+      });
+    }
+    const sanitizedTriggerData = valResult.data;
+
+    const execution = await prisma.executionLog.create({
+      data: {
+        workflowId: workflow.id,
+        status: 'running',
+        logs: JSON.stringify([{ time: new Date().toISOString(), message: 'Triggered via Google Form submission hook' }]),
+        triggerData: JSON.stringify(sanitizedTriggerData)
+      }
+    });
+
+    const context = { trigger: sanitizedTriggerData, steps: {} };
+    const startNodeId = formTriggerNode ? formTriggerNode.id : null;
+
+    const result = await executeWorkflow(workflow.id, execution.id, startNodeId, context);
+
+    if (result && result.webhookResponse) {
+      const resInfo = result.webhookResponse;
+      if (resInfo.headers) {
+        for (const [k, v] of Object.entries(resInfo.headers)) {
+          res.setHeader(k, String(v));
+        }
+      }
+      if (resInfo.responseMode === 'redirect') {
+        return res.redirect(resInfo.statusCode || 302, resInfo.body);
+      }
+      return res.status(resInfo.statusCode || 200).send(resInfo.body);
+    }
+
+    res.json({ success: true, executionId: execution.id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Webhook execution endpoint
 app.post('/api/webhooks/:workflowId', async (req, res) => {
   try {
@@ -155,17 +278,44 @@ app.post('/api/webhooks/:workflowId', async (req, res) => {
     if (!workflow) return res.status(404).json({ error: 'Workflow not found' });
     if (!workflow.isActive) return res.status(400).json({ error: 'Workflow is inactive' });
 
+    // Validate and sanitize standard webhook payload
+    const { nodes } = JSON.parse(workflow.definition);
+    const triggerNode = nodes.find(n => n.type === 'webhook' || n.type === 'trigger');
+    const fields = triggerNode?.data?.fields || null;
+    
+    const valResult = validateAndSanitizePayload(triggerData, fields);
+    if (!valResult.success) {
+      return res.status(400).json({
+        error: 'Validation failed.',
+        validationErrors: valResult.errors
+      });
+    }
+    const sanitizedTriggerData = valResult.data;
+
     const execution = await prisma.executionLog.create({
       data: {
         workflowId: workflow.id,
         status: 'running',
         logs: JSON.stringify([{ time: new Date().toISOString(), message: 'Triggered via incoming Webhook' }]),
-        triggerData: JSON.stringify(triggerData)
+        triggerData: JSON.stringify(sanitizedTriggerData)
       }
     });
 
-    const context = { trigger: triggerData, steps: {} };
-    executeWorkflow(workflow.id, execution.id, null, context);
+    const context = { trigger: sanitizedTriggerData, steps: {} };
+    const result = await executeWorkflow(workflow.id, execution.id, null, context);
+
+    if (result && result.webhookResponse) {
+      const resInfo = result.webhookResponse;
+      if (resInfo.headers) {
+        for (const [k, v] of Object.entries(resInfo.headers)) {
+          res.setHeader(k, String(v));
+        }
+      }
+      if (resInfo.responseMode === 'redirect') {
+        return res.redirect(resInfo.statusCode || 302, resInfo.body);
+      }
+      return res.status(resInfo.statusCode || 200).send(resInfo.body);
+    }
 
     res.json({ success: true, executionId: execution.id });
   } catch (err) {
