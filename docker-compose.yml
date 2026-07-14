@@ -39,5 +39,63 @@ services:
       - automation-backend
     restart: always
 
+  # 4. Automation Engine Postgres Database
+  automation-engine-postgres:
+    image: postgres:16-alpine
+    container_name: automation-engine-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: automation
+    ports:
+      - "5432:5432"
+    volumes:
+      - engine-pgdata:/var/lib/postgresql/data
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 5. Automation Engine Redis
+  automation-engine-redis:
+    image: redis:7-alpine
+    container_name: automation-engine-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - engine-redisdata:/data
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 6. Automation Engine Production-Grade Next.js UI & Web Server
+  automation-engine-web:
+    build:
+      context: ./automation-engine
+      dockerfile: Dockerfile
+    ports:
+      - "5174:3001" # Mapped to port 5174 as referenced in the root landing page
+    environment:
+      - PORT=3001
+      - NODE_ENV=production
+      - DATABASE_URL=file:/app/packages/db/prisma/dev.db
+    volumes:
+      - engine-db-data:/app/packages/db/prisma
+    depends_on:
+      automation-engine-postgres:
+        condition: service_healthy
+      automation-engine-redis:
+        condition: service_healthy
+    restart: always
+
 volumes:
   db-data:
+  engine-db-data:
+  engine-pgdata:
+  engine-redisdata:
+
