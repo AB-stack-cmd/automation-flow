@@ -1305,6 +1305,9 @@ return {
           background: #1c1b1b;
           border-left: 2px solid #facc15;
         }
+        .material-symbols-outlined {
+          display: none !important;
+        }
       `}</style>
 
       {/* SideNavBar */}

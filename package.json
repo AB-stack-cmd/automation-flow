@@ -8,7 +8,12 @@
     "build": "next build",
     "start": "next start",
     "server": "node server/index.js",
-    "dev:full": "concurrently \"npm run dev\" \"npm run server\""
+    "dev:full": "concurrently \"npm run dev\" \"npm run server\"",
+    "db:push:workflow": "npm run prisma --prefix automation-workflow/backend -- db push --schema=../prisma/schema.prisma",
+    "dev:all": "npm run db:push:workflow && concurrently \"npm run dev\" \"npm run server\" \"npm run dev --prefix automation-workflow/backend\" \"npm run dev --prefix automation-workflow/frontend\"",
+    "docker:up": "docker compose up --build -d",
+    "docker:down": "docker compose down",
+    "docker:status": "docker compose ps"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

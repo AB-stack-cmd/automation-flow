@@ -6,3 +6,6 @@ build
 .env
 *.db
 *.db-journal
+.git
+automation-workflow/
+automation-engine/
