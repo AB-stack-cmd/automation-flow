@@ -20,6 +20,9 @@ RUN npm ci
 # Copy all codebase source files
 COPY . .
 
+# Ensure sqlite volume directory exists
+RUN mkdir -p /app/packages/db/prisma/data
+
 # Generate the database prisma client
 RUN npm run db:generate
 

@@ -16,4 +16,4 @@ EXPOSE 3000
 EXPOSE 4001
 
 # Run both Next.js frontend and root companion Express server concurrently
-CMD ["npm", "run", "dev:full"]
+CMD ["npm", "run", "start:full"]

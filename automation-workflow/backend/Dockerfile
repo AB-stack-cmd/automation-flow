@@ -5,6 +5,9 @@ WORKDIR /app
 # Install openssl for prisma engine
 RUN apk add --no-cache openssl
 
+# Ensure database storage directory exists
+RUN mkdir -p /app/database
+
 # Copy dependency manifests
 COPY backend/package*.json ./backend/
 COPY prisma ./prisma/

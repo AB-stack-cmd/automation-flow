@@ -19,7 +19,11 @@ import {
   StartNode,
   GoogleFormTriggerNode,
   ScheduleTriggerNode,
-  GoogleSheetsNode
+  GoogleSheetsNode,
+  OpenAINode,
+  SlackNode,
+  DiscordNode,
+  RespondToWebhookNode
 } from './CustomNode';
 
 const nodeTypes = {
@@ -34,7 +38,15 @@ const nodeTypes = {
   start_trigger: StartNode,
   google_form_trigger: GoogleFormTriggerNode,
   schedule_trigger: ScheduleTriggerNode,
-  google_sheets: GoogleSheetsNode
+  google_sheets: GoogleSheetsNode,
+  openai: OpenAINode,
+  'action.openai': OpenAINode,
+  slack: SlackNode,
+  'action.slack': SlackNode,
+  discord: DiscordNode,
+  'action.discord': DiscordNode,
+  respond_to_webhook: RespondToWebhookNode,
+  'action.respondToWebhook': RespondToWebhookNode
 };
 
 const BACKEND_URL = 'http://localhost:4000';
@@ -1041,6 +1053,37 @@ return {
           rowData: '{\n  "email": "{{trigger.email}}",\n  "name": "{{trigger.name}}",\n  "status": "synchronized"\n}'
         };
         break;
+      case 'openai':
+        label = 'OpenAI GPT Summarizer';
+        extraData = {
+          prompt: 'Write a concise summary of this item:\nTitle: {{trigger.title}}\nContent: {{trigger.content}}',
+          model: 'gpt-4o'
+        };
+        break;
+      case 'slack':
+        label = 'Post to Slack';
+        extraData = {
+          webhookUrl: 'https://hooks.slack.com/services/mock-webhook-url',
+          text: '📢 *Workflow Alert:* {{trigger.title}}'
+        };
+        break;
+      case 'discord':
+        label = 'Discord Alert';
+        extraData = {
+          webhookUrl: 'https://discord.com/api/webhooks/mock-webhook-url',
+          content: '🚀 *New Notification:* {{trigger.email}} registered!'
+        };
+        break;
+      case 'respond_to_webhook':
+        label = 'Custom Webhook Response';
+        extraData = {
+          responseMode: 'json',
+          statusCode: 200,
+          headers: '{\n  "Content-Type": "application/json"\n}',
+          responseBody: '{\n  "success": true,\n  "message": "Processed successfully"\n}',
+          redirectUrl: ''
+        };
+        break;
     }
 
     const newNode = {
@@ -1718,6 +1761,38 @@ return {
                           </button>
 
                           <button
+                            onClick={() => addNode('openai')}
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-purple-900/30 bg-purple-950/10 hover:bg-purple-950/20 text-purple-400 text-[10px] font-bold text-left transition-all"
+                          >
+                            <span className="material-symbols-outlined !text-[13px]">psychology</span>
+                            <span>OpenAI GPT</span>
+                          </button>
+
+                          <button
+                            onClick={() => addNode('slack')}
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-teal-900/30 bg-teal-950/10 hover:bg-teal-950/20 text-teal-400 text-[10px] font-bold text-left transition-all"
+                          >
+                            <span className="material-symbols-outlined !text-[13px]">forum</span>
+                            <span>Post to Slack</span>
+                          </button>
+
+                          <button
+                            onClick={() => addNode('discord')}
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-indigo-900/30 bg-indigo-950/10 hover:bg-indigo-950/20 text-indigo-400 text-[10px] font-bold text-left transition-all"
+                          >
+                            <span className="material-symbols-outlined !text-[13px]">mark_chat_read</span>
+                            <span>Discord Alert</span>
+                          </button>
+
+                          <button
+                            onClick={() => addNode('respond_to_webhook')}
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-blue-900/30 bg-blue-950/10 hover:bg-blue-950/20 text-blue-400 text-[10px] font-bold text-left transition-all"
+                          >
+                            <span className="material-symbols-outlined !text-[13px]">send</span>
+                            <span>Webhook Response</span>
+                          </button>
+
+                          <button
                             onClick={() => addNode('ifelse')}
                             className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-fuchsia-900/30 bg-fuchsia-950/10 hover:bg-fuchsia-950/20 text-fuchsia-400 text-[10px] font-bold text-left transition-all"
                           >
@@ -2241,6 +2316,156 @@ return {
                               </p>
                             </div>
                           )}
+                        </>
+                      )}
+
+                      {(selectedNode.type === 'openai' || selectedNode.type === 'action.openai') && (
+                        <>
+                          <div>
+                            <label className="block text-neutral-400 font-bold mb-1">AI Model</label>
+                            <select
+                              value={selectedNode.data?.model || 'gpt-4o'}
+                              onChange={(e) => updateNodeData('model', e.target.value)}
+                              className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none cursor-pointer"
+                            >
+                              <option value="gpt-4o">GPT-4o (Recommended / Standard)</option>
+                              <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                              <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Fast)</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-neutral-400 font-bold mb-1">Prompt Template</label>
+                            <textarea
+                              value={selectedNode.data?.prompt || ''}
+                              onChange={(e) => updateNodeData('prompt', e.target.value)}
+                              rows={5}
+                              className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none font-mono text-[9px]"
+                              placeholder="Please summarize: {{trigger.title}} ..."
+                            />
+                            <p className="text-[9px] text-neutral-500 leading-normal mt-1">
+                              Supports template placeholders: {"{{trigger.field}}"} and {"{{steps.node_id.result}}"}.
+                            </p>
+                          </div>
+                        </>
+                      )}
+
+                      {(selectedNode.type === 'slack' || selectedNode.type === 'action.slack') && (
+                        <>
+                          <div>
+                            <label className="block text-neutral-400 font-bold mb-1">Slack Webhook URL</label>
+                            <input
+                              type="text"
+                              value={selectedNode.data?.webhookUrl || ''}
+                              onChange={(e) => updateNodeData('webhookUrl', e.target.value)}
+                              className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none"
+                              placeholder="https://hooks.slack.com/services/..."
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-neutral-400 font-bold mb-1">Message Text</label>
+                            <textarea
+                              value={selectedNode.data?.text || ''}
+                              onChange={(e) => updateNodeData('text', e.target.value)}
+                              rows={4}
+                              className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none font-mono text-[9px]"
+                              placeholder="📢 Alert: {{trigger.title}}"
+                            />
+                            <p className="text-[9px] text-neutral-500 leading-normal mt-1">
+                              Supports Slack markdown formatting and {"{{steps.node_id.result}}"}.
+                            </p>
+                          </div>
+                        </>
+                      )}
+
+                      {(selectedNode.type === 'discord' || selectedNode.type === 'action.discord') && (
+                        <>
+                          <div>
+                            <label className="block text-neutral-400 font-bold mb-1">Discord Webhook URL</label>
+                            <input
+                              type="text"
+                              value={selectedNode.data?.webhookUrl || ''}
+                              onChange={(e) => updateNodeData('webhookUrl', e.target.value)}
+                              className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none"
+                              placeholder="https://discord.com/api/webhooks/..."
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-neutral-400 font-bold mb-1">Message Content</label>
+                            <textarea
+                              value={selectedNode.data?.content || ''}
+                              onChange={(e) => updateNodeData('content', e.target.value)}
+                              rows={4}
+                              className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none font-mono text-[9px]"
+                              placeholder="🚀 New Event: {{trigger.email}}"
+                            />
+                            <p className="text-[9px] text-neutral-500 leading-normal mt-1">
+                              Supports Discord markdown and placeholders like {"{{trigger.email}}"}.
+                            </p>
+                          </div>
+                        </>
+                      )}
+
+                      {(selectedNode.type === 'respond_to_webhook' || selectedNode.type === 'action.respondToWebhook') && (
+                        <>
+                          <div>
+                            <label className="block text-neutral-400 font-bold mb-1">Response Mode</label>
+                            <select
+                              value={selectedNode.data?.responseMode || 'json'}
+                              onChange={(e) => updateNodeData('responseMode', e.target.value)}
+                              className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none cursor-pointer"
+                            >
+                              <option value="json">JSON Body</option>
+                              <option value="text">Raw Text / HTML</option>
+                              <option value="redirect">HTTP Redirect</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-neutral-400 font-bold mb-1">HTTP Status Code</label>
+                            <input
+                              type="number"
+                              value={selectedNode.data?.statusCode || 200}
+                              onChange={(e) => updateNodeData('statusCode', parseInt(e.target.value, 10))}
+                              className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none"
+                              placeholder="200"
+                            />
+                          </div>
+
+                          {selectedNode.data?.responseMode === 'redirect' ? (
+                            <div>
+                              <label className="block text-neutral-400 font-bold mb-1">Redirect Target URL</label>
+                              <input
+                                type="text"
+                                value={selectedNode.data?.redirectUrl || ''}
+                                onChange={(e) => updateNodeData('redirectUrl', e.target.value)}
+                                className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none"
+                                placeholder="https://your-site.com/thank-you"
+                              />
+                            </div>
+                          ) : (
+                            <div>
+                              <label className="block text-neutral-400 font-bold mb-1">Response Body</label>
+                              <textarea
+                                value={selectedNode.data?.responseBody || '{\n  "success": true\n}'}
+                                onChange={(e) => updateNodeData('responseBody', e.target.value)}
+                                rows={4}
+                                className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none font-mono text-[9px]"
+                              />
+                            </div>
+                          )}
+
+                          <div>
+                            <label className="block text-neutral-400 font-bold mb-1">Headers (JSON)</label>
+                            <textarea
+                              value={selectedNode.data?.headers || '{\n  "Content-Type": "application/json"\n}'}
+                              onChange={(e) => updateNodeData('headers', e.target.value)}
+                              rows={3}
+                              className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none font-mono text-[9px]"
+                            />
+                          </div>
                         </>
                       )}
                     </div>

@@ -2,7 +2,7 @@
 import express from "express";
 
 const app = express();
-const PORT = process.env.PORT || 4001;
+const PORT = process.env.EXPRESS_PORT || process.env.PORT || 4001;
 
 // Simple health‑check endpoint
 app.get("/api/health", (req, res) => {

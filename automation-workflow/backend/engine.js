@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import nodemailer from 'nodemailer';
 
 const prisma = new PrismaClient();
 
@@ -55,18 +56,21 @@ function interpolateTemplate(template, context) {
 /**
  * Safely evaluates custom JavaScript code.
  */
-function evaluateCode(codeString, context) {
+async function evaluateCode(codeString, context) {
   try {
     const run = new Function('context', `
-      try {
-        const trigger = context.trigger || {};
-        const steps = context.steps || {};
-        ${codeString}
-      } catch(e) {
-        return { error: e.message };
-      }
+      return (async () => {
+        try {
+          const trigger = context.trigger || {};
+          const steps = context.steps || {};
+          ${codeString}
+        } catch(e) {
+          return { error: e.message };
+        }
+      })();
     `);
-    return run(context) || {};
+    const result = await run(context);
+    return result || {};
   } catch (err) {
     return { error: err.message };
   }
@@ -277,6 +281,7 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
 
         // Replace templates in subject/body
         const renderText = (text) => {
+          if (typeof text !== 'string') return text || '';
           return text.replace(/\{\{([^}]+)\}\}/g, (_, path) => {
             const parts = path.trim().split('.');
             let val = context;
@@ -291,6 +296,48 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
         const resolvedSubject = renderText(subject);
         const resolvedBody = renderText(body);
 
+        let deliveryMode = 'simulated';
+        let logMsg = `Successfully simulated sent email to ${resolvedTo}`;
+
+        // Check if real SMTP credentials exist in environment variables or node settings
+        const smtpHost = process.env.SMTP_HOST || node.data?.smtpHost;
+        const smtpUser = process.env.SMTP_USER || node.data?.smtpUser;
+        const smtpPass = process.env.SMTP_PASS || node.data?.smtpPass;
+        const smtpPort = parseInt(process.env.SMTP_PORT || node.data?.smtpPort || '587', 10);
+        const smtpSecure = process.env.SMTP_SECURE === 'true' || smtpPort === 465;
+
+        if (smtpUser && smtpPass) {
+          try {
+            const transporter = nodemailer.createTransport({
+              host: smtpHost || 'smtp.gmail.com',
+              port: smtpPort,
+              secure: smtpSecure,
+              auth: {
+                user: smtpUser,
+                pass: smtpPass
+              }
+            });
+
+            await transporter.sendMail({
+              from: process.env.EMAIL_FROM || `"NEURON_FLOW Automation" <${smtpUser}>`,
+              to: resolvedTo,
+              subject: resolvedSubject,
+              text: resolvedBody,
+              html: `<div style="font-family: Arial, sans-serif; padding: 20px; line-height: 1.6;">${resolvedBody.replace(/\n/g, '<br/>')}</div>`
+            });
+
+            deliveryMode = 'real_smtp_sent';
+            logMsg = `Successfully sent REAL email via SMTP to ${resolvedTo}`;
+            console.log(`📧 [REAL SMTP DELIVERED] Sent email to ${resolvedTo} (${resolvedSubject})`);
+          } catch (smtpErr) {
+            console.error(`❌ [SMTP ERROR] Delivery failed to ${resolvedTo}:`, smtpErr.message);
+            deliveryMode = 'real_smtp_failed_fallback_simulated';
+            logMsg = `Real SMTP delivery failed (${smtpErr.message}). Stored in SimulatedEmail database.`;
+          }
+        } else {
+          console.log(`ℹ️ [SIMULATED EMAIL] To send real emails to ${resolvedTo}, set SMTP_USER and SMTP_PASS in .env`);
+        }
+
         const email = await prisma.simulatedEmail.create({
           data: {
             to: resolvedTo,
@@ -299,11 +346,11 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
           }
         });
 
-        nodeOutput = { status: 'sent', emailId: email.id, to: resolvedTo };
+        nodeOutput = { status: 'sent', deliveryMode, emailId: email.id, to: resolvedTo, subject: resolvedSubject };
         stepLogs.push({
           time: new Date().toISOString(),
           nodeId: node.id,
-          message: `Successfully simulated sent email to ${resolvedTo}`
+          message: logMsg
         });
       } 
       else if (node.type === 'crm_action' || node.type === 'crm_update') {
@@ -435,7 +482,7 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
       } 
       else if (node.type === 'code' || node.type === 'run_code') {
         const codeString = node.data?.code || 'return { success: true };';
-        const codeResult = evaluateCode(codeString, context);
+        const codeResult = await evaluateCode(codeString, context);
 
         nodeOutput = codeResult;
         stepLogs.push({

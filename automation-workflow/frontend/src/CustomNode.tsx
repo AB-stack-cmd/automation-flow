@@ -329,3 +329,110 @@ export const GoogleSheetsNode = memo(({ data, selected }: any) => {
     </div>
   );
 });
+
+// OpenAI GPT Node Card Style
+export const OpenAINode = memo(({ data, selected }: any) => {
+  return (
+    <div className={nodeCardClass(selected)}>
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="input"
+        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !left-[-4px] hover:!bg-purple-500"
+      />
+      <div className="flex items-center gap-3 mb-2.5">
+        <span className="material-symbols-outlined opacity-60 !text-[18px] text-purple-400" data-icon="psychology">psychology</span>
+        <span className="text-[11px] font-bold tracking-tight opacity-90 text-white">{data.label || 'OpenAI GPT'}</span>
+      </div>
+      <div className="text-[9px] font-mono text-neutral-400 flex flex-col gap-0.5 text-left">
+        <div>Model: <span className="text-purple-300 font-bold uppercase text-[8px]">{data.model || 'gpt-4o'}</span></div>
+        <div className="truncate opacity-70">Prompt: {data.prompt || 'Summarize text...'}</div>
+      </div>
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="output"
+        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !right-[-4px] hover:!bg-purple-500"
+      />
+    </div>
+  );
+});
+
+// Slack Integration Node Card Style
+export const SlackNode = memo(({ data, selected }: any) => {
+  return (
+    <div className={nodeCardClass(selected)}>
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="input"
+        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !left-[-4px] hover:!bg-teal-400"
+      />
+      <div className="flex items-center gap-3 mb-2.5">
+        <span className="material-symbols-outlined opacity-60 !text-[18px] text-teal-400" data-icon="forum">forum</span>
+        <span className="text-[11px] font-bold tracking-tight opacity-90 text-white">{data.label || 'Post to Slack'}</span>
+      </div>
+      <div className="text-[9px] font-mono text-neutral-400 flex flex-col gap-0.5 text-left">
+        <div className="truncate opacity-70">Message: {data.text || 'Slack notification'}</div>
+      </div>
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="output"
+        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !right-[-4px] hover:!bg-teal-400"
+      />
+    </div>
+  );
+});
+
+// Discord Integration Node Card Style
+export const DiscordNode = memo(({ data, selected }: any) => {
+  return (
+    <div className={nodeCardClass(selected)}>
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="input"
+        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !left-[-4px] hover:!bg-indigo-400"
+      />
+      <div className="flex items-center gap-3 mb-2.5">
+        <span className="material-symbols-outlined opacity-60 !text-[18px] text-indigo-400" data-icon="mark_chat_read">mark_chat_read</span>
+        <span className="text-[11px] font-bold tracking-tight opacity-90 text-white">{data.label || 'Discord Alert'}</span>
+      </div>
+      <div className="text-[9px] font-mono text-neutral-400 flex flex-col gap-0.5 text-left">
+        <div className="truncate opacity-70">Message: {data.content || 'Discord message'}</div>
+      </div>
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="output"
+        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !right-[-4px] hover:!bg-indigo-400"
+      />
+    </div>
+  );
+});
+
+// Respond to Webhook Node Card Style
+export const RespondToWebhookNode = memo(({ data, selected }: any) => {
+  const mode = data?.responseMode || 'json';
+  const status = data?.statusCode || '200';
+  return (
+    <div className={nodeCardClass(selected)}>
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="input"
+        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !left-[-4px] hover:!bg-blue-400"
+      />
+      <div className="flex items-center gap-3 mb-2.5">
+        <span className="material-symbols-outlined opacity-60 !text-[18px] text-blue-400" data-icon="send">send</span>
+        <span className="text-[11px] font-bold tracking-tight opacity-90 text-white">{data.label || 'Webhook Response'}</span>
+      </div>
+      <div className="text-[9px] font-mono text-neutral-400 flex flex-col gap-0.5 text-left">
+        <div>Status: <span className="text-blue-400 font-bold">{status}</span></div>
+        <div>Mode: <span className="uppercase text-[8px] opacity-80">{mode}</span></div>
+      </div>
+    </div>
+  );
+});
+
