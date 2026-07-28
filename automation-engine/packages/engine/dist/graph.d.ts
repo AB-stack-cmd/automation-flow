@@ -19,4 +19,9 @@ export interface RuntimeGraph {
     incomingCount: Map<string, number>;
 }
 export declare function buildGraph(workflow: WorkflowDefinition): RuntimeGraph;
+export declare function detectGraphCycle(graph: RuntimeGraph): {
+    hasCycle: boolean;
+    cyclePath?: string[];
+};
 export declare function topologicalOrderOrThrow(graph: RuntimeGraph): string[];
+export declare function computeTopologicalWaves(graph: RuntimeGraph): string[][];

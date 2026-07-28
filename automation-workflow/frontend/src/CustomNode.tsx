@@ -432,6 +432,12 @@ export const RespondToWebhookNode = memo(({ data, selected }: any) => {
         <div>Status: <span className="text-blue-400 font-bold">{status}</span></div>
         <div>Mode: <span className="uppercase text-[8px] opacity-80">{mode}</span></div>
       </div>
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="output"
+        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !right-[-4px] hover:!bg-blue-400"
+      />
     </div>
   );
 });

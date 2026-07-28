@@ -43,13 +43,63 @@ function evaluateCondition(expression, context) {
 function interpolateTemplate(template, context) {
   if (typeof template !== 'string') return template;
   return template.replace(/\{\{([^}]+)\}\}/g, (_, path) => {
-    const parts = path.trim().replace(/^\$/, '').split('.');
+    const rawPath = path.trim().replace(/^\$/, '');
+    const parts = rawPath.split(/\.|\s*\[\s*|\s*\]\s*/).filter(Boolean);
+    
+    // First try direct evaluation on context
     let val = context;
+    let found = true;
     for (const part of parts) {
       if (part === 'json') continue;
-      val = val?.[part];
+      if (val !== undefined && val !== null && typeof val === 'object' && part in val) {
+        val = val[part];
+      } else {
+        found = false;
+        break;
+      }
     }
-    return val !== undefined ? String(val) : '';
+
+    // If direct evaluation failed, check context.steps or context.trigger if first part isn't 'steps'/'trigger'
+    if (!found && parts.length > 0) {
+      const firstPart = parts[0];
+      if (firstPart !== 'steps' && firstPart !== 'trigger') {
+        // Try inside context.steps
+        if (context.steps && firstPart in context.steps) {
+          val = context.steps[firstPart];
+          found = true;
+          for (let i = 1; i < parts.length; i++) {
+            const part = parts[i];
+            if (part === 'json') continue;
+            if (val !== undefined && val !== null && typeof val === 'object' && part in val) {
+              val = val[part];
+            } else {
+              found = false;
+              break;
+            }
+          }
+        }
+        // Try inside context.trigger
+        if (!found && context.trigger && firstPart in context.trigger) {
+          val = context.trigger[firstPart];
+          found = true;
+          for (let i = 1; i < parts.length; i++) {
+            const part = parts[i];
+            if (part === 'json') continue;
+            if (val !== undefined && val !== null && typeof val === 'object' && part in val) {
+              val = val[part];
+            } else {
+              found = false;
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    if (found && val !== undefined && val !== null) {
+      return typeof val === 'object' ? JSON.stringify(val) : String(val);
+    }
+    return '';
   });
 }
 
@@ -153,7 +203,7 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
       let nodeOutput = {};
 
       // Process Node Types
-      if (node.type === 'trigger' || node.type === 'webhook' || node.type === 'crm_lead_trigger') {
+      if (node.type === 'trigger' || node.type === 'webhook' || node.type === 'crm_lead_trigger' || node.type === 'start_trigger' || node.type === 'google_form_trigger') {
         nodeOutput = { status: 'triggered', data: context.trigger };
       } 
       else if (node.type === 'schedule_trigger') {
@@ -473,10 +523,21 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
 
         // Find edge for True or False branch
         const targetHandle = evaluationResult ? 'true' : 'false';
-        const branchingEdges = edges.filter(e => e.source === node.id && e.sourceHandle === targetHandle);
+        const branchingEdges = edges.filter(e => {
+          if (e.source !== node.id) return false;
+          if (!e.sourceHandle) return true; // Fallback if handle unspecified
+          const h = e.sourceHandle.toLowerCase();
+          if (targetHandle === 'true') {
+            return h === 'true' || h === 'yes' || h === '1' || h === 'output_true';
+          } else {
+            return h === 'false' || h === 'no' || h === '0' || h === 'output_false';
+          }
+        });
 
         for (const edge of branchingEdges) {
-          queue.push(edge.target);
+          if (!queue.includes(edge.target)) {
+            queue.push(edge.target);
+          }
         }
         continue; // Avoid standard children push
       } 
@@ -621,7 +682,9 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
       // Queue standard children nodes (for nodes without custom branching handles)
       const outgoingEdges = edges.filter(e => e.source === node.id);
       for (const edge of outgoingEdges) {
-        queue.push(edge.target);
+        if (!queue.includes(edge.target)) {
+          queue.push(edge.target);
+        }
       }
     }
 

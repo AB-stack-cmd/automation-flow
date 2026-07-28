@@ -55,7 +55,52 @@ export function buildGraph(workflow: WorkflowDefinition): RuntimeGraph {
   return { nodesByName, outgoing, incomingCount };
 }
 
+export function detectGraphCycle(graph: RuntimeGraph): { hasCycle: boolean; cyclePath?: string[] } {
+  const state = new Map<string, 'WHITE' | 'GREY' | 'BLACK'>();
+  for (const name of graph.nodesByName.keys()) {
+    state.set(name, 'WHITE');
+  }
+
+  const stack: string[] = [];
+
+  function dfs(u: string): string[] | null {
+    state.set(u, 'GREY');
+    stack.push(u);
+
+    const edges = graph.outgoing.get(u) ?? [];
+    for (const edge of edges) {
+      const targetState = state.get(edge.toNode);
+      if (targetState === 'GREY') {
+        const cycleStartIndex = stack.indexOf(edge.toNode);
+        return [...stack.slice(cycleStartIndex), edge.toNode];
+      }
+      if (targetState === 'WHITE') {
+        const cycle = dfs(edge.toNode);
+        if (cycle) return cycle;
+      }
+    }
+
+    state.set(u, 'BLACK');
+    stack.pop();
+    return null;
+  }
+
+  for (const name of graph.nodesByName.keys()) {
+    if (state.get(name) === 'WHITE') {
+      const cycle = dfs(name);
+      if (cycle) return { hasCycle: true, cyclePath: cycle };
+    }
+  }
+
+  return { hasCycle: false };
+}
+
 export function topologicalOrderOrThrow(graph: RuntimeGraph): string[] {
+  const cycleCheck = detectGraphCycle(graph);
+  if (cycleCheck.hasCycle) {
+    throw new Error(`Cycle detected in workflow graph: ${cycleCheck.cyclePath?.join(' -> ')}`);
+  }
+
   const inDegree = new Map(graph.incomingCount);
   const queue: string[] = [...graph.nodesByName.keys()].filter(n => !inDegree.get(n));
   const order: string[] = [];
@@ -78,3 +123,35 @@ export function topologicalOrderOrThrow(graph: RuntimeGraph): string[] {
   }
   return order;
 }
+
+export function computeTopologicalWaves(graph: RuntimeGraph): string[][] {
+  const cycleCheck = detectGraphCycle(graph);
+  if (cycleCheck.hasCycle) {
+    throw new Error(`Cycle detected in workflow graph: ${cycleCheck.cyclePath?.join(' -> ')}`);
+  }
+
+  const inDegree = new Map(graph.incomingCount);
+  let currentWave: string[] = [...graph.nodesByName.keys()].filter(n => !inDegree.get(n));
+  const waves: string[][] = [];
+
+  while (currentWave.length > 0) {
+    waves.push(currentWave);
+    const nextWave: string[] = [];
+
+    for (const nodeName of currentWave) {
+      const edges = graph.outgoing.get(nodeName) ?? [];
+      for (const edge of edges) {
+        const remaining = (inDegree.get(edge.toNode) ?? 1) - 1;
+        inDegree.set(edge.toNode, remaining);
+        if (remaining === 0) {
+          nextWave.push(edge.toNode);
+        }
+      }
+    }
+
+    currentWave = nextWave;
+  }
+
+  return waves;
+}
+
