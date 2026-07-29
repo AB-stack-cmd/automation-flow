@@ -85,21 +85,6 @@ export default function Home() {
 
     const uTime = gl.getUniformLocation(prog, 'u_time');
     const uRes = gl.getUniformLocation(prog, 'u_resolution');
-    const uMouse = gl.getUniformLocation(prog, 'u_mouse');
-
-    let mouse = { x: canvas.width / 2, y: canvas.height / 2 };
-
-    const handleMouseMove = (event) => {
-      const rect = canvas.getBoundingClientRect();
-      if (rect.width && rect.height) {
-        const nx = (event.clientX - rect.left) / rect.width;
-        const ny = 1.0 - (event.clientY - rect.top) / rect.height;
-        mouse.x = nx * canvas.width;
-        mouse.y = ny * canvas.height;
-      }
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
 
     let animFrameId;
     function render(t) {
@@ -107,14 +92,12 @@ export default function Home() {
       gl.viewport(0, 0, canvas.width, canvas.height);
       if (uTime) gl.uniform1f(uTime, t * 0.001);
       if (uRes) gl.uniform2f(uRes, canvas.width, canvas.height);
-      if (uMouse) gl.uniform2f(uMouse, mouse.x, mouse.y);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       animFrameId = requestAnimationFrame(render);
     }
     render(0);
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
       if (animFrameId) cancelAnimationFrame(animFrameId);
       if (resizeObserver) resizeObserver.disconnect();
     };
@@ -269,13 +252,17 @@ export default function Home() {
               <span className="font-headline-md text-headline-md font-bold tracking-tighter text-primary dark:text-primary-fixed">NEURON_FLOW</span>
             </div>
             <nav className="hidden md:flex items-center gap-8">
-              <a className="text-primary font-bold border-b-2 border-primary pb-1 font-body-md text-body-md transition-colors" href="#">Platform</a>
-              <a className="text-on-surface-variant font-body-md text-body-md hover:text-primary transition-colors" href="#">Solutions</a>
-              <a className="text-on-surface-variant font-body-md text-body-md hover:text-primary transition-colors" href="#">Documentation</a>
-              <a className="text-on-surface-variant font-body-md text-body-md hover:text-primary transition-colors" href="#">Pricing</a>
+              <a className="text-primary font-bold border-b-2 border-primary pb-1 font-body-md text-body-md transition-colors" href="http://localhost:3000">Dashboard</a>
+              <a className="text-on-surface-variant font-body-md text-body-md hover:text-primary transition-colors" href="http://localhost:5173">Visual Designer</a>
+              <a className="text-on-surface-variant font-body-md text-body-md hover:text-primary transition-colors" href="http://localhost:5174">Production Engine</a>
+              <a className="text-on-surface-variant font-body-md text-body-md hover:text-primary transition-colors" href="/excel">Excel AI</a>
             </nav>
             <div className="flex items-center gap-4">
-              <a href="http://localhost:5173/" className="px-6 py-2 bg-primary-container text-on-primary-container font-label-md text-label-md rounded hover:opacity-90 active:scale-95 transition-all flex items-center justify-center">
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                Services Active: 4000 / 3000 / 5173
+              </div>
+              <a href="http://localhost:5173/" className="px-5 py-2 bg-primary-container text-on-primary-container font-label-md text-label-md rounded hover:opacity-90 active:scale-95 transition-all flex items-center justify-center font-bold">
                 Get Started
               </a>
             </div>

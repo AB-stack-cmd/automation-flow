@@ -143,13 +143,24 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
 
     const { nodes, edges } = JSON.parse(workflow.definition);
 
-    // Update execution log with initial trigger data
-    await prisma.executionLog.update({
-      where: { id: executionId },
-      data: {
-        triggerData: JSON.stringify(context.trigger || {})
-      }
-    });
+    // Create or update execution log
+    if (!executionId) {
+      const newExec = await prisma.executionLog.create({
+        data: {
+          workflowId,
+          status: 'running',
+          triggerData: JSON.stringify(context?.trigger || context || {})
+        }
+      });
+      executionId = newExec.id;
+    } else {
+      await prisma.executionLog.update({
+        where: { id: executionId },
+        data: {
+          triggerData: JSON.stringify(context?.trigger || context || {})
+        }
+      });
+    }
 
     // Build map for quick lookups
     const nodesMap = new Map(nodes.map(n => [n.id, n]));
@@ -704,7 +715,7 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
       }
     });
 
-    return { success: true, webhookResponse: context.webhookResponse, steps: context.steps };
+    return { success: true, executionId, webhookResponse: context.webhookResponse, steps: context.steps };
 
   } catch (error) {
     console.error('Workflow Execution Error:', error);

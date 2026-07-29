@@ -10,7 +10,7 @@ const prisma = new PrismaClient();
 
 function resolveParameters(paramValue: any, item: ItemData): any {
   if (paramValue === null || paramValue === undefined) return paramValue;
-  
+
   if (typeof paramValue === 'string') {
     return evaluateExpression(paramValue, item);
   }
@@ -241,6 +241,7 @@ export async function executeWorkflowAsync(
     stepLogs.push({ time: new Date().toISOString(), message: "Async pipeline completed successfully." });
     await updateLogs('success', true);
 
+    console.log('Completed Logs', JSON.stringify(stepLogs))
     return {
       success: true,
       executionId,

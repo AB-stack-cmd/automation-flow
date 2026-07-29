@@ -451,8 +451,8 @@ export default function ExcelAutomation() {
     try {
       showToast('Preparing workbook...');
       
-      // Dynamic import to prevent SSR/Next compile issues with fs / node components in SheetJS
-      const XLSX = await import('xlsx');
+      const XLSXModule = await import('xlsx');
+      const XLSX = XLSXModule.default || XLSXModule;
       
       // Build AoA
       const dataToExport = [columns, ...rows];
@@ -461,24 +461,16 @@ export default function ExcelAutomation() {
       const ws = XLSX.utils.aoa_to_sheet(dataToExport);
       
       // Apply basic column widths
-      const wscols = columns.map(c => ({ wch: Math.max(c.length + 4, 15) }));
+      const wscols = columns.map(c => ({ wch: Math.max(String(c || '').length + 4, 15) }));
       ws['!cols'] = wscols;
 
       // Create workbook
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Neuron AI Grid');
       
-      // Trigger download using safe client-side Blob approach
-      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-      const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `neuron_flow_data_${Date.now().toString().slice(-6)}.xlsx`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
+      const fileName = `neuron_flow_data_${Date.now().toString().slice(-6)}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
       showToast('Downloaded .xlsx file successfully!');
     } catch (err) {
       console.error(err);
@@ -598,7 +590,7 @@ export default function ExcelAutomation() {
           <div className="flex justify-between items-center h-16 px-6 max-w-7xl mx-auto">
             <div className="flex items-center gap-4">
               <Link href="/" className="px-3 py-1.5 rounded bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-white text-xs font-semibold flex items-center gap-1.5 border border-white/5 transition-all">
-                ← Home Dashboard
+                ← Dashboard
               </Link>
               <div className="h-4 w-[1px] bg-white/10"></div>
               <div className="flex items-center gap-2">
@@ -606,8 +598,17 @@ export default function ExcelAutomation() {
                 <span className="px-2 py-0.5 text-[9px] uppercase tracking-wider bg-primary-container/10 border border-primary-container/20 text-[#facc15] rounded">EXCEL_AI</span>
               </div>
             </div>
-            <div className="text-xs text-neutral-400 font-mono">
-              Status: <span className="text-emerald-400">ACTIVE ENGINE</span>
+            <nav className="hidden md:flex items-center gap-6 text-xs">
+              <a className="text-neutral-400 hover:text-white transition-colors" href="http://localhost:3000">Dashboard</a>
+              <a className="text-neutral-400 hover:text-white transition-colors" href="http://localhost:5173">Visual Designer</a>
+              <a className="text-neutral-400 hover:text-white transition-colors" href="http://localhost:5174">Production Engine</a>
+              <a className="text-[#facc15] font-bold border-b border-[#facc15] pb-0.5" href="/excel">Excel AI</a>
+            </nav>
+            <div className="flex items-center gap-3 text-xs text-neutral-400 font-mono">
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                Services Active: 4000 / 3000 / 5173
+              </div>
             </div>
           </div>
         </header>

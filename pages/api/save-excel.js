@@ -1,5 +1,7 @@
-import * as XLSX from 'xlsx';
+import * as XLSXModule from 'xlsx';
 import path from 'path';
+
+const XLSX = XLSXModule.default || XLSXModule;
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -19,7 +21,7 @@ export default async function handler(req, res) {
     const ws = XLSX.utils.aoa_to_sheet(dataToExport);
     
     // Apply basic column widths
-    const wscols = columns.map(c => ({ wch: Math.max(c.length + 4, 15) }));
+    const wscols = columns.map(c => ({ wch: Math.max(String(c || '').length + 4, 15) }));
     ws['!cols'] = wscols;
 
     // Create workbook

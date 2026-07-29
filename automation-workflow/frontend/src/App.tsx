@@ -1454,13 +1454,30 @@ return {
 
       {/* SideNavBar */}
       <aside className="h-screen w-64 border-r border-[#353534] flex flex-col py-8 bg-[#0e0e0e] flex-shrink-0 z-50">
-        <div className="px-8 mb-12 flex flex-col gap-1 text-left">
+        <div className="px-8 mb-6 flex flex-col gap-1 text-left">
           <a href="http://localhost:3000/" className="flex items-center gap-2 hover:opacity-85 transition text-white">
             <span className="material-symbols-outlined text-[#facc15] text-[22px]">hub</span>
             <span className="font-headline-md text-headline-md font-bold tracking-tight">NEURON_FLOW</span>
           </a>
           <span className="font-label-sm text-label-sm text-[#9a9078] uppercase tracking-widest pl-8">v2.0 Orchestrator</span>
         </div>
+
+        {/* Global Cross-App Launcher Links */}
+        <div className="px-4 mb-6">
+          <div className="text-[10px] font-mono text-neutral-500 uppercase tracking-wider px-3 mb-2">Switch Apps</div>
+          <div className="flex flex-col gap-1">
+            <a href="http://localhost:3000" className="flex items-center gap-2.5 px-3 py-1.5 rounded text-xs text-neutral-400 hover:text-white hover:bg-white/[0.04] transition">
+              <span className="w-2 h-2 rounded-full bg-yellow-400"></span> Dashboard (:3000)
+            </a>
+            <a href="http://localhost:5174" className="flex items-center gap-2.5 px-3 py-1.5 rounded text-xs text-neutral-400 hover:text-white hover:bg-white/[0.04] transition">
+              <span className="w-2 h-2 rounded-full bg-emerald-400"></span> Prod Engine (:5174)
+            </a>
+            <a href="http://localhost:3000/excel" className="flex items-center gap-2.5 px-3 py-1.5 rounded text-xs text-neutral-400 hover:text-white hover:bg-white/[0.04] transition">
+              <span className="w-2 h-2 rounded-full bg-sky-400"></span> Excel AI (:3000)
+            </a>
+          </div>
+        </div>
+
         <nav className="flex-1 space-y-2 px-4">
           <button
             onClick={() => setViewMode('overview')}
