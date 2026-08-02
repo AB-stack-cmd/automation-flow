@@ -15,20 +15,27 @@ export const TriggerNode = memo(({ data, selected }: any) => {
   return (
     <div className="relative group flex flex-col items-center">
       <div className={`w-14 h-14 rounded-full bg-[#0a0a0a] border flex items-center justify-center relative transition-all duration-300 ${
-        selected ? 'border-[#ef4444] shadow-[0_0_12px_rgba(239,68,68,0.2)]' : 'border-white/5 hover:border-[#ef4444]/30'
+        selected ? 'border-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.4)] scale-105' : 'border-emerald-400/40 hover:border-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.2)]'
       }`}>
-        <span className="material-symbols-outlined !text-xl opacity-60 text-white" data-icon={isCrm ? 'group_add' : 'alarm'}>
-          {isCrm ? 'group_add' : 'alarm'}
+        <span className="material-symbols-outlined !text-xl opacity-80 text-emerald-400" data-icon={isCrm ? 'group_add' : 'bolt'}>
+          {isCrm ? 'group_add' : 'bolt'}
         </span>
+
+        {/* Play SVG Overlay Badge matching node color */}
+        <div className="absolute -bottom-1 -right-1 w-4.5 h-4.5 rounded-full bg-[#0a0a0a] border border-emerald-400/80 flex items-center justify-center shadow-[0_0_6px_rgba(16,185,129,0.4)]">
+          <svg className="w-2.5 h-2.5 text-emerald-400 ml-0.5" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+        </div>
       </div>
-      <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] uppercase tracking-widest font-medium opacity-40">
-        {data.label || 'Start'}
+      <div className="mt-1.5 whitespace-nowrap text-[10px] uppercase tracking-widest font-bold text-emerald-400">
+        {data.label || 'Start Trigger'}
       </div>
       <Handle
         type="source"
         position={Position.Right}
         id="output"
-        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !right-[-4px] hover:!bg-[#ef4444] hover:!border-[#ef4444]"
+        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-emerald-400 !rounded-full !right-[-4px] hover:!bg-emerald-400"
       />
     </div>
   );
@@ -209,20 +216,28 @@ export const StartNode = memo(({ data, selected }: any) => {
   return (
     <div className="relative group flex flex-col items-center">
       <div className={`w-14 h-14 rounded-full bg-[#0a0a0a] border flex items-center justify-center relative transition-all duration-300 ${
-        selected ? 'border-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.2)]' : 'border-white/5 hover:border-amber-500/30'
+        selected ? 'border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.4)] scale-105' : 'border-amber-400/40 hover:border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.2)]'
       }`}>
-        <span className="material-symbols-outlined !text-xl opacity-60 text-white">
-          play_arrow
-        </span>
+        <svg className="w-6 h-6 text-amber-400 opacity-90 ml-0.5" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M8 5v14l11-7z" />
+        </svg>
+
+        {/* Play SVG Overlay Badge matching node color */}
+        <div className="absolute -bottom-1 -right-1 w-4.5 h-4.5 rounded-full bg-[#0a0a0a] border border-amber-400/80 flex items-center justify-center shadow-[0_0_6px_rgba(245,158,11,0.4)]">
+          <svg className="w-2.5 h-2.5 text-amber-400 ml-0.5" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+        </div>
       </div>
-      <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] uppercase tracking-widest font-medium opacity-40">
+
+      <div className="mt-1.5 whitespace-nowrap text-[10px] uppercase tracking-widest font-bold text-amber-400">
         {data.label || 'Start Trigger'}
       </div>
       <Handle
         type="source"
         position={Position.Right}
         id="output"
-        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !right-[-4px] hover:!bg-amber-500"
+        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-amber-400 !rounded-full !right-[-4px] hover:!bg-amber-400"
       />
     </div>
   );
@@ -237,8 +252,13 @@ export const GoogleFormTriggerNode = memo(({ data, selected }: any) => {
         : 'bg-[#131313]/90 border-green-600/30 hover:border-green-600/50 shadow-[0_0_12px_rgba(22,163,74,0.05)]'
     }`}>
       <div className="flex items-center gap-3 mb-2.5">
-        <span className="material-symbols-outlined text-green-400 !text-[18px]">description</span>
-        <span className="text-[11px] font-bold tracking-tight opacity-80">{data.label || 'Google Form Trigger'}</span>
+        <div className="relative flex items-center">
+          <span className="material-symbols-outlined text-green-400 !text-[18px]">description</span>
+          <svg className="w-3 h-3 text-green-400 absolute -bottom-1 -right-1" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+        </div>
+        <span className="text-[11px] font-bold tracking-tight opacity-90 text-white">{data.label || 'Google Form Trigger'}</span>
       </div>
       <div className="text-[8px] font-mono text-neutral-400 flex flex-col gap-1">
         <div className="text-[7px] uppercase tracking-widest text-green-400 font-bold mb-1">Webhook Endpoint</div>
@@ -246,7 +266,7 @@ export const GoogleFormTriggerNode = memo(({ data, selected }: any) => {
           {data.webhookUrl || 'Generate after save'}
         </div>
         <p className="text-[7px] leading-normal opacity-60 mt-1">
-          💡 Paste this URL into Google Apps Script `onSubmit` event trigger to link form submissions!
+          💡 Paste this URL into Google Apps Script `onSubmit` trigger to link form submissions!
         </p>
       </div>
       <Handle
@@ -274,23 +294,30 @@ export const ScheduleTriggerNode = memo(({ data, selected }: any) => {
   return (
     <div className="relative group flex flex-col items-center">
       <div className={`w-14 h-14 rounded-full bg-[#0a0a0a] border flex items-center justify-center relative transition-all duration-300 ${
-        selected ? 'border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.2)]' : 'border-white/5 hover:border-amber-400/30'
+        selected ? 'border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.4)] scale-105' : 'border-amber-400/40 hover:border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.2)]'
       }`}>
-        <span className="material-symbols-outlined !text-xl opacity-60 text-amber-400" data-icon="alarm">
+        <span className="material-symbols-outlined !text-xl opacity-80 text-amber-400" data-icon="alarm">
           alarm
         </span>
+
+        {/* Play SVG Overlay Badge matching node color */}
+        <div className="absolute -bottom-1 -right-1 w-4.5 h-4.5 rounded-full bg-[#0a0a0a] border border-amber-400/80 flex items-center justify-center shadow-[0_0_6px_rgba(245,158,11,0.4)]">
+          <svg className="w-2.5 h-2.5 text-amber-400 ml-0.5" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+        </div>
       </div>
-      <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] uppercase tracking-widest font-semibold text-neutral-400">
+      <div className="mt-1.5 whitespace-nowrap text-[10px] uppercase tracking-widest font-bold text-amber-400">
         {data.label || 'Schedule'}
       </div>
-      <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 whitespace-nowrap text-[7px] text-neutral-500">
+      <div className="text-[8px] text-neutral-400 font-mono mt-0.5">
         {scheduleText}
       </div>
       <Handle
         type="source"
         position={Position.Right}
         id="output"
-        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !right-[-4px] hover:!bg-amber-400 hover:!border-amber-400"
+        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-amber-400 !rounded-full !right-[-4px] hover:!bg-amber-400"
       />
     </div>
   );

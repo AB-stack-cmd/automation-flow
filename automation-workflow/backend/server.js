@@ -1,15 +1,14 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from './db.js';
 import { executeWorkflow } from './engine.js';
 import { startScheduler } from './scheduler.js';
+import { connectRabbitMQ, publishToQueue, getRabbitMQStatus } from './rabbitmq.js';
 
 dotenv.config();
 
 const app = express();
 app.use(express.json());
-
-const prisma = new PrismaClient();
 
 // Enable CORS for our frontend
 app.use((req, res, next) => {
@@ -25,6 +24,11 @@ app.use((req, res, next) => {
 // Simple health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', time: new Date() });
+});
+
+// RabbitMQ Connection & Queue Health Status Check
+app.get('/api/rabbitmq/status', (req, res) => {
+  res.json(getRabbitMQStatus());
 });
 
 // --- WORKFLOW CRUD ---
@@ -135,6 +139,9 @@ app.post('/api/workflows/:id/execute', async (req, res) => {
     // Start background execution
     const context = { trigger: triggerData, steps: {} };
     executeWorkflow(workflow.id, execution.id, null, context);
+
+    // Optionally publish event payload to RabbitMQ if connected
+    publishToQueue(null, { event: 'workflow_execute', workflowId: workflow.id, executionId: execution.id, triggerData });
 
     res.json({ success: true, executionId: execution.id });
   } catch (err) {
@@ -511,8 +518,10 @@ app.post('/api/crm/reset', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Backend listening on port ${PORT}`);
+  // Connect to RabbitMQ broker (standby mode if RABBITMQ_URL not set)
+  await connectRabbitMQ();
   // Start the background delay scheduler check loop
   startScheduler(2000);
 });

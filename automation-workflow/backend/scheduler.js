@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from './db.js';
 import { executeWorkflow } from './engine.js';
-
-const prisma = new PrismaClient();
 
 let isPolling = false;
 let intervalId = null;
@@ -185,7 +183,7 @@ export function calculateNextRun(data, referenceDate = new Date()) {
     }
   }
 
-  const value = parseInt(intervalValue, 10) || 10;
+  const value = Math.max(1, parseInt(intervalValue, 10) || 10);
   const unit = intervalUnit || 'seconds';
   const next = new Date(now);
 
@@ -240,23 +238,35 @@ export async function checkAndTriggerScheduledWorkflows() {
 
       if (!scheduleNode.data) scheduleNode.data = {};
 
-      if (!scheduleNode.data.nextRun) {
-        scheduleNode.data.nextRun = now.toISOString();
-      }
+      const nextRunStr = scheduleNode.data.nextRun;
+      let nextRunDate = nextRunStr ? new Date(nextRunStr) : null;
 
-      const nextRunDate = new Date(scheduleNode.data.nextRun);
+      if (!nextRunDate || isNaN(nextRunDate.getTime())) {
+        nextRunDate = now;
+      }
 
       if (now >= nextRunDate) {
         console.log(`⏰ Triggering scheduled workflow: "${workflow.name}" (ID=${workflow.id})`);
 
-        const calculatedNextRun = calculateNextRun(scheduleNode.data, now);
+        let calculatedNextRun = calculateNextRun(scheduleNode.data, now);
+        // Safety guard: ensure next run is strictly in the future (minimum 10s)
+        if (calculatedNextRun <= now) {
+          calculatedNextRun = new Date(now.getTime() + 10000);
+        }
+
         scheduleNode.data.lastRun = now.toISOString();
         scheduleNode.data.nextRun = calculatedNextRun.toISOString();
 
-        await prisma.workflow.update({
-          where: { id: workflow.id },
-          data: { definition: JSON.stringify(definition) }
-        });
+        // Update workflow definition in DB BEFORE starting execution logs or sub-workflows
+        try {
+          await prisma.workflow.update({
+            where: { id: workflow.id },
+            data: { definition: JSON.stringify(definition) }
+          });
+        } catch (updateErr) {
+          console.error(`Error updating scheduled workflow nextRun for ID=${workflow.id}:`, updateErr.message);
+          continue;
+        }
 
         const execution = await prisma.executionLog.create({
           data: {

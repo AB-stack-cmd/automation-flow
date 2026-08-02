@@ -25,6 +25,7 @@ import {
   DiscordNode,
   RespondToWebhookNode
 } from './CustomNode';
+import { edgeTypes } from './CustomEdge';
 
 const nodeTypes = {
   trigger: TriggerNode,
@@ -742,6 +743,11 @@ return {
   const [selectedNode, setSelectedNode] = useState<any>(null);
   const [historyTab, setHistoryTab] = useState<'logs' | 'crm' | 'emails'>('logs');
 
+  // Sidebar & Palette Customization Sliders State
+  const [sidebarWidth, setSidebarWidth] = useState<number>(240);
+  const [nodePaletteScale, setNodePaletteScale] = useState<number>(1);
+  const [showPaletteSliders, setShowPaletteSliders] = useState<boolean>(false);
+
   // Poll tables
   const [executions, setExecutions] = useState<any[]>([]);
   const [selectedExecution, setSelectedExecution] = useState<any>(null);
@@ -793,7 +799,10 @@ return {
   const [selectedTemplateCategory, setSelectedTemplateCategory] = useState('All');
   const [templateSearchQuery, setTemplateSearchQuery] = useState('');
 
-  // Variables store states
+  // Palette selector modal for edge wire button insertion
+  const [insertNodeModalData, setInsertNodeModalData] = useState<{ edgeId: string; pos: { x: number; y: number } } | null>(null);
+  const [paletteSearchQuery, setPaletteSearchQuery] = useState<string>('');
+
   const [variables, setVariables] = useState<Array<{ key: string; value: string }>>([
     { key: 'SLACK_API_TOKEN', value: 'xoxb-98729384-82738491823-ajdfhskdfjh' },
     { key: 'DATABASE_URL', value: 'postgresql://admin:supersecret@db.enterprise.internal:5432/production' },
@@ -1029,12 +1038,82 @@ return {
 
       setEdges((eds) => addEdge({
         ...params,
+        type: 'buttonEdge',
         animated: true,
-        style: { stroke: strokeColor, strokeWidth: 2 }
+        style: { stroke: strokeColor, strokeWidth: 2.5 }
       }, eds));
     },
     [setEdges]
   );
+
+  const handleAddNodeOnEdge = useCallback(
+    (edgeId: string, pos: { x: number; y: number }) => {
+      setInsertNodeModalData({ edgeId, pos });
+      setPaletteSearchQuery('');
+    },
+    []
+  );
+
+  const executeInsertNodeFromPalette = useCallback((item: any) => {
+    if (!insertNodeModalData) return;
+    const { edgeId, pos } = insertNodeModalData;
+
+    setEdges((currentEdges) => {
+      const targetEdge = currentEdges.find((e) => e.id === edgeId);
+      if (!targetEdge) return currentEdges;
+
+      const newNodeId = `node_${Date.now()}`;
+      const newNode = {
+        id: newNodeId,
+        type: item.type,
+        position: { x: Math.round(pos.x - 75), y: Math.round(pos.y - 30) },
+        data: { ...item.defaultData }
+      };
+
+      setNodes((nds) => [...nds, newNode]);
+      setSelectedNode(newNode);
+
+      let strokeColor = '#facc15';
+      if (targetEdge.sourceHandle === 'true' || targetEdge.sourceHandle === 'yes') strokeColor = '#10b981';
+      if (targetEdge.sourceHandle === 'false' || targetEdge.sourceHandle === 'no') strokeColor = '#ef4444';
+
+      const edge1 = {
+        id: `e_${targetEdge.source}-${newNodeId}_${Date.now()}`,
+        source: targetEdge.source,
+        target: newNodeId,
+        sourceHandle: targetEdge.sourceHandle,
+        animated: true,
+        type: 'buttonEdge',
+        style: { stroke: strokeColor, strokeWidth: 2.5 }
+      };
+
+      const edge2 = {
+        id: `e_${newNodeId}-${targetEdge.target}_${Date.now() + 1}`,
+        source: newNodeId,
+        target: targetEdge.target,
+        targetHandle: targetEdge.targetHandle,
+        animated: true,
+        type: 'buttonEdge',
+        style: { stroke: '#facc15', strokeWidth: 2.5 }
+      };
+
+      return [...currentEdges.filter((e) => e.id !== edgeId), edge1, edge2];
+    });
+
+    setInsertNodeModalData(null);
+    setPaletteSearchQuery('');
+  }, [insertNodeModalData, setNodes, setEdges]);
+
+  const edgesWithAddButton = React.useMemo(() => {
+    return edges.map((edge) => ({
+      ...edge,
+      type: 'buttonEdge',
+      data: {
+        ...edge.data,
+        onAddNodeOnEdge: handleAddNodeOnEdge
+      }
+    }));
+  }, [edges, handleAddNodeOnEdge]);
 
   const onNodeClick = useCallback((_event: React.MouseEvent, node: any) => {
     setSelectedNode(node);
@@ -1778,26 +1857,103 @@ return {
             <div className="flex-1 relative flex overflow-hidden h-full w-full">
               
               {/* Dedicated Node Palette Sidebar */}
-              <div className={`shrink-0 bg-[#131313] border-r border-neutral-900 flex flex-col text-left h-full z-10 transition-all duration-300 ${
-                isSidebarOpen ? 'w-56 p-4 opacity-100' : 'w-0 p-0 opacity-0 overflow-hidden'
-              }`}>
+              <div 
+                className={`shrink-0 bg-[#131313] border-r border-neutral-900 flex flex-col text-left h-full z-10 transition-all duration-200 ${
+                  isSidebarOpen ? 'p-4 opacity-100' : 'w-0 p-0 opacity-0 overflow-hidden'
+                }`}
+                style={{ width: isSidebarOpen ? `${sidebarWidth}px` : '0px' }}
+              >
                 {isSidebarOpen && (
                   <>
-                    <div className="flex items-center justify-between mb-4 shrink-0">
+                    <div className="flex items-center justify-between mb-3 shrink-0">
                       <h4 className="text-[10px] uppercase font-bold tracking-widest text-[#facc15] flex items-center gap-1.5">
                         <span className="material-symbols-outlined text-[14px]">grid_view</span>
                         Node Palette
                       </h4>
-                      <button 
-                        onClick={() => setIsSidebarOpen(false)}
-                        className="text-neutral-500 hover:text-white transition-colors"
-                        title="Collapse Node Palette"
-                      >
-                        <span className="material-symbols-outlined text-[15px]">menu_open</span>
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        <button 
+                          onClick={() => setShowPaletteSliders(prev => !prev)}
+                          className={`p-1 rounded transition-colors ${showPaletteSliders ? 'bg-[#facc15]/20 text-[#facc15]' : 'text-neutral-400 hover:text-white'}`}
+                          title="Customize Sidebar Sliders (Width & Scale)"
+                        >
+                          <span className="material-symbols-outlined text-[15px]">tune</span>
+                        </button>
+                        <button 
+                          onClick={() => setIsSidebarOpen(false)}
+                          className="text-neutral-500 hover:text-white transition-colors"
+                          title="Collapse Node Palette"
+                        >
+                          <span className="material-symbols-outlined text-[15px]">menu_open</span>
+                        </button>
+                      </div>
                     </div>
+
+                    {/* Interactive Sidebar & Palette Sliders Control Strip */}
+                    {showPaletteSliders && (
+                      <div className="mb-4 p-2.5 bg-[#1a1a1a] rounded-lg border border-neutral-800/80 space-y-2.5 shrink-0 text-left">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[9px] font-bold text-[#facc15] uppercase tracking-wider flex items-center gap-1">
+                            <span className="material-symbols-outlined text-[11px]">tune</span>
+                            Sidebar Sliders
+                          </span>
+                          <button 
+                            onClick={() => { setSidebarWidth(240); setNodePaletteScale(1); }} 
+                            className="text-[8px] text-neutral-500 hover:text-neutral-300 underline"
+                          >
+                            Reset
+                          </button>
+                        </div>
+
+                        {/* Sidebar Width Slider */}
+                        <div>
+                          <div className="flex justify-between items-center mb-1">
+                            <label className="text-[9px] font-bold text-neutral-400 flex items-center gap-1">
+                              <span className="material-symbols-outlined text-[11px]">linear_scale</span>
+                              Sidebar Width
+                            </label>
+                            <span className="text-[9px] font-mono text-[#facc15] font-bold px-1 bg-amber-950/40 rounded border border-amber-900/40">
+                              {sidebarWidth}px
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min="180"
+                            max="360"
+                            step="10"
+                            value={sidebarWidth}
+                            onChange={(e) => setSidebarWidth(Number(e.target.value))}
+                            className="w-full h-1 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-[#facc15]"
+                          />
+                        </div>
+
+                        {/* Node Card Scale Slider */}
+                        <div>
+                          <div className="flex justify-between items-center mb-1">
+                            <label className="text-[9px] font-bold text-neutral-400 flex items-center gap-1">
+                              <span className="material-symbols-outlined text-[11px]">format_size</span>
+                              Node Scale
+                            </label>
+                            <span className="text-[9px] font-mono text-[#facc15] font-bold px-1 bg-amber-950/40 rounded border border-amber-900/40">
+                              {Math.round(nodePaletteScale * 100)}%
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0.75"
+                            max="1.25"
+                            step="0.05"
+                            value={nodePaletteScale}
+                            onChange={(e) => setNodePaletteScale(Number(e.target.value))}
+                            className="w-full h-1 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-[#facc15]"
+                          />
+                        </div>
+                      </div>
+                    )}
                     
-                    <div className="space-y-4 flex-grow overflow-y-auto pr-1">
+                    <div 
+                      className="space-y-4 flex-grow overflow-y-auto pr-1"
+                      style={{ transform: `scale(${nodePaletteScale})`, transformOrigin: 'top left' }}
+                    >
                       {/* On Event (Triggers) Section */}
                       <div>
                         <div className="text-[8px] font-bold text-neutral-500 uppercase tracking-widest mb-2 px-1">
@@ -1961,12 +2117,14 @@ return {
                 )}
                 <ReactFlow
                   nodes={nodes}
-                  edges={edges}
+                  edges={edgesWithAddButton}
                   onNodesChange={onNodesChange}
                   onEdgesChange={onEdgesChange}
                   onConnect={onConnect}
                   isValidConnection={isValidConnection}
                   nodeTypes={nodeTypes}
+                  edgeTypes={edgeTypes}
+                  defaultEdgeOptions={{ type: 'buttonEdge' }}
                   onNodeClick={onNodeClick}
                   onPaneClick={onPaneClick}
                   fitView
@@ -2201,12 +2359,26 @@ return {
                             </select>
                           </div>
                           <div>
-                            <label className="block text-neutral-400 font-bold mb-1">Score increment</label>
+                            <div className="flex justify-between items-center mb-1">
+                              <label className="block text-neutral-400 font-bold">Score Increment</label>
+                              <span className="text-indigo-400 font-mono font-bold text-[10px] bg-indigo-950/40 px-1.5 py-0.5 rounded border border-indigo-900/40">
+                                {selectedNode.data?.scoreChange !== undefined ? Number(selectedNode.data.scoreChange) : 10}
+                              </span>
+                            </div>
+                            <input
+                              type="range"
+                              min="-50"
+                              max="100"
+                              step="5"
+                              value={selectedNode.data?.scoreChange !== undefined ? Number(selectedNode.data.scoreChange) : 10}
+                              onChange={(e) => updateNodeData('scoreChange', parseInt(e.target.value, 10))}
+                              className="w-full h-1.5 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-indigo-400 mb-1"
+                            />
                             <input
                               type="number"
-                              value={selectedNode.data?.scoreChange || '0'}
+                              value={selectedNode.data?.scoreChange || '10'}
                               onChange={(e) => updateNodeData('scoreChange', e.target.value)}
-                              className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none focus:border-accent-coral/50"
+                              className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none focus:border-accent-coral/50 text-[10px]"
                             />
                           </div>
                         </>
@@ -2214,27 +2386,65 @@ return {
 
                       {/* If / Else Fields */}
                       {selectedNode.type === 'ifelse' && (
-                        <div>
-                          <label className="block text-neutral-400 font-bold mb-1">Expression Condition</label>
-                          <input
-                            type="text"
-                            value={selectedNode.data?.condition || ''}
-                            onChange={(e) => updateNodeData('condition', e.target.value)}
-                            className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none focus:border-accent-coral/50 font-mono text-[10px]"
-                            placeholder="context.trigger.score > 50"
-                          />
-                        </div>
+                        <>
+                          <div>
+                            <div className="flex justify-between items-center mb-1">
+                              <label className="block text-neutral-400 font-bold">Threshold Score Slider</label>
+                              <span className="text-fuchsia-400 font-mono font-bold text-[10px] bg-fuchsia-950/40 px-1.5 py-0.5 rounded border border-fuchsia-900/40">
+                                {selectedNode.data?.thresholdScore ?? 50}
+                              </span>
+                            </div>
+                            <input
+                              type="range"
+                              min="0"
+                              max="100"
+                              step="1"
+                              value={selectedNode.data?.thresholdScore ?? 50}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value, 10);
+                                updateNodeData('thresholdScore', val);
+                                updateNodeData('condition', `context.trigger.score > ${val}`);
+                              }}
+                              className="w-full h-1.5 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-fuchsia-400 mb-2"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-neutral-400 font-bold mb-1">Expression Condition</label>
+                            <input
+                              type="text"
+                              value={selectedNode.data?.condition || 'context.trigger.score > 50'}
+                              onChange={(e) => updateNodeData('condition', e.target.value)}
+                              className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none focus:border-accent-coral/50 font-mono text-[10px]"
+                              placeholder="context.trigger.score > 50"
+                            />
+                          </div>
+                        </>
                       )}
 
                       {/* Delay timer fields */}
                       {selectedNode.type === 'delay' && (
                         <div>
-                          <label className="block text-neutral-400 font-bold mb-1">Delay Duration (Seconds)</label>
+                          <div className="flex justify-between items-center mb-1">
+                            <label className="block text-neutral-400 font-bold">Delay Duration (Seconds)</label>
+                            <span className="text-[#facc15] font-mono font-bold text-[10px] bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-900/40">
+                              {selectedNode.data?.seconds || 5}s
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min="1"
+                            max="300"
+                            step="1"
+                            value={parseInt(selectedNode.data?.seconds || '5', 10)}
+                            onChange={(e) => updateNodeData('seconds', parseInt(e.target.value, 10))}
+                            className="w-full h-1.5 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-[#facc15] mb-2"
+                          />
                           <input
                             type="number"
-                            value={selectedNode.data?.seconds || ''}
+                            value={selectedNode.data?.seconds || '5'}
                             onChange={(e) => updateNodeData('seconds', e.target.value)}
-                            className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none focus:border-accent-coral/50"
+                            className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none focus:border-accent-coral/50 text-[10px]"
                           />
                         </div>
                       )}
@@ -2269,32 +2479,52 @@ return {
                           </div>
 
                           {selectedNode.data?.scheduleType === 'interval' && (
-                            <div className="grid grid-cols-2 gap-2">
+                            <div className="space-y-2">
                               <div>
-                                <label className="block text-neutral-400 font-bold mb-1">Interval Value</label>
+                                <div className="flex justify-between items-center mb-1">
+                                  <label className="block text-neutral-400 font-bold">Interval Slider</label>
+                                  <span className="text-amber-400 font-mono font-bold text-[10px] bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-900/40">
+                                    {selectedNode.data?.intervalValue || 10} {selectedNode.data?.intervalUnit || 'seconds'}
+                                  </span>
+                                </div>
                                 <input
-                                  type="number"
+                                  type="range"
                                   min="1"
+                                  max="60"
+                                  step="1"
                                   value={selectedNode.data?.intervalValue || 10}
                                   onChange={(e) => updateNodeData('intervalValue', parseInt(e.target.value, 10))}
-                                  className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none"
+                                  className="w-full h-1.5 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-amber-400 mb-2"
                                 />
                               </div>
-                              <div>
-                                <label className="block text-neutral-400 font-bold mb-1">Unit</label>
-                                <select
-                                  value={selectedNode.data?.intervalUnit || 'seconds'}
-                                  onChange={(e) => updateNodeData('intervalUnit', e.target.value)}
-                                  className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none"
-                                >
-                                  <option value="seconds">Seconds</option>
-                                  <option value="minutes">Minutes</option>
-                                  <option value="hours">Hours</option>
-                                  <option value="days">Days</option>
-                                  <option value="weeks">Weeks</option>
-                                  <option value="months">Months</option>
-                                  <option value="years">Years</option>
-                                </select>
+
+                              <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                  <label className="block text-neutral-400 font-bold mb-1">Value</label>
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    value={selectedNode.data?.intervalValue || 10}
+                                    onChange={(e) => updateNodeData('intervalValue', parseInt(e.target.value, 10))}
+                                    className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none text-[10px]"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-neutral-400 font-bold mb-1">Unit</label>
+                                  <select
+                                    value={selectedNode.data?.intervalUnit || 'seconds'}
+                                    onChange={(e) => updateNodeData('intervalUnit', e.target.value)}
+                                    className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none text-[10px]"
+                                  >
+                                    <option value="seconds">Seconds</option>
+                                    <option value="minutes">Minutes</option>
+                                    <option value="hours">Hours</option>
+                                    <option value="days">Days</option>
+                                    <option value="weeks">Weeks</option>
+                                    <option value="months">Months</option>
+                                    <option value="years">Years</option>
+                                  </select>
+                                </div>
                               </div>
                             </div>
                           )}
@@ -2390,6 +2620,24 @@ return {
                                 </select>
                               </div>
 
+                              <div>
+                                <div className="flex justify-between items-center mb-1">
+                                  <label className="block text-neutral-400 font-bold">Max Row Limit</label>
+                                  <span className="text-green-400 font-mono font-bold text-[10px] bg-green-950/40 px-1.5 py-0.5 rounded border border-green-900/40">
+                                    {selectedNode.data?.rowLimit || 10} Rows
+                                  </span>
+                                </div>
+                                <input
+                                  type="range"
+                                  min="1"
+                                  max="50"
+                                  step="1"
+                                  value={selectedNode.data?.rowLimit || 10}
+                                  onChange={(e) => updateNodeData('rowLimit', parseInt(e.target.value, 10))}
+                                  className="w-full h-1.5 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-green-400 mb-1"
+                                />
+                              </div>
+
                               {selectedNode.data?.mockDataType === 'custom' && (
                                 <div>
                                   <label className="block text-neutral-400 font-bold mb-1">Custom JSON Array</label>
@@ -2451,13 +2699,56 @@ return {
                             </select>
                           </div>
 
+                          {/* Temperature Slider */}
+                          <div>
+                            <div className="flex justify-between items-center mb-1">
+                              <label className="block text-neutral-400 font-bold">Temperature (Creativity)</label>
+                              <span className="text-purple-400 font-mono font-bold text-[10px] bg-purple-950/40 px-1.5 py-0.5 rounded border border-purple-900/40">
+                                {selectedNode.data?.temperature !== undefined ? selectedNode.data.temperature : 0.7}
+                              </span>
+                            </div>
+                            <input
+                              type="range"
+                              min="0"
+                              max="1"
+                              step="0.05"
+                              value={selectedNode.data?.temperature !== undefined ? selectedNode.data.temperature : 0.7}
+                              onChange={(e) => updateNodeData('temperature', parseFloat(e.target.value))}
+                              className="w-full h-1.5 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-purple-400 mb-1"
+                            />
+                            <div className="flex justify-between text-[8px] text-neutral-500 font-mono mb-2">
+                              <span>0.0 (Precise)</span>
+                              <span>0.5 (Balanced)</span>
+                              <span>1.0 (Creative)</span>
+                            </div>
+                          </div>
+
+                          {/* Max Tokens Slider */}
+                          <div>
+                            <div className="flex justify-between items-center mb-1">
+                              <label className="block text-neutral-400 font-bold">Max Tokens (Output Length)</label>
+                              <span className="text-purple-400 font-mono font-bold text-[10px] bg-purple-950/40 px-1.5 py-0.5 rounded border border-purple-900/40">
+                                {selectedNode.data?.maxTokens || 1000}
+                              </span>
+                            </div>
+                            <input
+                              type="range"
+                              min="100"
+                              max="4000"
+                              step="50"
+                              value={selectedNode.data?.maxTokens || 1000}
+                              onChange={(e) => updateNodeData('maxTokens', parseInt(e.target.value, 10))}
+                              className="w-full h-1.5 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-purple-400 mb-2"
+                            />
+                          </div>
+
                           <div>
                             <label className="block text-neutral-400 font-bold mb-1">Prompt Template</label>
                             <textarea
                               value={selectedNode.data?.prompt || ''}
                               onChange={(e) => updateNodeData('prompt', e.target.value)}
                               rows={5}
-                              className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none font-mono text-[9px]"
+                              className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-2 py-1.5 text-white outline-none focus:border-accent-coral/50 font-mono text-[10px]"
                               placeholder="Please summarize: {{trigger.title}} ..."
                             />
                             <p className="text-[9px] text-neutral-500 leading-normal mt-1">
@@ -4279,6 +4570,113 @@ return {
                   </pre>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Palette Node Insertion Modal for Wire Add Button */}
+      {insertNodeModalData && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/80 backdrop-blur-md text-left animate-in fade-in duration-150">
+          <div className="w-[680px] max-w-[94vw] bg-[#141414] border border-neutral-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+            {/* Header */}
+            <div className="p-5 bg-[#1a1a1a] border-b border-neutral-800 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-neutral-800 border border-neutral-700 flex items-center justify-center text-white shadow-sm">
+                  <span className="material-symbols-outlined text-lg">add_circle</span>
+                </div>
+                <div>
+                  <span className="font-bold text-sm text-white block leading-tight">Insert Node into Connection Wire</span>
+                  <span className="text-[10px] text-neutral-400 block mt-0.5">Select a node from the palette to connect into the graph pipeline stream</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setInsertNodeModalData(null)}
+                className="text-neutral-400 hover:text-white bg-white/5 hover:bg-white/10 p-2 rounded-xl transition"
+              >
+                <span className="material-symbols-outlined text-base">close</span>
+              </button>
+            </div>
+
+            {/* Search Input */}
+            <div className="p-4 bg-[#111111] border-b border-neutral-800/80">
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-neutral-500">
+                  <span className="material-symbols-outlined text-sm">search</span>
+                </span>
+                <input
+                  type="text"
+                  autoFocus
+                  value={paletteSearchQuery}
+                  onChange={(e) => setPaletteSearchQuery(e.target.value)}
+                  placeholder="Search palette nodes (e.g. OpenAI, Slack, Email, If/Else)..."
+                  className="w-full bg-[#181818] border border-neutral-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white outline-none focus:border-neutral-600 transition"
+                />
+              </div>
+            </div>
+
+            {/* Node Items Grid */}
+            <div className="p-5 flex-1 overflow-y-auto space-y-5">
+              {[
+                { name: 'App Actions', items: [
+                  { type: 'marketing_email', label: 'Send Email', icon: 'mail', color: 'border-sky-800/40 bg-sky-950/10 text-sky-400', desc: 'Send marketing or notification email', defaultData: { label: 'Send Email', to: '{{trigger.email}}', subject: 'Notification', body: 'Hello!' } },
+                  { type: 'crm_action', label: 'CRM Update', icon: 'account_circle', color: 'border-indigo-800/40 bg-indigo-950/10 text-indigo-400', desc: 'Create or update contact lead in CRM', defaultData: { label: 'CRM Update', actionType: 'create_or_update', email: '{{trigger.email}}', status: 'lead', scoreChange: '5' } },
+                  { type: 'google_sheets', label: 'Google Sheet', icon: 'table_chart', color: 'border-green-800/40 bg-green-950/10 text-green-400', desc: 'Read or append row in spreadsheet', defaultData: { label: 'Google Sheet', action: 'read', sheetName: 'Sheet1' } },
+                  { type: 'openai', label: 'OpenAI GPT', icon: 'psychology', color: 'border-purple-800/40 bg-purple-950/10 text-purple-400', desc: 'Run LLM summary or data extraction', defaultData: { label: 'OpenAI GPT', model: 'GPT-4o', prompt: 'Please summarize: {{trigger.content}}' } },
+                  { type: 'slack', label: 'Post to Slack', icon: 'forum', color: 'border-teal-800/40 bg-teal-950/10 text-teal-400', desc: 'Post message to Slack channel', defaultData: { label: 'Post to Slack', text: '📢 Event: {{trigger.email}}' } },
+                  { type: 'discord', label: 'Discord Alert', icon: 'mark_chat_read', color: 'border-indigo-800/40 bg-indigo-950/10 text-indigo-400', desc: 'Send alert notification to Discord', defaultData: { label: 'Discord Alert', content: '🚀 Alert: {{trigger.email}}' } },
+                  { type: 'respond_to_webhook', label: 'Webhook Response', icon: 'send', color: 'border-blue-800/40 bg-blue-950/10 text-blue-400', desc: 'Return custom HTTP response payload', defaultData: { label: 'Webhook Response', responseMode: 'json', statusCode: 200, responseBody: '{"success": true}' } },
+                  { type: 'rabbitmq_publish', label: 'RabbitMQ Publish', icon: 'input', color: 'border-amber-800/40 bg-amber-950/10 text-amber-400', desc: 'Publish event payload to RabbitMQ broker queue', defaultData: { label: 'RabbitMQ Publish', queue: 'neuron_flow_queue', payload: '{"event": "triggered"}' } }
+                ]},
+                { name: 'Logic & Flow', items: [
+                  { type: 'ifelse', label: 'If / Else', icon: 'alt_route', color: 'border-fuchsia-800/40 bg-fuchsia-950/10 text-fuchsia-400', desc: 'Conditional logic branching (true / false handles)', defaultData: { label: 'If / Else', condition: 'context.trigger.score > 50' } },
+                  { type: 'delay', label: 'Delay Wait', icon: 'schedule', color: 'border-amber-800/40 bg-amber-950/10 text-amber-400', desc: 'Pause execution for timer interval duration', defaultData: { label: 'Delay Wait', seconds: '10' } },
+                  { type: 'code', label: 'Run Script', icon: 'code', color: 'border-teal-800/40 bg-teal-950/10 text-teal-400', desc: 'Execute custom JavaScript code context', defaultData: { label: 'Run Script', code: '// Custom JavaScript\nreturn { success: true };' } },
+                  { type: 'end', label: 'End Workflow', icon: 'stop_circle', color: 'border-rose-800/40 bg-rose-950/10 text-rose-400', desc: 'Terminal point of workflow pipeline', defaultData: { label: 'End Workflow' } }
+                ]},
+                { name: 'Triggers (On Event)', items: [
+                  { type: 'start_trigger', label: 'Start Trigger', icon: 'play_circle', color: 'border-amber-800/40 bg-amber-950/10 text-amber-400', desc: 'Initial entry point trigger', defaultData: { label: 'Start Trigger' } },
+                  { type: 'schedule_trigger', label: 'Schedule Trigger', icon: 'alarm', color: 'border-amber-800/40 bg-amber-950/10 text-amber-400', desc: 'Periodic timer or cron interval schedule', defaultData: { label: 'Schedule Trigger', scheduleType: 'interval', intervalValue: 10, intervalUnit: 'seconds' } },
+                  { type: 'google_form_trigger', label: 'Google Form Trigger', icon: 'description', color: 'border-green-800/40 bg-green-950/10 text-green-400', desc: 'Google Form submission event trigger', defaultData: { label: 'Google Form Trigger' } },
+                  { type: 'trigger', label: 'Webhook Trigger', icon: 'bolt', color: 'border-emerald-800/40 bg-emerald-950/10 text-emerald-400', desc: 'Incoming HTTP POST webhook request listener', defaultData: { label: 'Webhook Trigger', triggerType: 'webhook' } },
+                  { type: 'crm_lead_trigger', label: 'CRM Lead Trigger', icon: 'group_add', color: 'border-emerald-800/40 bg-emerald-950/10 text-emerald-400', desc: 'New lead creation in CRM database', defaultData: { label: 'CRM Lead Trigger', triggerType: 'crm' } }
+                ]}
+              ].map((category) => {
+                const filteredItems = category.items.filter(item => 
+                  item.label.toLowerCase().includes(paletteSearchQuery.toLowerCase()) || 
+                  item.desc.toLowerCase().includes(paletteSearchQuery.toLowerCase())
+                );
+                if (filteredItems.length === 0) return null;
+
+                return (
+                  <div key={category.name} className="space-y-2.5">
+                    <div className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest px-1">
+                      {category.name}
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                      {filteredItems.map((item) => (
+                        <button
+                          key={item.type}
+                          type="button"
+                          onClick={() => executeInsertNodeFromPalette(item)}
+                          className={`flex items-start gap-3 p-3 rounded-xl border ${item.color} hover:brightness-125 transition-all text-left group cursor-pointer`}
+                        >
+                          <span className="material-symbols-outlined text-lg shrink-0 mt-0.5">{item.icon}</span>
+                          <div className="flex-1 min-w-0">
+                            <span className="font-bold text-xs text-white block leading-tight group-hover:text-amber-300 transition-colors">
+                              {item.label}
+                            </span>
+                            <span className="text-[10px] text-neutral-400 block mt-0.5 leading-snug truncate">
+                              {item.desc}
+                            </span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

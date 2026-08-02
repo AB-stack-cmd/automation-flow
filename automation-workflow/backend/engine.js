@@ -1,7 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from './db.js';
 import nodemailer from 'nodemailer';
-
-const prisma = new PrismaClient();
+import { publishToQueue } from './rabbitmq.js';
 
 /**
  * Safely evaluates a simple condition script or expression using current context.
@@ -552,6 +551,25 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
         }
         continue; // Avoid standard children push
       } 
+      else if (node.type === 'rabbitmq_publish') {
+        const queueName = node.data?.queue || process.env.RABBITMQ_QUEUE_NAME || 'neuron_flow_queue';
+        const rawPayload = node.data?.payload || '{"message": "Hello from NEURON_FLOW"}';
+        const resolvedQueue = interpolateTemplate(queueName, context);
+        let resolvedPayload = interpolateTemplate(rawPayload, context);
+        try {
+          resolvedPayload = JSON.parse(resolvedPayload);
+        } catch (e) {}
+
+        const success = await publishToQueue(resolvedQueue, resolvedPayload);
+        nodeOutput = { status: success ? 'published' : 'standby', queue: resolvedQueue, payload: resolvedPayload };
+        stepLogs.push({
+          time: new Date().toISOString(),
+          nodeId: node.id,
+          message: success 
+            ? `Successfully published payload to RabbitMQ queue "${resolvedQueue}"` 
+            : `RabbitMQ in standby/offline mode. Payload recorded locally.`
+        });
+      }
       else if (node.type === 'code' || node.type === 'run_code') {
         const codeString = node.data?.code || 'return { success: true };';
         const codeResult = await evaluateCode(codeString, context);

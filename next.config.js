@@ -1,8 +1,11 @@
+import path from 'path';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // Enable API routes if needed; otherwise keep defaults
-  // future: { webpack5: true },
+  turbopack: {
+    root: path.resolve(process.cwd()),
+  },
 };
 
 export default nextConfig;
