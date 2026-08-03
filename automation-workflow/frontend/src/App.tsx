@@ -215,6 +215,7 @@ const TEMPLATES = [
 export default function App() {
   // Navigation layout state
   const [viewMode, setViewMode] = useState<'overview' | 'canvas' | 'templates' | 'variables' | 'settings' | 'history' | 'executions'>('overview');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // User Profile States
   const DEFAULT_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="avatarGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="%23ef4444"/><stop offset="100%" stop-color="%23facc15"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(%23avatarGrad)"/><circle cx="50" cy="40" r="18" fill="%23131313"/><path d="M18 78 C 18 58, 82 58, 82 78" fill="%23131313"/></svg>`;
@@ -734,6 +735,34 @@ return {
   // Workflow list state
   const [workflows, setWorkflows] = useState<any[]>([]);
   const [currentWorkflow, setCurrentWorkflow] = useState<any>(null);
+  const [isLiveEngineActive, setIsLiveEngineActive] = useState<boolean>(true);
+
+  const toggleLiveEngine = async () => {
+    const nextState = !isLiveEngineActive;
+    setIsLiveEngineActive(nextState);
+
+    if (currentWorkflow?.id) {
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/workflows/${currentWorkflow.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isActive: nextState })
+        });
+        if (res.ok) {
+          const updatedWf = await res.json();
+          setCurrentWorkflow(updatedWf);
+          setWorkflows(prev => prev.map(w => w.id === updatedWf.id ? updatedWf : w));
+        } else {
+          setCurrentWorkflow((prev: any) => prev ? { ...prev, isActive: nextState } : prev);
+          setWorkflows(prev => prev.map(w => w.id === currentWorkflow.id ? { ...w, isActive: nextState } : w));
+        }
+      } catch (e) {
+        console.error("Failed to sync Live Engine state to backend:", e);
+        setCurrentWorkflow((prev: any) => prev ? { ...prev, isActive: nextState } : prev);
+        setWorkflows(prev => prev.map(w => w.id === currentWorkflow.id ? { ...w, isActive: nextState } : w));
+      }
+    }
+  };
 
   // React Flow canvas states
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -827,6 +856,7 @@ return {
 
   const loadWorkflow = (wf: any) => {
     setCurrentWorkflow(wf);
+    setIsLiveEngineActive(wf.isActive !== false);
     try {
       const def = typeof wf.definition === 'string' ? JSON.parse(wf.definition) : wf.definition;
       setNodes(def.nodes || []);
@@ -1532,96 +1562,150 @@ return {
       `}</style>
 
       {/* SideNavBar */}
-      <aside className="h-screen w-64 border-r border-[#353534] flex flex-col py-8 bg-[#0e0e0e] flex-shrink-0 z-50">
-        <div className="px-8 mb-6 flex flex-col gap-1 text-left">
-          <a href="http://localhost:3000/" className="flex items-center gap-2 hover:opacity-85 transition text-white">
-            <span className="material-symbols-outlined text-[#facc15] text-[22px]">hub</span>
-            <span className="font-headline-md text-headline-md font-bold tracking-tight">NEURON_FLOW</span>
-          </a>
-          <span className="font-label-sm text-label-sm text-[#9a9078] uppercase tracking-widest pl-8">v2.0 Orchestrator</span>
+      <aside className={`h-screen border-r border-[#353534] flex flex-col py-8 bg-[#0e0e0e] flex-shrink-0 z-50 transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}>
+        <div className={`mb-6 flex items-center ${isSidebarCollapsed ? 'justify-center px-2' : 'justify-between px-6'}`}>
+          {!isSidebarCollapsed && (
+            <a href="http://localhost:3000/" className="flex items-center gap-2 hover:opacity-85 transition text-white">
+              <svg className="w-6 h-6 text-[#facc15]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="3" strokeWidth="2"/>
+                <circle cx="12" cy="4" r="2" strokeWidth="2"/>
+                <circle cx="4" cy="12" r="2" strokeWidth="2"/>
+                <circle cx="20" cy="12" r="2" strokeWidth="2"/>
+                <line x1="12" y1="6" x2="12" y2="9" strokeWidth="2"/>
+                <line x1="6" y1="12" x2="9" y2="12" strokeWidth="2"/>
+                <line x1="15" y1="12" x2="18" y2="12" strokeWidth="2"/>
+              </svg>
+              <span className="font-headline-md text-headline-md font-bold tracking-tight">NEURON_FLOW</span>
+            </a>
+          )}
+          
+          {/* SidebarTrigger Button */}
+          <button
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+            className="p-2 rounded-lg bg-[#1a1a1a] hover:bg-[#262626] border border-[#353534] text-neutral-300 hover:text-white transition-colors flex items-center justify-center shrink-0"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <rect x="3" y="3" width="18" height="18" rx="2" strokeWidth="2"/>
+              <path d="M9 3v18" strokeWidth="2"/>
+            </svg>
+          </button>
         </div>
+
+        {!isSidebarCollapsed && (
+          <span className="font-label-sm text-label-sm text-[#9a9078] uppercase tracking-widest px-8 -mt-4 mb-6 block text-left">v2.0 Orchestrator</span>
+        )}
 
         {/* Global Cross-App Launcher Links */}
-        <div className="px-4 mb-6">
-          <div className="text-[10px] font-mono text-neutral-500 uppercase tracking-wider px-3 mb-2">Switch Apps</div>
-          <div className="flex flex-col gap-1">
-            <a href="http://localhost:3000" className="flex items-center gap-2.5 px-3 py-1.5 rounded text-xs text-neutral-400 hover:text-white hover:bg-white/[0.04] transition">
-              <span className="w-2 h-2 rounded-full bg-yellow-400"></span> Dashboard (:3000)
-            </a>
-            <a href="http://localhost:5174" className="flex items-center gap-2.5 px-3 py-1.5 rounded text-xs text-neutral-400 hover:text-white hover:bg-white/[0.04] transition">
-              <span className="w-2 h-2 rounded-full bg-emerald-400"></span> Prod Engine (:5174)
-            </a>
-            <a href="http://localhost:3000/excel" className="flex items-center gap-2.5 px-3 py-1.5 rounded text-xs text-neutral-400 hover:text-white hover:bg-white/[0.04] transition">
-              <span className="w-2 h-2 rounded-full bg-sky-400"></span> Excel AI (:3000)
-            </a>
+        {!isSidebarCollapsed && (
+          <div className="px-4 mb-6">
+            <div className="text-[10px] font-mono text-neutral-500 uppercase tracking-wider px-3 mb-2">Switch Apps</div>
+            <div className="flex flex-col gap-1">
+              <a href="http://localhost:3000" className="flex items-center gap-2.5 px-3 py-1.5 rounded text-xs text-neutral-400 hover:text-white hover:bg-white/[0.04] transition">
+                <span className="w-2 h-2 rounded-full bg-yellow-400"></span> Dashboard (:3000)
+              </a>
+              <a href="http://localhost:5174" className="flex items-center gap-2.5 px-3 py-1.5 rounded text-xs text-neutral-400 hover:text-white hover:bg-white/[0.04] transition">
+                <span className="w-2 h-2 rounded-full bg-emerald-400"></span> Prod Engine (:5174)
+              </a>
+              <a href="http://localhost:3000/excel" className="flex items-center gap-2.5 px-3 py-1.5 rounded text-xs text-neutral-400 hover:text-white hover:bg-white/[0.04] transition">
+                <span className="w-2 h-2 rounded-full bg-sky-400"></span> Excel AI (:3000)
+              </a>
+            </div>
           </div>
-        </div>
+        )}
 
-        <nav className="flex-1 space-y-2 px-4">
+        <nav className="flex-1 space-y-2 px-3">
           <button
             onClick={() => setViewMode('overview')}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded transition-colors group font-medium text-left ${
+            title="Overview"
+            className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 rounded transition-colors group font-medium text-left ${
               viewMode === 'overview' ? 'text-primary bg-white/[0.03]' : 'text-on-surface-variant hover:text-on-surface'
             }`}
           >
-            <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: viewMode === 'overview' ? "'FILL' 1" : "'FILL' 0" }}>dashboard</span>
-            <span className="font-body-md text-body-md">Overview</span>
+            <svg className="w-5 h-5 text-yellow-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+            </svg>
+            {!isSidebarCollapsed && <span className="font-body-md text-body-md">Overview</span>}
           </button>
+
           <button
             onClick={() => setViewMode('canvas')}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded transition-colors group font-medium text-left ${
+            title="Workflows"
+            className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 rounded transition-colors group font-medium text-left ${
               viewMode === 'canvas' ? 'text-primary bg-white/[0.03]' : 'text-on-surface-variant hover:text-on-surface'
             }`}
           >
-            <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: viewMode === 'canvas' ? "'FILL' 1" : "'FILL' 0" }}>account_tree</span>
-            <span className="font-body-md text-body-md">Workflows</span>
+            <svg className="w-5 h-5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11" />
+            </svg>
+            {!isSidebarCollapsed && <span className="font-body-md text-body-md">Workflows</span>}
           </button>
+
           <button
             onClick={() => setViewMode('executions')}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded transition-colors group font-medium text-left ${
+            title="Executions"
+            className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 rounded transition-colors group font-medium text-left ${
               viewMode === 'executions' ? 'text-primary bg-white/[0.03]' : 'text-on-surface-variant hover:text-on-surface'
             }`}
           >
-            <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: viewMode === 'executions' ? "'FILL' 1" : "'FILL' 0" }}>analytics</span>
-            <span className="font-body-md text-body-md">Executions</span>
+            <svg className="w-5 h-5 text-sky-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            {!isSidebarCollapsed && <span className="font-body-md text-body-md">Executions</span>}
           </button>
+
           <button
             onClick={() => setViewMode('templates')}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded transition-colors group font-medium text-left ${
+            title="Templates"
+            className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 rounded transition-colors group font-medium text-left ${
               viewMode === 'templates' ? 'text-primary bg-white/[0.03]' : 'text-on-surface-variant hover:text-on-surface'
             }`}
           >
-            <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: viewMode === 'templates' ? "'FILL' 1" : "'FILL' 0" }}>library_books</span>
-            <span className="font-body-md text-body-md">Templates</span>
+            <svg className="w-5 h-5 text-purple-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+            {!isSidebarCollapsed && <span className="font-body-md text-body-md">Templates</span>}
           </button>
+
           <button
             onClick={() => setViewMode('variables')}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded transition-colors group font-medium text-left ${
+            title="Variables"
+            className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 rounded transition-colors group font-medium text-left ${
               viewMode === 'variables' ? 'text-primary bg-white/[0.03]' : 'text-on-surface-variant hover:text-on-surface'
             }`}
           >
-            <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: viewMode === 'variables' ? "'FILL' 1" : "'FILL' 0" }}>code</span>
-            <span className="font-body-md text-body-md">Variables</span>
+            <svg className="w-5 h-5 text-pink-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+            </svg>
+            {!isSidebarCollapsed && <span className="font-body-md text-body-md">Variables</span>}
           </button>
+
           <button
             onClick={() => setViewMode('history')}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded transition-colors group font-medium text-left ${
+            title="Simulation DB"
+            className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 rounded transition-colors group font-medium text-left ${
               viewMode === 'history' ? 'text-primary bg-white/[0.03]' : 'text-on-surface-variant hover:text-on-surface'
             }`}
           >
-            <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: viewMode === 'history' ? "'FILL' 1" : "'FILL' 0" }}>history</span>
-            <span className="font-body-md text-body-md">Simulation DB</span>
+            <svg className="w-5 h-5 text-[#facc15] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {!isSidebarCollapsed && <span className="font-body-md text-body-md">Simulation DB</span>}
           </button>
         </nav>
-        <div className="mt-auto px-4 pt-4">
+        <div className="mt-auto px-3 pt-4">
           <button
             onClick={() => setViewMode('settings')}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded transition-colors group font-medium text-left ${
+            title="Settings"
+            className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 rounded transition-colors group font-medium text-left ${
               viewMode === 'settings' ? 'text-primary bg-white/[0.03]' : 'text-on-surface-variant hover:text-on-surface'
             }`}
           >
-            <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: viewMode === 'settings' ? "'FILL' 1" : "'FILL' 0" }}>settings</span>
-            <span className="font-body-md text-body-md">Settings</span>
+            <svg className="w-5 h-5 text-neutral-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            {!isSidebarCollapsed && <span className="font-body-md text-body-md">Settings</span>}
           </button>
         </div>
       </aside>
@@ -1768,87 +1852,120 @@ return {
         {viewMode === 'canvas' && (
           <div className="flex-1 flex flex-col overflow-hidden h-full">
             {/* Topbar inside Canvas builder */}
-            <header className="h-16 border-b border-[#353534] bg-background/80 backdrop-blur-md flex items-center justify-between px-8 z-20 shrink-0 text-left">
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-3 text-[13px]">
-                  <span className="text-on-surface-variant/50 hover:text-on-surface cursor-pointer transition-colors" onClick={() => setViewMode('overview')}>Workflows</span>
+            <header className="h-16 border-b border-[#353534] bg-background/80 backdrop-blur-md flex items-center justify-between px-4 z-20 shrink-0 text-left overflow-x-auto overflow-y-hidden w-full min-w-0 gap-4">
+              <div className="flex items-center gap-3 shrink-0 min-w-0">
+                <div className="flex items-center gap-2 text-[13px] shrink-0 min-w-0">
+                  <span className="text-on-surface-variant/50 hover:text-on-surface cursor-pointer transition-colors whitespace-nowrap" onClick={() => setViewMode('overview')}>Workflows</span>
                   <span className="text-on-surface-variant/20">/</span>
-                  <h2 className="font-medium opacity-90">{currentWorkflow?.name || 'Unnamed Flow'}</h2>
+                  <h2 className="font-medium opacity-90 truncate max-w-[160px] lg:max-w-[220px] xl:max-w-[320px]" title={currentWorkflow?.name || 'Unnamed Flow'}>
+                    {currentWorkflow?.name || 'Unnamed Flow'}
+                  </h2>
                 </div>
+
                 <button
                   onClick={() => {
                     const newName = prompt('Rename workflow:', currentWorkflow?.name);
                     if (newName) setCurrentWorkflow({ ...currentWorkflow, name: newName });
                   }}
-                  className="text-[10px] px-3 py-1 rounded-full border border-outline-variant/30 text-on-surface-variant/60 hover:text-on-surface hover:border-outline-variant/60 transition-all flex items-center gap-1.5"
+                  className="text-[10px] px-2.5 py-1 rounded-full border border-outline-variant/30 text-on-surface-variant/60 hover:text-on-surface hover:border-outline-variant/60 transition-all flex items-center gap-1 shrink-0 whitespace-nowrap"
                 >
-                  <span className="material-symbols-outlined !text-[12px]">tag</span>
+                  <svg className="w-3 h-3 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h10M7 12h10M7 17h10" />
+                  </svg>
                   Rename
                 </button>
-                <div className="h-4 w-px bg-outline-variant/30 mx-2"></div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-neutral-500 font-bold">Select Active:</span>
+
+                <div className="h-4 w-px bg-outline-variant/30 mx-1 shrink-0"></div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-xs text-neutral-500 font-bold whitespace-nowrap">Select Active:</span>
                   <select
                     value={currentWorkflow?.id || ''}
                     onChange={(e) => {
                       const wf = workflows.find(w => w.id === parseInt(e.target.value, 10));
                       if (wf) loadWorkflow(wf);
                     }}
-                    className="bg-[#131313] border border-outline-variant/50 text-[12px] rounded-lg px-2.5 py-1 text-white outline-none cursor-pointer"
+                    className="bg-[#131313] border border-outline-variant/50 text-[12px] rounded-lg px-2.5 py-1 text-white outline-none cursor-pointer max-w-[160px] lg:max-w-[220px] truncate"
                   >
                     {workflows.map((w) => (
                       <option key={w.id} value={w.id}>{w.name}</option>
                     ))}
                   </select>
                 </div>
+
                 <button
                   onClick={handleCreateNew}
-                  className="text-xs text-primary font-bold hover:brightness-110 flex items-center gap-1 ml-2"
+                  className="text-xs text-primary font-bold hover:brightness-110 flex items-center gap-1 ml-1 shrink-0 whitespace-nowrap"
                 >
-                  <span className="material-symbols-outlined !text-[14px]">add</span> New Fresh Canvas
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                  New Fresh Canvas
                 </button>
               </div>
 
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-3">
-                  <span className="text-[11px] font-medium text-[#ef4444] uppercase tracking-widest opacity-80">Live Engine</span>
-                  <div className="w-7 h-3.5 bg-[#ef4444]/10 rounded-full relative flex items-center px-0.5 border border-[#ef4444]/20">
-                    <div className="w-2.5 h-2.5 bg-[#ef4444] rounded-full ml-auto"></div>
+              <div className="flex items-center gap-3 shrink-0">
+                {/* Live Engine Interactive Toggle Button */}
+                <button
+                  onClick={toggleLiveEngine}
+                  title={isLiveEngineActive ? "Live Engine Active - Click to pause engine" : "Live Engine Paused - Click to activate engine"}
+                  className={`flex items-center gap-2 px-3 py-1 rounded-full border transition-all shrink-0 cursor-pointer shadow-sm ${
+                    isLiveEngineActive
+                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
+                      : 'bg-rose-500/10 border-rose-500/30 text-rose-400 hover:bg-rose-500/20'
+                  }`}
+                >
+                  <span className="text-[11px] font-bold uppercase tracking-widest whitespace-nowrap">
+                    {isLiveEngineActive ? 'Live Engine ON' : 'Live Engine OFF'}
+                  </span>
+                  <div className={`w-8 h-4 rounded-full relative flex items-center px-0.5 border transition-colors ${
+                    isLiveEngineActive
+                      ? 'bg-emerald-500/20 border-emerald-500/40 justify-end'
+                      : 'bg-rose-500/20 border-rose-500/40 justify-start'
+                  }`}>
+                    <div className={`w-3 h-3 rounded-full transition-all ${
+                      isLiveEngineActive ? 'bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-rose-500'
+                    }`}></div>
                   </div>
-                </div>
-                <div className="h-4 w-px bg-outline-variant/30 mx-2"></div>
+                </button>
+
+                <div className="h-4 w-px bg-outline-variant/30 mx-1 shrink-0"></div>
                 
                 <button
                   onClick={handleSave}
-                  className="text-[12px] font-bold text-[#facc15] hover:opacity-80 transition-opacity uppercase tracking-widest"
+                  className="text-[12px] font-bold text-[#facc15] hover:opacity-80 transition-opacity uppercase tracking-widest shrink-0 whitespace-nowrap"
                 >
                   Save Definition
                 </button>
 
                 <button
                   onClick={runDiagnostics}
-                  className="text-[12px] font-bold text-emerald-500 hover:text-emerald-400 transition-colors uppercase tracking-widest flex items-center gap-1.5"
+                  className="text-[12px] font-bold text-emerald-500 hover:text-emerald-400 transition-colors uppercase tracking-widest flex items-center gap-1 shrink-0 whitespace-nowrap"
                 >
-                  <span className="material-symbols-outlined !text-[16px]">fact_check</span>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
                   Verify & Diagnose
                 </button>
 
                 <button
                   onClick={handleDelete}
-                  className="text-[12px] font-bold text-rose-500 hover:text-rose-400 transition-colors uppercase tracking-widest"
+                  className="text-[12px] font-bold text-rose-500 hover:text-rose-400 transition-colors uppercase tracking-widest shrink-0 whitespace-nowrap"
                 >
                   Delete Flow
                 </button>
 
-                <div className="flex items-center rounded-lg overflow-hidden border border-outline-variant/30 text-[11px]">
+                <div className="flex items-center rounded-lg overflow-hidden border border-outline-variant/30 text-[11px] shrink-0">
                   <button
                     onClick={() => alert(`Webhook endpoint: ${BACKEND_URL}/api/webhooks/${currentWorkflow?.id}`)}
-                    className="px-3 py-1.5 bg-surface-container-high/40 flex items-center gap-2 hover:bg-surface-container-high transition-colors text-white"
+                    className="px-2.5 py-1 bg-surface-container-high/40 flex items-center gap-1.5 hover:bg-surface-container-high transition-colors text-white whitespace-nowrap"
                   >
-                    <span className="material-symbols-outlined !text-[14px] opacity-60">link</span>
+                    <svg className="w-3.5 h-3.5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
                     Webhook URL
                   </button>
-                  <span className="px-3 py-1.5 bg-surface-container-lowest/50 font-mono text-[10px] opacity-40">POST</span>
+                  <span className="px-2.5 py-1 bg-surface-container-lowest/50 font-mono text-[10px] opacity-60">POST</span>
                 </div>
               </div>
             </header>
