@@ -1,11 +1,9 @@
 import express from 'express';
-import dotenv from 'dotenv';
+import { env } from '../../env.js';
 import { prisma } from './db.js';
 import { executeWorkflow } from './engine.js';
 import { startScheduler } from './scheduler.js';
 import { connectRabbitMQ, publishToQueue, getRabbitMQStatus } from './rabbitmq.js';
-
-dotenv.config();
 
 const app = express();
 app.use(express.json());
@@ -517,7 +515,7 @@ app.post('/api/crm/reset', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 4000;
+const PORT = env.PORT || 4000;
 app.listen(PORT, async () => {
   console.log(`Backend listening on port ${PORT}`);
   // Connect to RabbitMQ broker (standby mode if RABBITMQ_URL not set)

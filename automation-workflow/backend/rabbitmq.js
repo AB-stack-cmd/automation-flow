@@ -1,4 +1,5 @@
 import amqp from 'amqplib';
+import { env } from '../../env.js';
 
 let connection = null;
 let channel = null;
@@ -10,8 +11,8 @@ let lastError = null;
  * If RABBITMQ_URL is empty or missing, operates in standby mode gracefully without crashing.
  */
 export async function connectRabbitMQ() {
-  const url = process.env.RABBITMQ_URL ? process.env.RABBITMQ_URL.trim() : '';
-  const queueName = process.env.RABBITMQ_QUEUE_NAME || 'neuron_flow_queue';
+  const url = env.RABBITMQ_URL;
+  const queueName = env.RABBITMQ_QUEUE_NAME;
 
   if (!url) {
     console.log('ℹ️ [RabbitMQ] RABBITMQ_URL space is empty in .env. System operating in queue standby mode.');
@@ -56,7 +57,7 @@ export async function connectRabbitMQ() {
  * Safely falls back if RabbitMQ is offline or disconnected.
  */
 export async function publishToQueue(queueName = null, payload = {}) {
-  const targetQueue = queueName || process.env.RABBITMQ_QUEUE_NAME || 'neuron_flow_queue';
+  const targetQueue = queueName || env.RABBITMQ_QUEUE_NAME;
 
   if (!isConnected || !channel) {
     // Graceful fallback when queue connection is offline/not configured
@@ -86,7 +87,7 @@ export async function publishToQueue(queueName = null, payload = {}) {
  * Consumes messages from a specified queue and executes handler callback.
  */
 export async function consumeQueue(queueName = null, onMessageCallback = () => {}) {
-  const targetQueue = queueName || process.env.RABBITMQ_QUEUE_NAME || 'neuron_flow_queue';
+  const targetQueue = queueName || env.RABBITMQ_QUEUE_NAME;
 
   if (!isConnected || !channel) {
     return false;
@@ -120,8 +121,8 @@ export async function consumeQueue(queueName = null, onMessageCallback = () => {
  * Returns health and connection status metrics for the RabbitMQ client module.
  */
 export function getRabbitMQStatus() {
-  const url = process.env.RABBITMQ_URL ? process.env.RABBITMQ_URL.trim() : '';
-  const queueName = process.env.RABBITMQ_QUEUE_NAME || 'neuron_flow_queue';
+  const url = env.RABBITMQ_URL;
+  const queueName = env.RABBITMQ_QUEUE_NAME;
 
   return {
     connected: isConnected,

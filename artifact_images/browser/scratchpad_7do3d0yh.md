@@ -8,4 +8,4 @@
 - [x] Verify table columns are updated (Company, Contact Name, Email, Phone, Lead Score, Status)
 - [x] Click the 'Generate Rows with AI' button
 - [x] Wait for generation and verify table has updated with 10 rows
-- [x] Click the 'Export to Excel (.xlsx)' button to trigger the export download
+- [x] Click the 'Download Excel (.xlsx)' button to trigger the export download

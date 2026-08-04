@@ -1,8 +1,9 @@
 // Express backend for the workspace project
 import express from "express";
+import { env } from "../env.js";
 
 const app = express();
-const PORT = process.env.EXPRESS_PORT || process.env.PORT || 4001;
+const PORT = env.EXPRESS_PORT || env.PORT || 4001;
 
 // Simple health‑check endpoint
 app.get("/api/health", (req, res) => {

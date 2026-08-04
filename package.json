@@ -10,7 +10,7 @@
     "server": "node server/index.js",
     "dev:full": "concurrently \"npm run dev\" \"npm run server\"",
     "start:full": "concurrently \"npm run start\" \"npm run server\"",
-    "db:push:workflow": "npm run prisma --prefix automation-workflow/backend -- db push --schema=../prisma/schema.prisma",
+    "db:push:workflow": "prisma db push --schema=automation-workflow/prisma/schema.prisma",
     "dev:all": "npm run db:push:workflow && concurrently \"npm run dev\" \"npm run server\" \"npm run dev --prefix automation-workflow/backend\" \"npm run dev --prefix automation-workflow/frontend\"",
     "docker:up": "docker compose up --build -d",
     "docker:down": "docker compose down",
@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
+    "dotenv": "^16.6.1",
     "express": "^5.2.1",
     "next": "^16.2.10",
     "react": "^19.2.7",

@@ -1,6 +1,7 @@
 import { prisma } from './db.js';
 import nodemailer from 'nodemailer';
 import { publishToQueue } from './rabbitmq.js';
+import { env } from '../../env.js';
 
 /**
  * Safely evaluates a simple condition script or expression using current context.
@@ -360,11 +361,11 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
         let logMsg = `Successfully simulated sent email to ${resolvedTo}`;
 
         // Check if real SMTP credentials exist in environment variables or node settings
-        const smtpHost = process.env.SMTP_HOST || node.data?.smtpHost;
-        const smtpUser = process.env.SMTP_USER || node.data?.smtpUser;
-        const smtpPass = process.env.SMTP_PASS || node.data?.smtpPass;
-        const smtpPort = parseInt(process.env.SMTP_PORT || node.data?.smtpPort || '587', 10);
-        const smtpSecure = process.env.SMTP_SECURE === 'true' || smtpPort === 465;
+        const smtpHost = env.SMTP_HOST || node.data?.smtpHost;
+        const smtpUser = env.SMTP_USER || node.data?.smtpUser;
+        const smtpPass = env.SMTP_PASS || node.data?.smtpPass;
+        const smtpPort = env.SMTP_PORT || parseInt(node.data?.smtpPort || '587', 10);
+        const smtpSecure = env.SMTP_SECURE || smtpPort === 465;
 
         if (smtpUser && smtpPass) {
           try {
@@ -379,7 +380,7 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
             });
 
             await transporter.sendMail({
-              from: process.env.EMAIL_FROM || `"NEURON_FLOW Automation" <${smtpUser}>`,
+              from: env.EMAIL_FROM || `"NEURON_FLOW Automation" <${smtpUser}>`,
               to: resolvedTo,
               subject: resolvedSubject,
               text: resolvedBody,
@@ -552,7 +553,7 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
         continue; // Avoid standard children push
       } 
       else if (node.type === 'rabbitmq_publish') {
-        const queueName = node.data?.queue || process.env.RABBITMQ_QUEUE_NAME || 'neuron_flow_queue';
+        const queueName = node.data?.queue || env.RABBITMQ_QUEUE_NAME;
         const rawPayload = node.data?.payload || '{"message": "Hello from NEURON_FLOW"}';
         const resolvedQueue = interpolateTemplate(queueName, context);
         let resolvedPayload = interpolateTemplate(rawPayload, context);
@@ -634,7 +635,7 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
       }
       else if (node.type === 'openai' || node.type === 'action.openai') {
         const prompt = interpolateTemplate(node.data?.prompt || '', context);
-        const apiKey = process.env.OPENAI_API_KEY || 'mock-key';
+        const apiKey = env.OPENAI_API_KEY || 'mock-key';
         let resultText = "Mock OpenAI completion success!";
         if (apiKey && apiKey !== 'mock-key') {
           try {
