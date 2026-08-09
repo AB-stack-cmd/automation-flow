@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { SignInButton, UserButton, useUser } from '@clerk/nextjs';
 
 export default function ExcelAutomation() {
+  const { isLoaded, isSignedIn } = useUser();
   // Grid State
   const [columns, setColumns] = useState(['Name', 'Email', 'Company', 'Role', 'Status']);
   const [rows, setRows] = useState([
@@ -621,6 +623,15 @@ export default function ExcelAutomation() {
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                 Services Active: 4000 / 3000 / 5173
               </div>
+              {isLoaded && isSignedIn ? (
+                <UserButton afterSignOutUrl="/" />
+              ) : (
+                <SignInButton mode="modal">
+                  <button className="px-3 py-1 bg-neutral-900 hover:bg-neutral-800 border border-white/10 text-white rounded text-xs">
+                    Sign In
+                  </button>
+                </SignInButton>
+              )}
             </div>
           </div>
         </header>

@@ -1,11 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
+import { SignInButton, UserButton, useUser } from '@clerk/nextjs';
 
 export default function Home() {
+  const { isLoaded, isSignedIn, user } = useUser();
+  const [syncedUser, setSyncedUser] = useState(null);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     document.documentElement.classList.add('dark');
   }, []);
+
+  // Automatic Prisma Sync when user signs in via Clerk
+  useEffect(() => {
+    if (isSignedIn && user) {
+      const syncUserToPrisma = async () => {
+        try {
+          const res = await fetch('/api/user/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              clerkId: user.id,
+              email: user.primaryEmailAddress?.emailAddress || `${user.id}@clerk.local`,
+              name: user.fullName || user.firstName || 'Clerk User',
+              imageUrl: user.imageUrl,
+            }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            setSyncedUser(data.user);
+          }
+        } catch (e) {
+          console.error('Failed to sync Clerk user to Prisma:', e);
+        }
+      };
+      syncUserToPrisma();
+    }
+  }, [isSignedIn, user]);
 
   return (
     <>
@@ -72,6 +103,24 @@ export default function Home() {
                 <span className="w-2 h-2 rounded-full bg-[#ff4f00] animate-pulse"></span>
                 Dark Mode Active 🌙
               </div>
+
+              {isLoaded && isSignedIn ? (
+                <div className="flex items-center gap-2">
+                  {syncedUser && (
+                    <span className="text-xs font-semibold text-emerald-400 bg-emerald-950/60 px-2.5 py-1 rounded border border-emerald-500/20 hidden lg:inline">
+                      Prisma Synced ✓
+                    </span>
+                  )}
+                  <UserButton afterSignOutUrl="/" />
+                </div>
+              ) : (
+                <SignInButton mode="modal">
+                  <button className="px-4 py-2 bg-[#18181b] border border-[#27272a] hover:border-[#ff4f00] text-xs font-semibold text-white rounded-md transition">
+                    Sign In
+                  </button>
+                </SignInButton>
+              )}
+
               <a
                 href="http://localhost:5173"
                 className="px-5 py-2.5 bg-[#ff4f00] text-[#fffefb] font-semibold text-sm rounded-md hover:opacity-95 transition shadow-sm"

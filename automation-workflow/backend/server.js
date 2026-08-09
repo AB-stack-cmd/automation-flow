@@ -27,6 +27,21 @@ app.get('/health', (req, res) => {
 // RabbitMQ Connection & Queue Health Status Check
 app.get('/api/rabbitmq/status', (req, res) => {
   res.json(getRabbitMQStatus());
+// --- USER & AUTHENTICATION ENDPOINTS ---
+
+// Get User & Workflows by Clerk ID
+app.get('/api/users/clerk/:clerkId', async (req, res) => {
+  try {
+    const { clerkId } = req.params;
+    const user = await prisma.user.findUnique({
+      where: { clerkId },
+      include: { workflows: true }
+    });
+    if (!user) return res.status(404).json({ error: 'User not found in database' });
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // --- WORKFLOW CRUD ---
