@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { Handle, Position } from 'reactflow';
 
-// Custom Zapier Node Card Style
+// Custom Node Card Style
 const nodeCardClass = (selected: boolean) =>
   `node-card w-52 p-4 rounded-md relative group cursor-pointer text-[#201515] dark:text-[#f4f4f5] text-left transition-all duration-200 shadow-sm ${
     selected
@@ -9,7 +9,7 @@ const nodeCardClass = (selected: boolean) =>
       : 'bg-[#f8f4f0] dark:bg-[#18181b] border border-[#c5c0b1] dark:border-[#27272a] hover:border-[#201515] dark:hover:border-[#ff4f00] hover:shadow-md'
   }`;
 
-// Circle start node trigger style with Zapier Orange Play Badge
+// Circle start node trigger style with Orange Play Badge
 export const TriggerNode = memo(({ data, selected }: any) => {
   const isCrm = data?.triggerType === 'crm';
   return (
@@ -21,7 +21,7 @@ export const TriggerNode = memo(({ data, selected }: any) => {
           {isCrm ? '👥' : '⚡'}
         </span>
 
-        {/* Play SVG Overlay Badge in Zapier Orange */}
+        {/* Play SVG Overlay Badge in Primary Orange */}
         <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#ff4f00] border-2 border-[#fffefb] flex items-center justify-center shadow-sm">
           <svg className="w-2.5 h-2.5 text-[#fffefb] ml-0.5" viewBox="0 0 24 24" fill="currentColor">
             <path d="M8 5v14l11-7z" />

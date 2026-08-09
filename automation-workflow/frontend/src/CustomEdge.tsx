@@ -2,7 +2,7 @@ import React from 'react';
 import { BaseEdge, EdgeLabelRenderer, getBezierPath, type EdgeProps } from 'reactflow';
 
 /**
- * Custom Edge component with Zapier orange insert button positioned in the middle of the connection wire curve.
+ * Custom Edge component with primary orange insert button positioned in the middle of the connection wire curve.
  */
 export function CustomButtonEdge({
   id,

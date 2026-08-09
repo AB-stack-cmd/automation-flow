@@ -41,7 +41,7 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Zapier Inspired NEURON_FLOW | Workflow Automation</title>
+        <title>NEURON_FLOW | Workflow Automation</title>
         <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />
@@ -135,7 +135,7 @@ export default function Home() {
         <section className="bg-[#fffefb] dark:bg-[#121212] px-6 py-20 lg:py-28 text-center max-w-5xl mx-auto flex flex-col items-center transition-colors">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#f8f4f0] dark:bg-[#1f1f23] border border-[#c5c0b1] dark:border-[#27272a] text-xs font-semibold text-[#201515] dark:text-[#f4f4f5] mb-6">
             <span className="w-2 h-2 rounded-full bg-[#ff4f00] animate-pulse"></span>
-            Zapier Inspired Workflow Engine 2.0
+            NEURON_FLOW Workflow Engine 2.0
           </div>
 
           <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-medium tracking-tight leading-none text-[#201515] dark:text-[#ffffff] mb-6">

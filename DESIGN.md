@@ -1,7 +1,7 @@
 ---
 version: alpha
-name: Zapier-design-analysis
-description: An inspired interpretation of Zapier's design language — a workflow-automation platform whose surface combines warm-cream neutrals (`#fffefb` canvas, `#f8f4f0` soft cream) with deep coffee ink (`#201515`) and a single saturated orange CTA accent (`#ff4f00`); typography pairs the proprietary Degular Display family at hero scale with Inter for sub-displays and body, giving the brand a confident-warm rather than cool-tech voice.
+name: Neuron-flow-design-analysis
+description: An inspired design language for workflow automation — combining warm-cream neutrals (`#fffefb` canvas, `#f8f4f0` soft cream) with deep coffee ink (`#201515`) and a single saturated orange CTA accent (`#ff4f00`); typography pairs the proprietary Degular Display family at hero scale with Inter for sub-displays and body, giving the brand a confident-warm rather than cool-tech voice.
 
 colors:
   primary: "#ff4f00"
@@ -294,7 +294,7 @@ components:
 
 ## Overview
 
-Zapier is the original "connect your apps" workflow automation platform — and the marketing surface today reads as confidently-mature. The brand pairs a warm-cream canvas `{colors.canvas}` (`#fffefb`) with a deep coffee-ink `{colors.ink}` (`#201515`) and a single saturated orange `{colors.primary}` (`#ff4f00`) CTA. The warmth in the neutrals — slightly cream rather than pure white — is the brand's defining temperature signal.
+NEURON_FLOW is a workflow automation platform — with a marketing surface that reads as confidently-mature. The brand pairs a warm-cream canvas `{colors.canvas}` (`#fffefb`) with a deep coffee-ink `{colors.ink}` (`#201515`) and a single saturated orange `{colors.primary}` (`#ff4f00`) CTA. The warmth in the neutrals — slightly cream rather than pure white — is the brand's defining temperature signal.
 
 Type carries the second voice. The proprietary `Degular Display` family carries hero displays at weight 500. The brand uses `Inter` for everything else — sub-displays, body, button, eyebrow. The two-face pairing reads as "the brand has its own typeface for the loud moments and uses the workhorse for the rest" — modest and unflashy.
 
@@ -311,7 +311,7 @@ Cards are universally `{rounded.md}` 12 px. Buttons share the same 12 px radius 
 ## Colors
 
 ### Brand & Accent
-- **Zapier Orange** (`{colors.primary}` — `#ff4f00`): The single brand accent. Every primary CTA pill, every conversion target. The saturated orange IS the brand.
+- **Primary Orange** (`{colors.primary}` — `#ff4f00`): The single brand accent. Every primary CTA pill, every conversion target. The saturated orange IS the brand.
 
 ### Surface
 - **Canvas** (`{colors.canvas}` — `#fffefb`): Warm off-white page background.
@@ -522,7 +522,7 @@ The brand uses illustrative SVGs of zaps / workflows + product screenshots insid
 ## Do's and Don'ts
 
 ### Do
-- Reserve `{colors.primary}` Zapier orange for every primary CTA. The saturated orange IS the conversion signature.
+- Reserve `{colors.primary}` primary orange for every primary CTA. The saturated orange IS the conversion signature.
 - Keep canvas WARM — `{colors.canvas}` `#fffefb` cream, not pure white. The temperature is the brand voice.
 - Set hero headlines in `{typography.display-xl}` Degular Display weight 500. Sentence-case, no uppercase.
 - Pair Degular Display (hero, eyebrow) with Inter (everything else). Two faces, two roles.

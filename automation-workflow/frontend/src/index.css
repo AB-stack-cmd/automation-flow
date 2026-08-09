@@ -1,4 +1,4 @@
-/* Zapier Design System - React Flow & Base Styles (Dark Mode Default) */
+/* NEURON_FLOW Design System - React Flow & Base Styles (Dark Mode Default) */
 
 :root {
   --bg-canvas: #121212;
@@ -30,7 +30,7 @@ html, body, #root {
   transition: background-color 0.2s ease;
 }
 
-/* Custom Zapier scrollbars */
+/* Custom scrollbars */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -46,7 +46,7 @@ html, body, #root {
   background: #ff4f00;
 }
 
-/* Zapier custom focus & selection */
+/* Custom focus & selection */
 ::selection {
   background-color: #ff4f00;
   color: #fffefb;

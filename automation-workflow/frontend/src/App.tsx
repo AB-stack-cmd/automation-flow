@@ -230,15 +230,15 @@ export default function App() {
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [avatarInputUrl, setAvatarInputUrl] = useState('');
 
-  // Zapier Design System Example Surfaces UI States
+  // NEURON_FLOW Design System Example Surfaces UI States
   const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
   const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [zapierToast, setZapierToast] = useState<{ message: string; type?: 'info' | 'success' | 'warning' } | null>(null);
+  const [appToast, setAppToast] = useState<{ message: string; type?: 'info' | 'success' | 'warning' } | null>(null);
 
-  const showZapierToast = (message: string, type: 'info' | 'success' | 'warning' = 'success') => {
-    setZapierToast({ message, type });
-    setTimeout(() => setZapierToast(null), 3000);
+  const showAppToast = (message: string, type: 'info' | 'success' | 'warning' = 'success') => {
+    setAppToast({ message, type });
+    setTimeout(() => setAppToast(null), 3000);
   };
 
   // AI Chat States
@@ -2179,7 +2179,7 @@ return {
                   <Background color="#ff4f00" gap={32} size={1} />
                 </ReactFlow>
 
-                {/* Primary Action Button (Zapier Orange #ff4f00 CTA) */}
+                {/* Primary Action Button (#ff4f00 CTA) */}
                 <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20">
                   <button
                     onClick={handleRunWorkflow}
@@ -2198,7 +2198,7 @@ return {
                       <div className="p-3 bg-[#201515] text-[#fffefb] flex items-center justify-between shrink-0">
                         <div className="flex items-center gap-2">
                           <span className="text-[#ff4f00] font-bold text-sm">🤖</span>
-                          <span className="font-bold text-xs text-[#fffefb]">Zapier AI Copilot</span>
+                          <span className="font-bold text-xs text-[#fffefb]">NEURON_FLOW AI Copilot</span>
                         </div>
                         <button onClick={() => setIsChatOpen(false)} className="text-[#c5c0b1] hover:text-[#fffefb]">
                           ✕
@@ -4725,7 +4725,7 @@ return {
           <div className="w-[860px] max-w-full bg-[#fffefb] border border-[#201515] rounded-md shadow-2xl p-6 overflow-y-auto max-h-[90vh]">
             <div className="flex items-center justify-between border-b border-[#c5c0b1] pb-4 mb-6">
               <div>
-                <span className="text-xs uppercase tracking-wider font-semibold text-[#ff4f00]">Zapier Inspired Pricing</span>
+                <span className="text-xs uppercase tracking-wider font-semibold text-[#ff4f00]">NEURON_FLOW Pricing</span>
                 <h2 className="text-2xl font-bold text-[#201515]">Choose your automation plan</h2>
               </div>
               <button
@@ -4752,7 +4752,7 @@ return {
                 </div>
                 <button
                   type="button"
-                  onClick={() => { showZapierToast("Switched to Starter Plan"); setIsPricingModalOpen(false); }}
+                  onClick={() => { showAppToast("Switched to Starter Plan"); setIsPricingModalOpen(false); }}
                   className="w-full py-2.5 bg-[#fffefb] border border-[#201515] text-[#201515] rounded-md font-semibold text-xs hover:bg-[#201515] hover:text-[#fffefb] transition"
                 >
                   Current Plan
@@ -4777,7 +4777,7 @@ return {
                 </div>
                 <button
                   type="button"
-                  onClick={() => { showZapierToast("Upgraded to Professional Plan!"); setIsPricingModalOpen(false); }}
+                  onClick={() => { showAppToast("Upgraded to Professional Plan!"); setIsPricingModalOpen(false); }}
                   className="w-full py-2.5 bg-[#ff4f00] text-[#fffefb] rounded-md font-bold text-xs hover:opacity-90 transition shadow-md"
                 >
                   Upgrade to Pro
@@ -4798,7 +4798,7 @@ return {
                 </div>
                 <button
                   type="button"
-                  onClick={() => { showZapierToast("Contacted sales for Team Plan"); setIsPricingModalOpen(false); }}
+                  onClick={() => { showAppToast("Contacted sales for Team Plan"); setIsPricingModalOpen(false); }}
                   className="w-full py-2.5 bg-[#201515] text-[#fffefb] rounded-md font-semibold text-xs hover:opacity-90 transition"
                 >
                   Get Team Plan
@@ -4857,7 +4857,7 @@ return {
               </div>
               <button
                 type="button"
-                onClick={() => { showZapierToast("Checkout complete!"); setIsCartDrawerOpen(false); }}
+                onClick={() => { showAppToast("Checkout complete!"); setIsCartDrawerOpen(false); }}
                 className="w-full py-3 bg-[#ff4f00] text-[#fffefb] font-bold text-xs rounded-md shadow-md hover:opacity-90 transition"
               >
                 Proceed to Checkout
@@ -4874,7 +4874,7 @@ return {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full bg-[#ff4f00]"></span>
-                <span className="font-bold text-lg text-[#201515]">Sign in to Zapier Flow</span>
+                <span className="font-bold text-lg text-[#201515]">Sign in to NEURON_FLOW</span>
               </div>
               <button
                 type="button"
@@ -4887,7 +4887,7 @@ return {
 
             <p className="text-xs text-[#605d52] mb-6">Enter your workspace account credentials to sync workflow graphs.</p>
 
-            <form onSubmit={(e) => { e.preventDefault(); showZapierToast("Signed in successfully!"); setIsAuthModalOpen(false); }} className="space-y-4">
+            <form onSubmit={(e) => { e.preventDefault(); showAppToast("Signed in successfully!"); setIsAuthModalOpen(false); }} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-[#201515] mb-1">Work Email</label>
                 <input
@@ -4920,10 +4920,10 @@ return {
       )}
 
       {/* ex-toast: Toast Notification */}
-      {zapierToast && (
+      {appToast && (
         <div className="fixed bottom-6 right-6 z-[150] bg-[#201515] text-[#fffefb] border-2 border-[#ff4f00] rounded-md px-4 py-3 shadow-xl flex items-center gap-3 animate-in slide-in-from-bottom-4 duration-200">
           <span className="w-2 h-2 rounded-full bg-[#ff4f00] animate-ping"></span>
-          <span className="text-xs font-semibold">{zapierToast.message}</span>
+          <span className="text-xs font-semibold">{appToast.message}</span>
         </div>
       )}
     </div>

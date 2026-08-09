@@ -8,7 +8,7 @@ This guide details the core architecture, data lifecycles, and scaling patterns 
 
 ### What is n8n & Why It Exists
 n8n is an extendable, source-available workflow automation platform that allows developers and systems to connect APIs, databases, files, and AI services using a node-based visual designer.
-Unlike closed SaaS platforms (e.g., Zapier, Make), n8n can be hosted on-premise, allowing it to satisfy strict data privacy requirements (GDPR, HIPAA, SOC2), eliminate payload size limits, support custom scripts, and offer consumption-independent scaling.
+Unlike closed SaaS platforms (e.g., commercial cloud SaaS, Make), n8n can be hosted on-premise, allowing it to satisfy strict data privacy requirements (GDPR, HIPAA, SOC2), eliminate payload size limits, support custom scripts, and offer consumption-independent scaling.
 
 ### Core Components & Architecture Map
 
