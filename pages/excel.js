@@ -34,6 +34,11 @@ export default function ExcelAutomation() {
   });
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    document.documentElement.classList.add('dark');
+  }, []);
+
+  useEffect(() => {
     // Update metrics when rows/columns change
     setMetrics({
       totalRows: rows.length,
@@ -491,20 +496,20 @@ export default function ExcelAutomation() {
                 extend: {
                   "colors": {
                     "secondary-container": "#a40217",
-                    "surface-container-low": "#1c1b1b",
-                    "outline-variant": "#4d4632",
-                    "on-surface-variant": "#d1c6ab",
-                    "surface-container": "#201f1f",
-                    "secondary-fixed-dim": "#ffb3ad",
-                    "primary-container": "#facc15",
-                    "surface-tint": "#eec200",
-                    "surface-container-high": "#2a2a2a",
-                    "outline": "#9a9078",
-                    "background": "#131313",
-                    "surface": "#131313",
-                    "on-surface": "#e5e2e1",
-                    "primary": "#ffecb9",
-                    "surface-container-lowest": "#0e0e0e"
+                  colors: {
+                    "primary": "#ff4f00",
+                    "on-primary": "#fffefb",
+                    "ink": "#201515",
+                    "body": "#605d52",
+                    "mute": "#c5c0b1",
+                    "canvas": "#fffefb",
+                    "canvas-soft": "#f8f4f0"
+                  },
+                  borderRadius: {
+                    "none": "0px",
+                    "sm": "6px",
+                    "md": "12px",
+                    "pill": "9999px"
                   }
                 }
               }
@@ -512,10 +517,24 @@ export default function ExcelAutomation() {
           `
         }} />
         <style>{`
+          body {
+            background-color: #fffefb;
+            color: #201515;
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.2s, color 0.2s;
+          }
+          html.dark body, body.dark {
+            background-color: #121212;
+            color: #f4f4f5;
+          }
           .glass-panel {
-              background: rgba(20, 20, 20, 0.85);
-              backdrop-filter: blur(25px);
-              border: 1px solid rgba(250, 204, 21, 0.08);
+            background: #f8f4f0;
+            border: 1px solid #c5c0b1;
+            border-radius: 12px;
+          }
+          html.dark .glass-panel, .dark .glass-panel {
+            background: #18181b;
+            border: 1px solid #27272a;
           }
           .excel-grid input {
             background: transparent;
@@ -524,11 +543,18 @@ export default function ExcelAutomation() {
             width: 100%;
             height: 100%;
             padding: 8px 12px;
-            color: #e5e2e1;
+            color: #201515;
+          }
+          html.dark .excel-grid input, .dark .excel-grid input {
+            color: #f4f4f5;
           }
           .excel-grid input:focus {
-            background: rgba(250, 204, 21, 0.05);
-            box-shadow: inset 0 0 0 1px #facc15;
+            background: #fffefb;
+            box-shadow: inset 0 0 0 2px #ff4f00;
+          }
+          html.dark .excel-grid input:focus, .dark .excel-grid input:focus {
+            background: #1f1f23;
+            box-shadow: inset 0 0 0 2px #ff4f00;
           }
           /* Custom scrollbars */
           ::-webkit-scrollbar {
@@ -536,40 +562,26 @@ export default function ExcelAutomation() {
             height: 8px;
           }
           ::-webkit-scrollbar-track {
-            background: #131313;
+            background: #f8f4f0;
+          }
+          html.dark ::-webkit-scrollbar-track, .dark ::-webkit-scrollbar-track {
+            background: #18181b;
           }
           ::-webkit-scrollbar-thumb {
-            background: #2a2a2a;
-            border-radius: 4px;
+            background: #c5c0b1;
+            border-radius: 6px;
+          }
+          html.dark ::-webkit-scrollbar-thumb, .dark ::-webkit-scrollbar-thumb {
+            background: #3f3f46;
           }
           ::-webkit-scrollbar-thumb:hover {
-            background: #3a3939;
-          }
-          .glow-btn {
-            position: relative;
-            overflow: hidden;
-          }
-          .glow-btn::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(45deg, transparent, rgba(250, 204, 21, 0.3), transparent);
-            transform: rotate(45deg);
-            transition: 0.5s;
-            opacity: 0;
-          }
-          .glow-btn:hover::after {
-            left: 120%;
-            opacity: 1;
-            transition: 0.8s ease-in-out;
+            background: #939084;
           }
         `}</style>
       </Head>
 
-      <div className="bg-background text-on-surface font-sans min-h-screen relative overflow-x-hidden selection:bg-primary-container selection:text-black">
+      <div className="bg-[#fffefb] dark:bg-[#121212] text-[#201515] dark:text-[#f4f4f5] font-sans min-h-screen relative overflow-x-hidden transition-colors">
+
         {/* Glow overlay */}
         <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary-container/5 rounded-full blur-3xl pointer-events-none"></div>
 

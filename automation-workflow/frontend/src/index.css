@@ -1,12 +1,14 @@
-/* React Flow container styling */
-.react-flow {
-  width: 100%;
-  height: 100%;
-  background-color: #131313;
-}
+/* Zapier Design System - React Flow & Base Styles (Dark Mode Default) */
 
-.react-flow__renderer {
-  background-color: #131313;
+:root {
+  --bg-canvas: #121212;
+  --bg-surface: #18181b;
+  --bg-card: #1f1f23;
+  --text-main: #f4f4f5;
+  --text-muted: #a1a1aa;
+  --border-color: #27272a;
+  --scrollbar-track: #18181b;
+  --scrollbar-thumb: #3f3f46;
 }
 
 html, body, #root {
@@ -15,21 +17,37 @@ html, body, #root {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  background-color: #131313;
+  background-color: var(--bg-canvas);
+  color: var(--text-main);
+  font-family: 'Inter', system-ui, sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Custom scrollbars */
+.react-flow,
+.react-flow__renderer,
+.react-flow__background {
+  background-color: var(--bg-canvas) !important;
+  transition: background-color 0.2s ease;
+}
+
+/* Custom Zapier scrollbars */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #1a1a1a;
+  background: var(--scrollbar-track);
 }
 ::-webkit-scrollbar-thumb {
-  background: #333;
-  border-radius: 4px;
+  background: var(--scrollbar-thumb);
+  border-radius: 6px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #444;
+  background: #ff4f00;
+}
+
+/* Zapier custom focus & selection */
+::selection {
+  background-color: #ff4f00;
+  color: #fffefb;
 }

@@ -2,8 +2,7 @@ import React from 'react';
 import { BaseEdge, EdgeLabelRenderer, getBezierPath, type EdgeProps } from 'reactflow';
 
 /**
- * Custom Edge component with a subtle, minimal "+" button positioned in the middle of the connection wire curve.
- * Clicking opens the node palette modal to insert a chosen node into the connection.
+ * Custom Edge component with Zapier orange insert button positioned in the middle of the connection wire curve.
  */
 export function CustomButtonEdge({
   id,
@@ -35,7 +34,7 @@ export function CustomButtonEdge({
 
   return (
     <>
-      <BaseEdge path={edgePath} markerEnd={markerEnd} style={{ strokeWidth: 2, stroke: '#525252', ...style }} />
+      <BaseEdge path={edgePath} markerEnd={markerEnd} style={{ strokeWidth: 2, stroke: '#201515', ...style }} />
       <EdgeLabelRenderer>
         <div
           style={{
@@ -48,11 +47,11 @@ export function CustomButtonEdge({
           <button
             type="button"
             onClick={onEdgeAddClick}
-            className="group flex items-center justify-center w-5 h-5 rounded-full bg-[#18181b] border border-neutral-700/80 text-neutral-400 hover:bg-[#27272a] hover:text-white hover:border-neutral-500 transition-all duration-150 cursor-pointer shadow-sm"
-            title="Insert node from palette"
+            className="group flex items-center justify-center w-6 h-6 rounded-full bg-[#ff4f00] border-2 border-[#fffefb] text-[#fffefb] hover:scale-110 transition-all duration-150 cursor-pointer shadow-md"
+            title="Insert node here"
           >
-            <span className="material-symbols-outlined text-[12px] font-bold transition-transform duration-200 group-hover:rotate-90">
-              add
+            <span className="text-xs font-bold transition-transform duration-200 group-hover:rotate-90">
+              +
             </span>
           </button>
         </div>

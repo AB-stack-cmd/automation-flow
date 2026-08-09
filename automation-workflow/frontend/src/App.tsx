@@ -213,17 +213,33 @@ const TEMPLATES = [
 ];
 
 export default function App() {
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    document.documentElement.classList.add('dark');
+  }, []);
+
   // Navigation layout state
   const [viewMode, setViewMode] = useState<'overview' | 'canvas' | 'templates' | 'variables' | 'settings' | 'history' | 'executions'>('overview');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // User Profile States
-  const DEFAULT_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="avatarGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="%23ef4444"/><stop offset="100%" stop-color="%23facc15"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(%23avatarGrad)"/><circle cx="50" cy="40" r="18" fill="%23131313"/><path d="M18 78 C 18 58, 82 58, 82 78" fill="%23131313"/></svg>`;
+  const DEFAULT_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="avatarGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="%23ff4f00"/><stop offset="100%" stop-color="%23201515"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(%23avatarGrad)"/><circle cx="50" cy="40" r="18" fill="%23fffefb"/><path d="M18 78 C 18 58, 82 58, 82 78" fill="%23fffefb"/></svg>`;
   const [profilePic, setProfilePic] = useState<string>(() => {
     return localStorage.getItem('neuron_profile_pic') || DEFAULT_AVATAR;
   });
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [avatarInputUrl, setAvatarInputUrl] = useState('');
+
+  // Zapier Design System Example Surfaces UI States
+  const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
+  const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [zapierToast, setZapierToast] = useState<{ message: string; type?: 'info' | 'success' | 'warning' } | null>(null);
+
+  const showZapierToast = (message: string, type: 'info' | 'success' | 'warning' = 'success') => {
+    setZapierToast({ message, type });
+    setTimeout(() => setZapierToast(null), 3000);
+  };
 
   // AI Chat States
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -1561,175 +1577,119 @@ return {
         }
       `}</style>
 
-      {/* SideNavBar */}
-      <aside className={`h-screen border-r border-[#353534] flex flex-col py-8 bg-[#0e0e0e] flex-shrink-0 z-50 transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}>
-        <div className={`mb-6 flex items-center ${isSidebarCollapsed ? 'justify-center px-2' : 'justify-between px-6'}`}>
+      {/* App Shell Sidebar Nav (ex-app-shell-row) */}
+      <aside 
+        className={`bg-[#201515] text-[#fffefb] border-r border-[#2f2a26] transition-all duration-300 shrink-0 flex flex-col z-20 ${
+          isSidebarCollapsed ? 'w-16' : 'w-64'
+        }`}
+      >
+        <div className="p-4 flex items-center justify-between">
           {!isSidebarCollapsed && (
-            <a href="http://localhost:3000/" className="flex items-center gap-2 hover:opacity-85 transition text-white">
-              <svg className="w-6 h-6 text-[#facc15]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="3" strokeWidth="2"/>
-                <circle cx="12" cy="4" r="2" strokeWidth="2"/>
-                <circle cx="4" cy="12" r="2" strokeWidth="2"/>
-                <circle cx="20" cy="12" r="2" strokeWidth="2"/>
-                <line x1="12" y1="6" x2="12" y2="9" strokeWidth="2"/>
-                <line x1="6" y1="12" x2="9" y2="12" strokeWidth="2"/>
-                <line x1="15" y1="12" x2="18" y2="12" strokeWidth="2"/>
-              </svg>
-              <span className="font-headline-md text-headline-md font-bold tracking-tight">NEURON_FLOW</span>
-            </a>
+            <div className="flex items-center gap-2 cursor-pointer" onClick={() => setViewMode('overview')}>
+              <div className="w-7 h-7 rounded-md bg-[#ff4f00] flex items-center justify-center text-[#fffefb] font-bold text-sm">⚡</div>
+              <span className="font-bold text-base tracking-tight text-[#fffefb]">NEURON_FLOW</span>
+            </div>
           )}
-          
-          {/* SidebarTrigger Button */}
           <button
+            type="button"
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-            className="p-2 rounded-lg bg-[#1a1a1a] hover:bg-[#262626] border border-[#353534] text-neutral-300 hover:text-white transition-colors flex items-center justify-center shrink-0"
+            className="text-[#c5c0b1] hover:text-[#fffefb] p-1.5 rounded-md hover:bg-[#2f2a26] transition"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <rect x="3" y="3" width="18" height="18" rx="2" strokeWidth="2"/>
-              <path d="M9 3v18" strokeWidth="2"/>
-            </svg>
+            ☰
           </button>
         </div>
 
         {!isSidebarCollapsed && (
-          <span className="font-label-sm text-label-sm text-[#9a9078] uppercase tracking-widest px-8 -mt-4 mb-6 block text-left">v2.0 Orchestrator</span>
-        )}
-
-        {/* Global Cross-App Launcher Links */}
-        {!isSidebarCollapsed && (
-          <div className="px-4 mb-6">
-            <div className="text-[10px] font-mono text-neutral-500 uppercase tracking-wider px-3 mb-2">Switch Apps</div>
-            <div className="flex flex-col gap-1">
-              <a href="http://localhost:3000" className="flex items-center gap-2.5 px-3 py-1.5 rounded text-xs text-neutral-400 hover:text-white hover:bg-white/[0.04] transition">
-                <span className="w-2 h-2 rounded-full bg-yellow-400"></span> Dashboard (:3000)
+          <div className="px-4 mb-4">
+            <div className="text-[10px] font-mono text-[#939084] uppercase tracking-wider mb-2">Switch Apps</div>
+            <div className="flex flex-col gap-1 text-xs">
+              <a href="http://localhost:3000" className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[#c5c0b1] hover:text-[#fffefb] hover:bg-[#2f2a26] transition">
+                <span className="w-2 h-2 rounded-full bg-[#ff4f00]"></span> Dashboard (:3000)
               </a>
-              <a href="http://localhost:5174" className="flex items-center gap-2.5 px-3 py-1.5 rounded text-xs text-neutral-400 hover:text-white hover:bg-white/[0.04] transition">
+              <a href="http://localhost:5174" className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[#c5c0b1] hover:text-[#fffefb] hover:bg-[#2f2a26] transition">
                 <span className="w-2 h-2 rounded-full bg-emerald-400"></span> Prod Engine (:5174)
               </a>
-              <a href="http://localhost:3000/excel" className="flex items-center gap-2.5 px-3 py-1.5 rounded text-xs text-neutral-400 hover:text-white hover:bg-white/[0.04] transition">
+              <a href="/excel" className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[#c5c0b1] hover:text-[#fffefb] hover:bg-[#2f2a26] transition">
                 <span className="w-2 h-2 rounded-full bg-sky-400"></span> Excel AI (:3000)
               </a>
             </div>
           </div>
         )}
 
-        <nav className="flex-1 space-y-2 px-3">
-          <button
-            onClick={() => setViewMode('overview')}
-            title="Overview"
-            className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 rounded transition-colors group font-medium text-left ${
-              viewMode === 'overview' ? 'text-primary bg-white/[0.03]' : 'text-on-surface-variant hover:text-on-surface'
-            }`}
-          >
-            <svg className="w-5 h-5 text-yellow-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-            </svg>
-            {!isSidebarCollapsed && <span className="font-body-md text-body-md">Overview</span>}
-          </button>
-
-          <button
-            onClick={() => setViewMode('canvas')}
-            title="Workflows"
-            className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 rounded transition-colors group font-medium text-left ${
-              viewMode === 'canvas' ? 'text-primary bg-white/[0.03]' : 'text-on-surface-variant hover:text-on-surface'
-            }`}
-          >
-            <svg className="w-5 h-5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11" />
-            </svg>
-            {!isSidebarCollapsed && <span className="font-body-md text-body-md">Workflows</span>}
-          </button>
-
-          <button
-            onClick={() => setViewMode('executions')}
-            title="Executions"
-            className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 rounded transition-colors group font-medium text-left ${
-              viewMode === 'executions' ? 'text-primary bg-white/[0.03]' : 'text-on-surface-variant hover:text-on-surface'
-            }`}
-          >
-            <svg className="w-5 h-5 text-sky-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            {!isSidebarCollapsed && <span className="font-body-md text-body-md">Executions</span>}
-          </button>
-
-          <button
-            onClick={() => setViewMode('templates')}
-            title="Templates"
-            className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 rounded transition-colors group font-medium text-left ${
-              viewMode === 'templates' ? 'text-primary bg-white/[0.03]' : 'text-on-surface-variant hover:text-on-surface'
-            }`}
-          >
-            <svg className="w-5 h-5 text-purple-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
-            {!isSidebarCollapsed && <span className="font-body-md text-body-md">Templates</span>}
-          </button>
-
-          <button
-            onClick={() => setViewMode('variables')}
-            title="Variables"
-            className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 rounded transition-colors group font-medium text-left ${
-              viewMode === 'variables' ? 'text-primary bg-white/[0.03]' : 'text-on-surface-variant hover:text-on-surface'
-            }`}
-          >
-            <svg className="w-5 h-5 text-pink-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-            </svg>
-            {!isSidebarCollapsed && <span className="font-body-md text-body-md">Variables</span>}
-          </button>
-
-          <button
-            onClick={() => setViewMode('history')}
-            title="Simulation DB"
-            className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 rounded transition-colors group font-medium text-left ${
-              viewMode === 'history' ? 'text-primary bg-white/[0.03]' : 'text-on-surface-variant hover:text-on-surface'
-            }`}
-          >
-            <svg className="w-5 h-5 text-[#facc15] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            {!isSidebarCollapsed && <span className="font-body-md text-body-md">Simulation DB</span>}
-          </button>
+        {/* Sidebar Nav Items (ex-app-shell-row with #ff4f00 active indicator) */}
+        <nav className="flex-1 space-y-1 px-3">
+          {[
+            { id: 'overview', label: 'Overview', icon: '📊' },
+            { id: 'canvas', label: 'Workflows', icon: '⚡' },
+            { id: 'executions', label: 'Executions', icon: '📈' },
+            { id: 'templates', label: 'Templates', icon: '📦' },
+            { id: 'variables', label: 'Variables', icon: '💻' },
+            { id: 'history', label: 'Simulation DB', icon: '🗄️' },
+          ].map((item) => {
+            const isActive = viewMode === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setViewMode(item.id as any)}
+                className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center' : 'gap-3 px-3'} py-2.5 rounded-md text-xs font-semibold transition-all relative ${
+                  isActive ? 'bg-[#ff4f00] text-[#fffefb] shadow-sm' : 'text-[#c5c0b1] hover:text-[#fffefb] hover:bg-[#2f2a26]'
+                }`}
+              >
+                <span>{item.icon}</span>
+                {!isSidebarCollapsed && <span>{item.label}</span>}
+              </button>
+            );
+          })}
         </nav>
-        <div className="mt-auto px-3 pt-4">
-          <button
-            onClick={() => setViewMode('settings')}
-            title="Settings"
-            className={`w-full flex items-center ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-3 px-4'} py-2.5 rounded transition-colors group font-medium text-left ${
-              viewMode === 'settings' ? 'text-primary bg-white/[0.03]' : 'text-on-surface-variant hover:text-on-surface'
-            }`}
-          >
-            <svg className="w-5 h-5 text-neutral-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            {!isSidebarCollapsed && <span className="font-body-md text-body-md">Settings</span>}
-          </button>
-        </div>
+
+        {!isSidebarCollapsed && (
+          <div className="p-4 border-t border-[#2f2a26] space-y-2">
+            <button
+              type="button"
+              onClick={() => setIsPricingModalOpen(true)}
+              className="w-full py-2 bg-[#ff4f00] text-[#fffefb] text-xs font-bold rounded-md hover:opacity-90 transition shadow-sm"
+            >
+              Pricing & Pro Plan
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsCartDrawerOpen(true)}
+              className="w-full py-2 bg-[#2f2a26] text-[#fffefb] text-xs font-semibold rounded-md hover:bg-[#36342e] transition"
+            >
+              Subscription Cart
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsAuthModalOpen(true)}
+              className="w-full py-2 bg-[#2f2a26] text-[#fffefb] text-xs font-semibold rounded-md hover:bg-[#36342e] transition"
+            >
+              Sign In Account
+            </button>
+          </div>
+        )}
       </aside>
 
       {/* Main Workspace Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative bg-[#fffefb] text-[#201515]">
 
         {/* 1. OVERVIEW VIEW */}
         {viewMode === 'overview' && (
-          <div className="flex-1 flex flex-col overflow-y-auto workflow-dot-bg p-margin-lg">
+          <div className="flex-1 flex flex-col overflow-y-auto p-8 bg-[#fffefb]">
             {/* Header */}
-            <header className="flex justify-between items-center mb-16 shrink-0 text-left">
+            <header className="flex justify-between items-center mb-10 shrink-0 text-left">
               <div>
-                <h1 className="font-headline-xl text-headline-xl text-white tracking-tight mb-2">Overview Dashboard</h1>
-                <p className="text-on-surface-variant text-body-lg max-w-2xl">Real-time status metrics and automation activity control hub.</p>
+                <h1 className="text-3xl font-bold text-[#201515] tracking-tight mb-1">Overview Dashboard</h1>
+                <p className="text-[#605d52] text-sm">Real-time status metrics and automation activity control hub.</p>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded bg-green-500/10 text-green-400 border border-green-500/20">
-                  <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></div>
-                  <span className="font-label-md text-label-md uppercase tracking-wider">Systems Operational</span>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#f8f4f0] text-emerald-700 border border-[#c5c0b1] text-xs font-semibold">
+                  <div className="w-2 h-2 bg-emerald-600 rounded-full animate-pulse"></div>
+                  <span>Systems Operational</span>
                 </div>
                 <div 
                   onClick={() => setIsAvatarModalOpen(true)}
-                  className="w-9 h-9 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden cursor-pointer hover:opacity-85 transition-opacity"
+                  className="w-9 h-9 rounded-full bg-[#f8f4f0] border border-[#201515] overflow-hidden cursor-pointer hover:opacity-85 transition-opacity"
                   title="Change Profile Picture"
                 >
                   <img className="w-full h-full object-cover" alt="User Avatar" src={profilePic} />
@@ -1737,49 +1697,49 @@ return {
               </div>
             </header>
 
-            {/* Metrics cards grid */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12 text-left">
-              <div className="clean-card p-6 rounded-xl flex flex-col justify-between">
-                <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Pipeline Latency</span>
-                <span className="text-3xl font-bold text-primary mt-2">10ms</span>
-                <span className="text-[10px] text-green-500 mt-2">Within SLA limit</span>
+            {/* Metrics cards grid (card-feature-cream) */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10 text-left">
+              <div className="bg-[#f8f4f0] border border-[#c5c0b1] p-6 rounded-md flex flex-col justify-between">
+                <span className="text-[10px] font-bold text-[#939084] uppercase tracking-wider">Pipeline Latency</span>
+                <span className="text-3xl font-bold text-[#ff4f00] my-2">10ms</span>
+                <span className="text-xs text-emerald-700 font-semibold">Within SLA limit</span>
               </div>
-              <div className="clean-card p-6 rounded-xl flex flex-col justify-between">
-                <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Max Throughput</span>
-                <span className="text-3xl font-bold text-primary mt-2">1M+ rps</span>
-                <span className="text-[10px] text-neutral-400 mt-2">Distributed architecture</span>
+              <div className="bg-[#f8f4f0] border border-[#c5c0b1] p-6 rounded-md flex flex-col justify-between">
+                <span className="text-[10px] font-bold text-[#939084] uppercase tracking-wider">Max Throughput</span>
+                <span className="text-3xl font-bold text-[#201515] my-2">1M+ rps</span>
+                <span className="text-xs text-[#605d52]">Distributed engine</span>
               </div>
-              <div className="clean-card p-6 rounded-xl flex flex-col justify-between">
-                <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Uptime Guarantee</span>
-                <span className="text-3xl font-bold text-primary mt-2">99.99%</span>
-                <span className="text-[10px] text-green-500 mt-2">Carrier-grade reliability</span>
+              <div className="bg-[#f8f4f0] border border-[#c5c0b1] p-6 rounded-md flex flex-col justify-between">
+                <span className="text-[10px] font-bold text-[#939084] uppercase tracking-wider">Uptime Guarantee</span>
+                <span className="text-3xl font-bold text-[#ff4f00] my-2">99.99%</span>
+                <span className="text-xs text-emerald-700 font-semibold">Carrier-grade reliability</span>
               </div>
-              <div className="clean-card p-6 rounded-xl flex flex-col justify-between">
-                <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Active Workflows</span>
-                <span className="text-3xl font-bold text-primary mt-2">{workflows.length}</span>
-                <span className="text-[10px] text-neutral-400 mt-2">Deployed in cluster</span>
+              <div className="bg-[#f8f4f0] border border-[#c5c0b1] p-6 rounded-md flex flex-col justify-between">
+                <span className="text-[10px] font-bold text-[#939084] uppercase tracking-wider">Active Workflows</span>
+                <span className="text-3xl font-bold text-[#201515] my-2">{workflows.length}</span>
+                <span className="text-xs text-[#605d52]">Deployed in workspace</span>
               </div>
             </div>
 
             {/* Double column list */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Workflows List */}
-              <div className="clean-card p-8 rounded-xl flex flex-col text-left">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="font-headline-md text-headline-md text-white font-bold">Automation Pipelines</h3>
-                  <button onClick={handleCreateNew} className="text-xs text-primary hover:underline flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[14px]">add</span> Create Fresh Canvas
+              <div className="bg-[#f8f4f0] border border-[#c5c0b1] p-6 rounded-md flex flex-col text-left">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-bold text-[#201515]">Automation Pipelines</h3>
+                  <button onClick={handleCreateNew} className="text-xs font-bold text-[#ff4f00] hover:underline">
+                    + Create Fresh Canvas
                   </button>
                 </div>
                 <div className="space-y-3 flex-1 overflow-y-auto max-h-[350px]">
                   {workflows.length === 0 ? (
-                    <div className="text-center py-8 text-neutral-600">No pipelines registered. Go to templates to deploy one!</div>
+                    <div className="text-center py-8 text-[#939084] text-xs">No pipelines registered. Go to templates to deploy one!</div>
                   ) : (
                     workflows.map(wf => (
-                      <div key={wf.id} className="p-4 bg-[#131313] border border-neutral-800 rounded-lg flex items-center justify-between hover:border-neutral-700 transition-all">
+                      <div key={wf.id} className="p-4 bg-[#fffefb] border border-[#c5c0b1] rounded-md flex items-center justify-between hover:border-[#201515] transition-all">
                         <div className="flex flex-col text-left">
-                          <span className="font-medium text-white text-sm">{wf.name}</span>
-                          <span className="text-[10px] text-neutral-500 font-mono">ID: #{wf.id} • Active</span>
+                          <span className="font-bold text-[#201515] text-sm">{wf.name}</span>
+                          <span className="text-xs text-[#605d52]">ID: #{wf.id} • Active</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <button
@@ -1787,7 +1747,7 @@ return {
                               loadWorkflow(wf);
                               setViewMode('canvas');
                             }}
-                            className="px-3 py-1.5 bg-neutral-800 text-white rounded text-[11px] hover:bg-neutral-700 transition-colors"
+                            className="px-3 py-1.5 bg-[#201515] text-[#fffefb] rounded-md text-xs font-semibold hover:opacity-90 transition"
                           >
                             Edit
                           </button>
@@ -1796,7 +1756,7 @@ return {
                               loadWorkflow(wf);
                               handleRunWorkflow();
                             }}
-                            className="px-3 py-1.5 bg-primary-container text-black rounded text-[11px] font-bold hover:brightness-110 transition-all"
+                            className="px-3 py-1.5 bg-[#ff4f00] text-[#fffefb] rounded-md text-xs font-bold hover:opacity-90 transition shadow-sm"
                           >
                             Trigger
                           </button>
@@ -1807,17 +1767,17 @@ return {
                 </div>
               </div>
 
-              {/* Execution logs overview */}
-              <div className="clean-card p-8 rounded-xl flex flex-col text-left">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="font-headline-md text-headline-md text-white font-bold">Recent System Activity</h3>
-                  <button onClick={() => { setViewMode('history'); setHistoryTab('logs'); }} className="text-xs text-primary hover:underline">
-                    View Outbox & Simulation DB
+              {/* Execution logs overview (ex-data-table-cell) */}
+              <div className="bg-[#f8f4f0] border border-[#c5c0b1] p-6 rounded-md flex flex-col text-left">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-bold text-[#201515]">Recent Activity</h3>
+                  <button onClick={() => { setViewMode('history'); setHistoryTab('logs'); }} className="text-xs font-bold text-[#ff4f00] hover:underline">
+                    View Outbox Logs →
                   </button>
                 </div>
-                <div className="space-y-3 flex-1 overflow-y-auto max-h-[350px] text-left">
+                <div className="space-y-3 flex-1 overflow-y-auto max-h-[350px]">
                   {executions.length === 0 ? (
-                    <div className="text-center py-8 text-neutral-600">No logs recorded. Trigger a workflow to start simulation.</div>
+                    <div className="text-center py-8 text-[#939084] text-xs">No logs recorded. Trigger a workflow to start simulation.</div>
                   ) : (
                     executions.slice(0, 5).map(exec => (
                       <div
@@ -1827,15 +1787,15 @@ return {
                           setViewMode('history');
                           setHistoryTab('logs');
                         }}
-                        className="p-4 bg-[#131313] border border-neutral-800 rounded-lg flex items-center justify-between hover:border-neutral-700 transition-all cursor-pointer"
+                        className="p-3 bg-[#fffefb] border border-[#c5c0b1] rounded-md flex items-center justify-between hover:border-[#201515] transition cursor-pointer"
                       >
                         <div className="flex flex-col">
-                          <span className="font-bold text-white text-xs">Run ID #{exec.id}</span>
-                          <span className="text-[10px] text-neutral-500 font-mono">{new Date(exec.startedAt).toLocaleString()}</span>
+                          <span className="font-bold text-[#201515] text-xs">Run ID #{exec.id}</span>
+                          <span className="text-[10px] text-[#605d52] font-mono">{new Date(exec.startedAt).toLocaleString()}</span>
                         </div>
-                        <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
-                          exec.status === 'success' ? 'bg-emerald-950/50 text-emerald-400 border border-emerald-900/30' :
-                          exec.status === 'failed' ? 'bg-rose-950/50 text-rose-400 border border-rose-900/30' : 'bg-amber-950/50 text-amber-400 border border-amber-900/30 animate-pulse'
+                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                          exec.status === 'success' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' :
+                          exec.status === 'failed' ? 'bg-rose-100 text-rose-800 border border-rose-300' : 'bg-amber-100 text-amber-800 border border-amber-300'
                         }`}>
                           {exec.status}
                         </span>
@@ -2066,150 +2026,120 @@ return {
                         </div>
                       </div>
                     )}
-                    
-                    <div 
-                      className="space-y-4 flex-grow overflow-y-auto pr-1"
-                      style={{ transform: `scale(${nodePaletteScale})`, transformOrigin: 'top left' }}
-                    >
-                      {/* On Event (Triggers) Section */}
+
+                    <div className="space-y-3 flex-1 overflow-y-auto pr-1">
                       <div>
-                        <div className="text-[8px] font-bold text-neutral-500 uppercase tracking-widest mb-2 px-1">
-                          On Event (Triggers)
-                        </div>
+                        <div className="text-[10px] uppercase tracking-wider font-bold text-[#939084] mb-2">Triggers & Actions</div>
                         <div className="space-y-2">
                           <button
-                            onClick={() => addNode('start_trigger')}
-                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-amber-900/30 bg-amber-950/10 hover:bg-amber-950/20 text-amber-400 text-[10px] font-bold text-left transition-all"
+                            onClick={() => addNode('trigger')}
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-md border border-[#c5c0b1] bg-[#fffefb] hover:border-[#ff4f00] text-[#201515] text-xs font-bold text-left transition-all"
                           >
-                            <span className="material-symbols-outlined !text-[13px]">play_circle</span>
-                            <span>Start Trigger</span>
+                            <span>⚡</span>
+                            <span>Start Webhook</span>
                           </button>
 
                           <button
                             onClick={() => addNode('schedule_trigger')}
-                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-amber-900/30 bg-amber-950/10 hover:bg-amber-950/20 text-amber-400 text-[10px] font-bold text-left transition-all"
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-md border border-[#c5c0b1] bg-[#fffefb] hover:border-[#ff4f00] text-[#201515] text-xs font-bold text-left transition-all"
                           >
-                            <span className="material-symbols-outlined !text-[13px]">alarm</span>
-                            <span>Schedule Trigger</span>
+                            <span>⏰</span>
+                            <span>Schedule Timer</span>
                           </button>
 
                           <button
                             onClick={() => addNode('google_form_trigger')}
-                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-green-900/30 bg-green-950/10 hover:bg-green-950/20 text-green-400 text-[10px] font-bold text-left transition-all"
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-md border border-[#c5c0b1] bg-[#fffefb] hover:border-[#ff4f00] text-[#201515] text-xs font-bold text-left transition-all"
                           >
-                            <span className="material-symbols-outlined !text-[13px]">description</span>
-                            <span>Google Form Trigger</span>
+                            <span>📋</span>
+                            <span>Google Form</span>
                           </button>
 
-                          <button
-                            onClick={() => addNode('trigger')}
-                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-emerald-900/30 bg-emerald-950/10 hover:bg-emerald-950/20 text-emerald-400 text-[10px] font-bold text-left transition-all"
-                          >
-                            <span className="material-symbols-outlined !text-[13px]">bolt</span>
-                            <span>Webhook Trigger</span>
-                          </button>
-
-                          <button
-                            onClick={() => addNode('crm_lead_trigger')}
-                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-emerald-900/30 bg-emerald-950/10 hover:bg-emerald-950/20 text-emerald-400 text-[10px] font-bold text-left transition-all"
-                          >
-                            <span className="material-symbols-outlined !text-[13px]">group_add</span>
-                            <span>CRM Lead Trigger</span>
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* App Actions Section */}
-                      <div>
-                        <div className="text-[8px] font-bold text-neutral-500 uppercase tracking-widest mb-2 px-1">
-                          App Actions
-                        </div>
-                        <div className="space-y-2">
                           <button
                             onClick={() => addNode('marketing_email')}
-                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-sky-900/30 bg-sky-950/10 hover:bg-sky-950/20 text-sky-400 text-[10px] font-bold text-left transition-all"
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-md border border-[#c5c0b1] bg-[#fffefb] hover:border-[#ff4f00] text-[#201515] text-xs font-bold text-left transition-all"
                           >
-                            <span className="material-symbols-outlined !text-[13px]">mail</span>
+                            <span>✉️</span>
                             <span>Send Email</span>
                           </button>
 
                           <button
                             onClick={() => addNode('crm_action')}
-                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-indigo-900/30 bg-indigo-950/10 hover:bg-indigo-950/20 text-indigo-400 text-[10px] font-bold text-left transition-all"
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-md border border-[#c5c0b1] bg-[#fffefb] hover:border-[#ff4f00] text-[#201515] text-xs font-bold text-left transition-all"
                           >
-                            <span className="material-symbols-outlined !text-[13px]">account_circle</span>
-                            <span>CRM Update</span>
+                            <span>🗄️</span>
+                            <span>CRM Contact</span>
                           </button>
 
                           <button
                             onClick={() => addNode('google_sheets')}
-                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-green-900/30 bg-green-950/10 hover:bg-green-950/20 text-green-400 text-[10px] font-bold text-left transition-all"
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-md border border-[#c5c0b1] bg-[#fffefb] hover:border-[#ff4f00] text-[#201515] text-xs font-bold text-left transition-all"
                           >
-                            <span className="material-symbols-outlined !text-[13px]">table_chart</span>
-                            <span>Google Sheet</span>
+                            <span>📊</span>
+                            <span>Google Sheets</span>
                           </button>
 
                           <button
                             onClick={() => addNode('openai')}
-                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-purple-900/30 bg-purple-950/10 hover:bg-purple-950/20 text-purple-400 text-[10px] font-bold text-left transition-all"
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-md border border-[#c5c0b1] bg-[#fffefb] hover:border-[#ff4f00] text-[#201515] text-xs font-bold text-left transition-all"
                           >
-                            <span className="material-symbols-outlined !text-[13px]">psychology</span>
+                            <span>🤖</span>
                             <span>OpenAI GPT</span>
                           </button>
 
                           <button
                             onClick={() => addNode('slack')}
-                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-teal-900/30 bg-teal-950/10 hover:bg-teal-950/20 text-teal-400 text-[10px] font-bold text-left transition-all"
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-md border border-[#c5c0b1] bg-[#fffefb] hover:border-[#ff4f00] text-[#201515] text-xs font-bold text-left transition-all"
                           >
-                            <span className="material-symbols-outlined !text-[13px]">forum</span>
+                            <span>💬</span>
                             <span>Post to Slack</span>
                           </button>
 
                           <button
                             onClick={() => addNode('discord')}
-                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-indigo-900/30 bg-indigo-950/10 hover:bg-indigo-950/20 text-indigo-400 text-[10px] font-bold text-left transition-all"
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-md border border-[#c5c0b1] bg-[#fffefb] hover:border-[#ff4f00] text-[#201515] text-xs font-bold text-left transition-all"
                           >
-                            <span className="material-symbols-outlined !text-[13px]">mark_chat_read</span>
+                            <span>🎮</span>
                             <span>Discord Alert</span>
                           </button>
 
                           <button
                             onClick={() => addNode('respond_to_webhook')}
-                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-blue-900/30 bg-blue-950/10 hover:bg-blue-950/20 text-blue-400 text-[10px] font-bold text-left transition-all"
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-md border border-[#c5c0b1] bg-[#fffefb] hover:border-[#ff4f00] text-[#201515] text-xs font-bold text-left transition-all"
                           >
-                            <span className="material-symbols-outlined !text-[13px]">send</span>
+                            <span>📤</span>
                             <span>Webhook Response</span>
                           </button>
 
                           <button
                             onClick={() => addNode('ifelse')}
-                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-fuchsia-900/30 bg-fuchsia-950/10 hover:bg-fuchsia-950/20 text-fuchsia-400 text-[10px] font-bold text-left transition-all"
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-md border border-[#c5c0b1] bg-[#fffefb] hover:border-[#ff4f00] text-[#201515] text-xs font-bold text-left transition-all"
                           >
-                            <span className="material-symbols-outlined !text-[13px]">alt_route</span>
-                            <span>If / Else</span>
+                            <span>🔀</span>
+                            <span>If / Else Filter</span>
                           </button>
 
                           <button
                             onClick={() => addNode('delay')}
-                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-amber-900/30 bg-amber-950/10 hover:bg-amber-950/20 text-amber-400 text-[10px] font-bold text-left transition-all"
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-md border border-[#c5c0b1] bg-[#fffefb] hover:border-[#ff4f00] text-[#201515] text-xs font-bold text-left transition-all"
                           >
-                            <span className="material-symbols-outlined !text-[13px]">schedule</span>
+                            <span>⏳</span>
                             <span>Delay Wait</span>
                           </button>
 
                           <button
                             onClick={() => addNode('code')}
-                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-teal-900/30 bg-teal-950/10 hover:bg-teal-950/20 text-teal-400 text-[10px] font-bold text-left transition-all"
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-md border border-[#c5c0b1] bg-[#fffefb] hover:border-[#ff4f00] text-[#201515] text-xs font-bold text-left transition-all"
                           >
-                            <span className="material-symbols-outlined !text-[13px]">code</span>
-                            <span>Run Script</span>
+                            <span>💻</span>
+                            <span>Run JS Script</span>
                           </button>
 
                           <button
                             onClick={() => addNode('end')}
-                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-rose-900/30 bg-rose-950/10 hover:bg-rose-950/20 text-rose-400 text-[10px] font-bold text-left transition-all"
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-md border border-rose-300 bg-[#fffefb] hover:border-rose-600 text-rose-700 text-xs font-bold text-left transition-all"
                           >
-                            <span className="material-symbols-outlined !text-[13px]">stop_circle</span>
+                            <span>🛑</span>
                             <span>End Workflow</span>
                           </button>
                         </div>
@@ -2219,17 +2149,17 @@ return {
                 )}
               </div>
 
-              {/* React Flow Workspace Canvas */}
-              <div className="flex-1 h-full bg-surface relative dot-grid">
+              {/* React Flow Workspace Canvas (Warm Cream Surface #fffefb) */}
+              <div className="flex-1 h-full bg-[#fffefb] relative dot-grid">
                 
                 {/* Floating expand toggle for collapsed Node Palette */}
                 {!isSidebarOpen && (
                   <button
                     onClick={() => setIsSidebarOpen(true)}
-                    className="absolute top-8 left-4 z-20 w-8 h-8 rounded-lg bg-[#1c1b1b] border border-neutral-800 flex items-center justify-center text-[#facc15] hover:text-white transition shadow-lg cursor-pointer"
+                    className="absolute top-6 left-4 z-20 w-9 h-9 rounded-md bg-[#fffefb] border border-[#201515] flex items-center justify-center text-[#ff4f00] hover:bg-[#201515] hover:text-[#fffefb] transition shadow-md cursor-pointer font-bold"
                     title="Expand Node Palette"
                   >
-                    <span className="material-symbols-outlined text-[18px]">menu</span>
+                    ☰
                   </button>
                 )}
                 <ReactFlow
@@ -2246,67 +2176,54 @@ return {
                   onPaneClick={onPaneClick}
                   fitView
                 >
-                  <Background color="#ef4444" gap={32} size={1} />
+                  <Background color="#ff4f00" gap={32} size={1} />
                 </ReactFlow>
 
-                {/* View Controls Overlay (Bottom Left) */}
-                <div className="absolute bottom-10 left-10 z-20">
-                  <div className="flex bg-[#1c1b1b]/85 backdrop-blur-md border border-white/5 rounded-full p-1 shadow-2xl text-on-surface-variant/40">
-                    <button onClick={() => setNodes(nds => nds.map(n => ({...n, position: {x: n.position.x + 20, y: n.position.y}})))} className="p-2.5 hover:text-on-surface transition-colors" title="Refit canvas">
-                      <span className="material-symbols-outlined !text-[16px]">fit_screen</span>
-                    </button>
-                    <div className="w-px h-4 bg-white/5 my-auto"></div>
-                    <span className="px-4 flex items-center text-[10px] font-mono text-on-surface-variant/30">100%</span>
-                  </div>
-                </div>
-
-                {/* Primary Action Button (Bottom Center) */}
-                <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20">
+                {/* Primary Action Button (Zapier Orange #ff4f00 CTA) */}
+                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20">
                   <button
                     onClick={handleRunWorkflow}
-                    className="bg-white text-black px-10 py-3 rounded-full font-bold text-[13px] tracking-widest uppercase shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-3"
+                    className="bg-[#ff4f00] text-[#fffefb] px-8 py-3 rounded-md font-bold text-xs tracking-wider uppercase shadow-xl hover:opacity-90 active:scale-98 transition-all flex items-center gap-2"
                   >
-                    <span className="material-symbols-outlined !text-[18px]">play_arrow</span>
+                    <span>⚡</span>
                     Run Workflow
                   </button>
                 </div>
 
                 {/* AI Copilot Floating Panel (Bottom Right) */}
-                <div className="absolute bottom-10 right-10 z-20 flex flex-col items-end">
+                <div className="absolute bottom-8 right-8 z-20 flex flex-col items-end">
                   {isChatOpen && (
-                    <div className="w-80 h-[380px] bg-[#1c1b1b]/95 backdrop-blur-md border border-neutral-800 rounded-xl shadow-2xl flex flex-col overflow-hidden mb-3 text-left">
+                    <div className="w-80 h-[380px] bg-[#fffefb] border border-[#201515] rounded-md shadow-2xl flex flex-col overflow-hidden mb-3 text-left">
                       {/* Header */}
-                      <div className="p-3 bg-[#262626] border-b border-neutral-800 flex items-center justify-between shrink-0">
+                      <div className="p-3 bg-[#201515] text-[#fffefb] flex items-center justify-between shrink-0">
                         <div className="flex items-center gap-2">
-                          <span className="material-symbols-outlined text-[#facc15] text-lg">psychology</span>
-                          <span className="font-bold text-xs text-white">Neuron AI Copilot</span>
-                          <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                          <span className="text-[#ff4f00] font-bold text-sm">🤖</span>
+                          <span className="font-bold text-xs text-[#fffefb]">Zapier AI Copilot</span>
                         </div>
-                        <button onClick={() => setIsChatOpen(false)} className="text-neutral-500 hover:text-white transition">
-                          <span className="material-symbols-outlined text-sm">close</span>
+                        <button onClick={() => setIsChatOpen(false)} className="text-[#c5c0b1] hover:text-[#fffefb]">
+                          ✕
                         </button>
                       </div>
 
                       {/* Messages list */}
-                      <div className="flex-1 overflow-y-auto p-3 space-y-3 font-sans text-xs">
+                      <div className="flex-1 overflow-y-auto p-3 space-y-3 text-xs bg-[#f8f4f0]">
                         {chatMessages.map((msg) => (
                           <div key={msg.id} className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}>
-                            <div className={`p-2.5 rounded-lg max-w-[85%] leading-relaxed ${
+                            <div className={`p-2.5 rounded-md max-w-[85%] leading-relaxed ${
                               msg.sender === 'user' 
-                                ? 'bg-[#facc15] text-black rounded-tr-none font-semibold' 
-                                : 'bg-[#262626] text-neutral-200 rounded-tl-none border border-neutral-800'
+                                ? 'bg-[#ff4f00] text-[#fffefb] font-semibold' 
+                                : 'bg-[#fffefb] text-[#201515] border border-[#c5c0b1]'
                             }`}>
                               <p className="whitespace-pre-wrap">{msg.text}</p>
                               {msg.code && (
                                 <div className="mt-2 text-left">
-                                  <pre className="bg-black/40 p-2 rounded text-[10px] font-mono overflow-x-auto border border-neutral-800 text-teal-300">
+                                  <pre className="bg-[#201515] text-[#fffefb] p-2 rounded text-[10px] font-mono overflow-x-auto">
                                     <code>{msg.code}</code>
                                   </pre>
                                   <button
                                     onClick={() => handleApplyCodeToNode(msg.code)}
-                                    className="mt-1.5 w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-1 px-2 rounded text-[10px] transition-colors flex items-center justify-center gap-1 border border-emerald-500/20"
+                                    className="mt-1.5 w-full bg-[#ff4f00] text-[#fffefb] font-bold py-1 px-2 rounded text-[10px] transition-colors flex items-center justify-center gap-1"
                                   >
-                                    <span className="material-symbols-outlined text-xs">code</span>
                                     Apply to selected node
                                   </button>
                                 </div>
@@ -2315,38 +2232,25 @@ return {
                           </div>
                         ))}
                         {isTyping && (
-                          <div className="flex items-center gap-1 bg-[#262626] border border-neutral-800 text-neutral-400 p-2 rounded-lg w-14 justify-center">
-                            <span className="w-1.5 h-1.5 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                            <span className="w-1.5 h-1.5 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                            <span className="w-1.5 h-1.5 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                          <div className="flex items-center gap-1 bg-[#fffefb] border border-[#c5c0b1] text-[#201515] p-2 rounded-md w-14 justify-center">
+                            <span className="w-1.5 h-1.5 bg-[#ff4f00] rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                            <span className="w-1.5 h-1.5 bg-[#ff4f00] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                            <span className="w-1.5 h-1.5 bg-[#ff4f00] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
                           </div>
                         )}
                       </div>
 
-                      {/* Quick chips suggestions */}
-                      <div className="px-3 py-1.5 border-t border-neutral-800 bg-[#161616] flex gap-1.5 overflow-x-auto shrink-0">
-                        <button onClick={() => handleSendChatMessage("Write Lead Qualification Script")} className="px-2 py-1 rounded bg-[#262626] border border-neutral-800 text-neutral-400 hover:text-white transition whitespace-nowrap text-[9px] font-bold">
-                          Qualify Lead
-                        </button>
-                        <button onClick={() => handleSendChatMessage("Write Sentiment Classifier Script")} className="px-2 py-1 rounded bg-[#262626] border border-neutral-800 text-neutral-400 hover:text-white transition whitespace-nowrap text-[9px] font-bold">
-                          Sentiment
-                        </button>
-                        <button onClick={() => handleSendChatMessage("Write Slack Payload Formatter")} className="px-2 py-1 rounded bg-[#262626] border border-neutral-800 text-neutral-400 hover:text-white transition whitespace-nowrap text-[9px] font-bold">
-                          Slack Format
-                        </button>
-                      </div>
-
                       {/* Input */}
-                      <div className="p-2 border-t border-neutral-800 flex gap-2 shrink-0 bg-[#262626]">
+                      <div className="p-2 border-t border-[#c5c0b1] flex gap-2 shrink-0 bg-[#fffefb]">
                         <input
                           type="text"
                           value={chatInput}
                           onChange={(e) => setChatInput(e.target.value)}
                           onKeyDown={(e) => e.key === 'Enter' && handleSendChatMessage(chatInput)}
-                          placeholder={selectedNode?.type === 'code' ? "Ask me to write a script..." : "Ask Copilot..."}
-                          className="flex-1 bg-[#0e0e0e] border border-neutral-800 rounded px-2.5 py-1 text-white text-xs outline-none focus:border-[#facc15]"
+                          placeholder="Ask Copilot script help..."
+                          className="flex-1 bg-[#f8f4f0] border border-[#201515] rounded-sm px-2.5 py-1 text-[#201515] text-xs outline-none focus:border-[#ff4f00]"
                         />
-                        <button onClick={() => handleSendChatMessage(chatInput)} className="bg-[#facc15] hover:opacity-90 text-black px-3 py-1 rounded text-xs font-bold transition">
+                        <button onClick={() => handleSendChatMessage(chatInput)} className="bg-[#201515] text-[#fffefb] px-3 py-1 rounded-md text-xs font-bold hover:opacity-90">
                           Send
                         </button>
                       </div>
@@ -2355,20 +2259,12 @@ return {
 
                   <button
                     onClick={() => setIsChatOpen(!isChatOpen)}
-                    className="flex items-center gap-2 px-5 py-3 rounded-full bg-[#facc15] hover:opacity-95 text-black font-bold text-xs uppercase tracking-widest shadow-2xl transition-all border border-[#ffe083]/40"
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-md bg-[#201515] text-[#fffefb] font-bold text-xs uppercase tracking-wider shadow-xl hover:bg-[#ff4f00] transition-all"
                   >
-                    <span className="material-symbols-outlined !text-[18px]">psychology</span>
+                    <span>🤖</span>
                     <span>AI Copilot</span>
-                    {isChatOpen ? (
-                      <span className="material-symbols-outlined !text-[14px]">keyboard_arrow_down</span>
-                    ) : (
-                      <span className="material-symbols-outlined !text-[14px]">keyboard_arrow_up</span>
-                    )}
                   </button>
                 </div>
-
-
-
               </div>
 
               {/* NODE DETAILS CONFIG PANEL (Right side on Canvas) */}
@@ -3009,61 +2905,60 @@ return {
 
         {/* 3. TEMPLATES (TEMPLATE LIBRARY) VIEW */}
         {viewMode === 'templates' && (
-          <div className="flex-1 flex flex-col overflow-y-auto workflow-dot-bg p-margin-lg">
+          <div className="flex-1 flex flex-col overflow-y-auto p-8 bg-[#fffefb] text-[#201515]">
             {/* Template TopNavBar */}
-            <header className="flex justify-between items-center mb-16 shrink-0 text-left">
-              <div className="flex items-center gap-8">
-                <div className="relative group">
-                  <span className="absolute inset-y-0 left-0 flex items-center text-outline pl-2">
-                    <span className="material-symbols-outlined text-[20px]">search</span>
-                  </span>
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 shrink-0 text-left">
+              <div>
+                <h1 className="text-3xl font-bold text-[#201515] tracking-tight mb-1">Template Library</h1>
+                <p className="text-[#605d52] text-sm max-w-xl">Curated automation workflows ready to deploy into your visual workspace in seconds.</p>
+              </div>
+
+              <div className="flex items-center gap-4 w-full md:w-auto">
+                <div className="relative flex-1 md:w-72">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-[#939084] font-bold">🔍</span>
                   <input
                     value={templateSearchQuery}
                     onChange={(e) => setTemplateSearchQuery(e.target.value)}
-                    className="bg-[#1c1b1b] border border-[#353534] pl-10 pr-4 py-2 rounded-lg text-body-md focus:ring-0 w-80 placeholder:text-outline text-white focus:border-[#9a9078] transition-all"
+                    className="w-full bg-[#f8f4f0] border border-[#c5c0b1] pl-9 pr-4 py-2 rounded-md text-xs text-[#201515] placeholder-[#939084] focus:outline-none focus:border-[#ff4f00] transition-all"
                     placeholder="Search templates..."
                     type="text"
                   />
                 </div>
-              </div>
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-4">
-                  <div 
-                    onClick={() => setIsAvatarModalOpen(true)}
-                    className="w-9 h-9 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden cursor-pointer hover:opacity-85 transition-opacity"
-                    title="Change Profile Picture"
-                  >
-                    <img className="w-full h-full object-cover" alt="User Avatar" src={profilePic} />
-                  </div>
+                <div 
+                  onClick={() => setIsAvatarModalOpen(true)}
+                  className="w-9 h-9 rounded-full bg-[#f8f4f0] border border-[#201515] overflow-hidden cursor-pointer hover:opacity-85 transition-opacity shrink-0"
+                  title="Change Profile Picture"
+                >
+                  <img className="w-full h-full object-cover" alt="User Avatar" src={profilePic} />
                 </div>
               </div>
             </header>
 
-            {/* Template Intro */}
-            <div className="flex flex-col gap-4 mb-16 text-left">
-              <h1 className="font-headline-xl text-headline-xl text-on-surface tracking-tight">Template Library</h1>
-              <p className="text-on-surface-variant text-body-lg max-w-2xl leading-relaxed">Curated automation workflows designed for high-scale enterprise operations. Deploy with one click.</p>
-            </div>
-
-            {/* Simplified Filters */}
-            <div className="flex gap-8 mb-12 border-b border-surface-variant/20 pb-4 shrink-0 text-left">
-              {['All', 'CRM', 'AI Agents', 'E-Commerce', 'Marketing', 'DevOps', 'Security'].map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedTemplateCategory(cat)}
-                  className={`filter-btn font-bold text-label-md uppercase tracking-widest ${
-                    selectedTemplateCategory === cat ? 'active text-on-surface' : 'text-on-surface-variant hover:text-on-surface'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
+            {/* Category Filter Pills */}
+            <div className="flex gap-2 mb-8 border-b border-[#c5c0b1] pb-3 overflow-x-auto shrink-0 text-left">
+              {['All', 'CRM', 'AI Agents', 'E-Commerce', 'Marketing', 'DevOps', 'Security'].map((cat) => {
+                const isActive = selectedTemplateCategory === cat;
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setSelectedTemplateCategory(cat)}
+                    className={`px-3.5 py-1.5 rounded-md text-xs font-bold transition-all whitespace-nowrap ${
+                      isActive
+                        ? 'bg-[#ff4f00] text-[#fffefb] shadow-sm'
+                        : 'bg-[#f8f4f0] text-[#605d52] hover:text-[#201515] hover:bg-[#eae4dc] border border-[#c5c0b1]'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                );
+              })}
             </div>
 
             {/* Template Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 text-left">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-left items-stretch">
               
-              {/* Featured Bento Card (Rendered if Inventory Balancer passes category check) */}
+              {/* Featured Bento Card (Inventory Balancer) */}
               {(() => {
                 const featuredTemplate = TEMPLATES.find(t => t.featured);
                 if (!featuredTemplate) return null;
@@ -3073,60 +2968,78 @@ return {
                 if (!matchesCategory || !matchesSearch) return null;
 
                 return (
-                  <div className="lg:col-span-2 clean-card group cursor-pointer flex flex-row p-10 rounded-lg overflow-hidden min-h-[320px]">
-                    <div className="flex-1 flex flex-col">
-                      <div className="flex items-center gap-4 mb-8">
-                        <span className="text-label-sm font-label-sm text-outline uppercase tracking-[0.2em]">{featuredTemplate.category}</span>
-                        <span className="px-2 py-0.5 bg-primary-container/10 text-primary-container text-[10px] font-bold tracking-[0.1em] rounded">FEATURED</span>
+                  <div className="lg:col-span-2 clean-card group cursor-pointer flex flex-row p-5 rounded-lg overflow-hidden min-h-[170px] bg-[#1a1918] text-[#fffefb] border border-[#353330] hover:border-[#ff4f00] shadow-sm hover:shadow-md transition-all relative">
+                    <div className="flex-1 flex flex-col justify-between z-10 pr-4 text-left">
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-[10px] font-bold text-[#c5c0b1] uppercase tracking-wider">{featuredTemplate.category}</span>
+                          <span className="px-2 py-0.5 bg-[#ff4f00]/20 text-[#ff4f00] text-[9px] font-bold tracking-wider rounded border border-[#ff4f00]/30">
+                            ★ FEATURED
+                          </span>
+                        </div>
+                        <h3 className="text-lg font-bold text-white mb-1 tracking-tight">{featuredTemplate.name}</h3>
+                        <p className="text-[#c5c0b1] text-xs leading-relaxed max-w-md mb-3">{featuredTemplate.description}</p>
                       </div>
-                      <h3 className="font-headline-lg text-headline-lg text-on-surface mb-6">{featuredTemplate.name}</h3>
-                      <p className="text-on-surface-variant text-body-lg leading-relaxed mb-10 max-w-md">{featuredTemplate.description}</p>
                       <div className="mt-auto">
                         <button
-                          onClick={() => handleDeployTemplate(featuredTemplate)}
-                          className="px-10 py-3 bg-white text-black font-bold text-label-md uppercase tracking-widest hover:bg-primary-container hover:text-on-primary-container transition-all"
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeployTemplate(featuredTemplate);
+                          }}
+                          className="px-4 py-1.5 bg-[#ff4f00] text-white font-bold text-xs uppercase tracking-wider rounded hover:bg-[#e04500] transition-all shadow-sm flex items-center gap-1.5"
                         >
-                          Deploy Template
+                          ⚡ Deploy Template
                         </button>
                       </div>
                     </div>
-                    <div className="w-1/3 flex items-center justify-center border-l border-surface-variant/20 ml-10 pl-10 opacity-40 group-hover:opacity-100 transition-opacity">
-                      <div className="relative">
-                        <div className="w-24 h-24 border border-outline rounded-full flex items-center justify-center">
-                          <span className="material-symbols-outlined text-[40px] text-primary-container">hub</span>
+
+                    {/* Graphic diagram on right side */}
+                    <div className="hidden md:flex w-1/4 items-center justify-center border-l border-[#353330] ml-3 pl-3 z-10 opacity-80 group-hover:opacity-100 transition-opacity">
+                      <div className="relative flex items-center justify-center">
+                        <div className="w-14 h-14 rounded-full border border-[#ff4f00]/60 bg-[#252321] flex items-center justify-center text-xl shadow-inner text-[#ff4f00]">
+                          ⚡
                         </div>
-                        <div className="absolute -top-2 -right-2 w-4 h-4 bg-primary rounded-full animate-pulse"></div>
+                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full animate-ping"></div>
+                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full"></div>
                       </div>
                     </div>
+
+                    {/* Subtle orange ambient backdrop glow */}
+                    <div className="absolute -bottom-10 -right-10 w-36 h-36 bg-[#ff4f00]/10 rounded-full blur-2xl pointer-events-none"></div>
                   </div>
                 );
               })()}
 
-              {/* Regular Cards */}
+              {/* Regular Template Cards */}
               {filteredTemplates.filter(t => !t.featured).map((tpl) => (
                 <div
                   key={tpl.id}
                   onClick={() => handleDeployTemplate(tpl)}
-                  className="clean-card group cursor-pointer flex flex-col p-8 rounded-lg"
+                  className="bg-[#fcfaf7] border border-[#c5c0b1] hover:border-[#ff4f00] p-5 rounded-lg flex flex-col justify-between transition-all cursor-pointer group shadow-sm hover:shadow-md text-left min-h-[170px]"
                 >
-                  <div className="flex justify-between items-start mb-10">
-                    <span className="text-label-sm font-label-sm text-outline uppercase tracking-[0.2em]">{tpl.category}</span>
-                    <span className="material-symbols-outlined text-outline group-hover:text-primary transition-colors">north_east</span>
-                  </div>
-                  <h3 className="font-headline-md text-headline-md text-on-surface mb-4">{tpl.name}</h3>
-                  <p className="text-on-surface-variant text-body-md leading-relaxed mb-12 flex-1">{tpl.description}</p>
-                  
-                  <div className="flex items-center gap-3 mt-auto">
-                    <div className="flex -space-x-1">
-                      {tpl.icons.map((icon, idx) => (
-                        <div key={idx} className="w-7 h-7 rounded bg-surface-container-high border border-outline-variant flex items-center justify-center">
-                          <span className="material-symbols-outlined text-[14px] text-neutral-400">{icon}</span>
-                        </div>
-                      ))}
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-[10px] font-bold text-[#807d75] uppercase tracking-wider">{tpl.category}</span>
+                      <span className="text-[#201515] font-bold text-xs group-hover:text-[#ff4f00] transition-colors">↗</span>
                     </div>
-                    <div className="h-px flex-1 bg-surface-variant/30 mx-4"></div>
+                    <h3 className="text-base font-bold text-[#201515] mb-1">{tpl.name}</h3>
+                    <p className="text-[#504d44] text-xs leading-relaxed mb-4">{tpl.description}</p>
+                  </div>
+                  
+                  <div className="flex items-center justify-between pt-2.5 border-t border-[#e5e0d3] mt-auto">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-bold text-[#807d75]">Nodes:</span>
+                      <div className="flex items-center gap-1">
+                        <span className="px-1.5 py-0.5 rounded bg-[#f0ebd9] border border-[#d5d0c1] text-[10px] font-bold text-[#201515]">⚡</span>
+                        <span className="px-1.5 py-0.5 rounded bg-[#f0ebd9] border border-[#d5d0c1] text-[10px] font-bold text-[#201515]">✉️</span>
+                        <span className="px-1.5 py-0.5 rounded bg-[#f0ebd9] border border-[#d5d0c1] text-[10px] font-bold text-[#201515]">🤖</span>
+                      </div>
+                    </div>
                     {tpl.popular && (
-                      <span className="text-label-sm font-label-sm text-primary uppercase tracking-widest">Popular</span>
+                      <span className="text-[9px] font-bold text-[#ff4f00] uppercase tracking-wider px-2 py-0.5 bg-[#ff4f00]/10 rounded border border-[#ff4f00]/20">
+                        Popular
+                      </span>
                     )}
                   </div>
                 </div>
@@ -3137,52 +3050,52 @@ return {
 
         {/* 4. VARIABLES MANAGER VIEW */}
         {viewMode === 'variables' && (
-          <div className="flex-1 flex flex-col overflow-y-auto workflow-dot-bg p-margin-lg">
+          <div className="flex-1 flex flex-col overflow-y-auto p-8 bg-[#fffefb] text-[#201515]">
             {/* Header */}
-            <header className="flex justify-between items-center mb-16 shrink-0 text-left">
+            <header className="flex justify-between items-center mb-8 shrink-0 text-left">
               <div>
-                <h1 className="font-headline-xl text-headline-xl text-white tracking-tight mb-2">Environment Variables</h1>
-                <p className="text-on-surface-variant text-body-lg max-w-2xl">Manage environment variables accessible securely by execution engines and custom script runner nodes.</p>
+                <h1 className="text-3xl font-bold text-[#201515] tracking-tight mb-1">Environment Variables</h1>
+                <p className="text-[#605d52] text-sm max-w-2xl">Manage environment variables accessible securely by execution engines and custom script runner nodes.</p>
               </div>
               <div 
                 onClick={() => setIsAvatarModalOpen(true)}
-                className="w-9 h-9 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden cursor-pointer hover:opacity-85 transition-opacity"
+                className="w-9 h-9 rounded-full bg-[#f8f4f0] border border-[#201515] overflow-hidden cursor-pointer hover:opacity-85 transition-opacity"
                 title="Change Profile Picture"
               >
                 <img className="w-full h-full object-cover" alt="User Avatar" src={profilePic} />
               </div>
             </header>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 text-left">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 text-left">
               {/* Creator Form */}
-              <div className="clean-card p-6 rounded-xl h-fit">
-                <h3 className="font-bold text-[#facc15] text-xs uppercase tracking-wider mb-4">Add Variable</h3>
+              <div className="bg-[#f8f4f0] border border-[#c5c0b1] p-6 rounded-md h-fit">
+                <h3 className="font-bold text-[#ff4f00] text-xs uppercase tracking-wider mb-4">Add Variable</h3>
                 <form onSubmit={handleAddVar} className="space-y-4">
                   <div>
-                    <label className="block text-neutral-400 text-xs mb-1 font-bold">Key / Variable Name</label>
+                    <label className="block text-[#201515] text-xs mb-1 font-bold">Key / Variable Name</label>
                     <input
                       type="text"
                       required
                       value={newVarKey}
                       onChange={(e) => setNewVarKey(e.target.value.toUpperCase())}
                       placeholder="MY_API_SECRET"
-                      className="w-full bg-[#131313] border border-[#353534] rounded-lg px-3 py-2 text-white outline-none focus:border-primary-container text-xs font-mono"
+                      className="w-full bg-[#fffefb] border border-[#201515] rounded-sm px-3 py-2 text-[#201515] outline-none focus:border-[#ff4f00] text-xs font-mono"
                     />
                   </div>
                   <div>
-                    <label className="block text-neutral-400 text-xs mb-1 font-bold">Value</label>
+                    <label className="block text-[#201515] text-xs mb-1 font-bold">Value</label>
                     <textarea
                       required
                       value={newVarVal}
                       onChange={(e) => setNewVarVal(e.target.value)}
                       placeholder="xoxb-secret-token"
                       rows={4}
-                      className="w-full bg-[#131313] border border-[#353534] rounded-lg px-3 py-2 text-white outline-none focus:border-primary-container text-xs font-mono"
+                      className="w-full bg-[#fffefb] border border-[#201515] rounded-sm px-3 py-2 text-[#201515] outline-none focus:border-[#ff4f00] text-xs font-mono"
                     />
                   </div>
                   <button
                     type="submit"
-                    className="w-full bg-primary-container text-black font-bold py-2.5 rounded-lg hover:brightness-110 transition-colors uppercase tracking-widest text-[10px]"
+                    className="w-full bg-[#ff4f00] text-[#fffefb] font-bold py-2.5 rounded-md hover:opacity-90 transition-colors uppercase tracking-wider text-xs shadow-sm"
                   >
                     Save Variable
                   </button>
@@ -3190,33 +3103,34 @@ return {
               </div>
 
               {/* Variables List Table */}
-              <div className="lg:col-span-2 clean-card p-8 rounded-xl">
-                <h3 className="font-headline-md text-headline-md text-white font-bold mb-6">Configured Values</h3>
-                <div className="overflow-x-auto rounded-lg border border-neutral-800">
-                  <table className="w-full border-collapse text-xs text-left">
+              <div className="lg:col-span-2 bg-[#f8f4f0] border border-[#c5c0b1] p-6 rounded-md">
+                <h3 className="text-lg font-bold text-[#201515] mb-4">Configured Values</h3>
+                <div className="overflow-x-auto rounded-md border border-[#c5c0b1]">
+                  <table className="w-full border-collapse text-xs text-left bg-[#fffefb]">
                     <thead>
-                      <tr className="bg-[#131313] text-neutral-400 border-b border-neutral-800">
-                        <th className="p-4 font-bold uppercase tracking-wider">Key</th>
-                        <th className="p-4 font-bold uppercase tracking-wider">Masked Value</th>
-                        <th className="p-4 text-right">Actions</th>
+                      <tr className="bg-[#201515] text-[#fffefb] border-b border-[#201515]">
+                        <th className="p-3.5 font-bold uppercase tracking-wider">Key</th>
+                        <th className="p-3.5 font-bold uppercase tracking-wider">Masked Value</th>
+                        <th className="p-3.5 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {variables.length === 0 ? (
                         <tr>
-                          <td colSpan={3} className="p-6 text-center text-neutral-600 font-bold">No global variables configured.</td>
+                          <td colSpan={3} className="p-6 text-center text-[#939084] font-semibold">No global variables configured.</td>
                         </tr>
                       ) : (
                         variables.map((v) => (
-                          <tr key={v.key} className="border-b border-neutral-800/50 hover:bg-white/[0.01]">
-                            <td className="p-4 font-mono font-bold text-white">{v.key}</td>
-                            <td className="p-4 font-mono text-neutral-400">
+                          <tr key={v.key} className="border-b border-[#c5c0b1] hover:bg-[#f8f4f0]">
+                            <td className="p-3.5 font-mono font-bold text-[#201515]">{v.key}</td>
+                            <td className="p-3.5 font-mono text-[#605d52]">
                               {v.value.length > 20 ? `${v.value.substring(0, 15)}... [encrypted]` : v.value}
                             </td>
-                            <td className="p-4 text-right">
+                            <td className="p-3.5 text-right">
                               <button
+                                type="button"
                                 onClick={() => handleDeleteVar(v.key)}
-                                className="text-rose-400 hover:text-rose-300 font-bold hover:underline"
+                                className="text-rose-600 hover:text-rose-800 font-bold hover:underline"
                               >
                                 Delete
                               </button>
@@ -3234,47 +3148,53 @@ return {
 
         {/* 5. HISTORY & DB SIMULATIONS VIEW */}
         {viewMode === 'history' && (
-          <div className="flex-1 flex flex-col h-full w-full bg-[#0e0e0e]">
+          <div className="flex-1 flex flex-col h-full w-full bg-[#fffefb] text-[#201515]">
             
             {/* Tab Selector */}
-            <div className="flex border-b border-outline-variant/30 text-xs font-bold text-on-surface-variant shrink-0 bg-[#0a0a0a]">
+            <div className="flex border-b border-[#c5c0b1] text-xs font-bold text-[#fffefb] shrink-0 bg-[#201515]">
               <button
+                type="button"
                 onClick={() => setHistoryTab('logs')}
-                className={`px-8 py-4 border-r border-outline-variant/30 transition-all ${
-                  historyTab === 'logs' ? 'bg-[#0e0e0e] text-white border-b-2 border-b-accent-coral' : 'opacity-50 hover:opacity-100'
+                className={`px-6 py-3.5 transition-all flex items-center gap-2 ${
+                  historyTab === 'logs' ? 'bg-[#ff4f00] text-[#fffefb]' : 'text-[#c5c0b1] hover:text-[#fffefb] hover:bg-[#2f2a26]'
                 }`}
               >
-                Execution History Logs
+                <span>📜</span>
+                <span>Execution History Logs</span>
               </button>
               <button
+                type="button"
                 onClick={() => setHistoryTab('crm')}
-                className={`px-8 py-4 border-r border-outline-variant/30 transition-all ${
-                  historyTab === 'crm' ? 'bg-[#0e0e0e] text-white border-b-2 border-b-accent-coral' : 'opacity-50 hover:opacity-100'
+                className={`px-6 py-3.5 transition-all flex items-center gap-2 ${
+                  historyTab === 'crm' ? 'bg-[#ff4f00] text-[#fffefb]' : 'text-[#c5c0b1] hover:text-[#fffefb] hover:bg-[#2f2a26]'
                 }`}
               >
-                CRM Simulation DB
+                <span>🗄️</span>
+                <span>CRM Simulation DB</span>
               </button>
               <button
+                type="button"
                 onClick={() => setHistoryTab('emails')}
-                className={`px-8 py-4 border-r border-outline-variant/30 transition-all ${
-                  historyTab === 'emails' ? 'bg-[#0e0e0e] text-white border-b-2 border-b-accent-coral' : 'opacity-50 hover:opacity-100'
+                className={`px-6 py-3.5 transition-all flex items-center gap-2 ${
+                  historyTab === 'emails' ? 'bg-[#ff4f00] text-[#fffefb]' : 'text-[#c5c0b1] hover:text-[#fffefb] hover:bg-[#2f2a26]'
                 }`}
               >
-                Emails Outbox Simulation
+                <span>✉️</span>
+                <span>Emails Outbox Simulation</span>
               </button>
             </div>
 
             {/* Tab Contents container */}
-            <div className="flex-1 overflow-hidden flex">
+            <div className="flex-1 overflow-hidden flex bg-[#fffefb]">
 
               {/* Sub Tab: Logs */}
               {historyTab === 'logs' && (
                 <div className="flex-1 flex overflow-hidden h-full text-left">
                   {/* Execution runs list */}
-                  <div className="w-80 border-r border-outline-variant/30 overflow-y-auto p-4 flex flex-col gap-2 bg-[#0a0a0a] shrink-0 text-left">
-                    <h4 className="text-[10px] uppercase font-bold tracking-wider text-neutral-500 px-1 mb-2">Execution Runs</h4>
+                  <div className="w-80 border-r border-[#c5c0b1] overflow-y-auto p-4 flex flex-col gap-2 bg-[#f8f4f0] shrink-0 text-left">
+                    <h4 className="text-[10px] uppercase font-bold tracking-wider text-[#939084] px-1 mb-2">Execution Runs</h4>
                     {executions.length === 0 ? (
-                      <div className="text-center py-8 text-neutral-600 text-xs">No runs recorded yet. Trigger a workflow to start.</div>
+                      <div className="text-center py-8 text-[#939084] text-xs">No runs recorded yet. Trigger a workflow to start.</div>
                     ) : (
                       executions.map((exec) => {
                         const isSel = selectedExecution?.id === exec.id;
@@ -3282,22 +3202,22 @@ return {
                           <div
                             key={exec.id}
                             onClick={() => setSelectedExecution(exec)}
-                            className={`p-3 rounded-lg border transition-all cursor-pointer text-xs ${
+                            className={`p-3 rounded-md border transition-all cursor-pointer text-xs ${
                               isSel
-                                ? 'bg-[#1c1b1b] border-accent-coral/50'
-                                : 'bg-[#131313]/60 border-white/5 hover:border-white/10'
+                                ? 'bg-[#fffefb] border-[#ff4f00] shadow-sm'
+                                : 'bg-[#fffefb] border-[#c5c0b1] hover:border-[#201515]'
                             }`}
                           >
                             <div className="flex justify-between items-center mb-1">
-                              <span className="font-bold text-white font-mono">Run ID #{exec.id}</span>
+                              <span className="font-bold text-[#201515] font-mono">Run ID #{exec.id}</span>
                               <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
-                                exec.status === 'success' ? 'bg-emerald-950/50 text-emerald-400' :
-                                exec.status === 'failed' ? 'bg-rose-950/50 text-rose-400' : 'bg-amber-950/50 text-amber-400 animate-pulse'
+                                exec.status === 'success' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' :
+                                exec.status === 'failed' ? 'bg-rose-100 text-rose-800 border border-rose-300' : 'bg-amber-100 text-amber-800 border border-amber-300'
                               }`}>
                                 {exec.status}
                               </span>
                             </div>
-                            <div className="text-[10px] text-neutral-500 font-mono">
+                            <div className="text-[10px] text-[#605d52] font-mono">
                               {new Date(exec.startedAt).toLocaleString()}
                             </div>
                           </div>
@@ -3307,29 +3227,29 @@ return {
                   </div>
 
                   {/* Step log list console */}
-                  <div className="flex-1 p-6 overflow-y-auto bg-[#050505] text-left font-mono text-xs">
+                  <div className="flex-1 p-6 overflow-y-auto bg-[#201515] text-left font-mono text-xs text-[#fffefb]">
                     {selectedExecution ? (
                       <div className="space-y-4">
-                        <div className="flex justify-between items-center border-b border-outline-variant/30 pb-3 mb-4">
-                          <span className="font-bold text-white">Console Output trace Log #{selectedExecution.id}</span>
-                          <span className="text-[10px] text-neutral-500">Status: {selectedExecution.status}</span>
+                        <div className="flex justify-between items-center border-b border-[#2f2a26] pb-3 mb-4">
+                          <span className="font-bold text-[#fffefb]">Console Output trace Log #{selectedExecution.id}</span>
+                          <span className="text-[10px] text-[#c5c0b1]">Status: {selectedExecution.status}</span>
                         </div>
                         <div className="flex flex-col gap-2">
                           {selectedExecution.logs ? (
                             JSON.parse(selectedExecution.logs).map((step: any, i: number) => (
-                              <div key={i} className="flex gap-4 p-1.5 hover:bg-white/5 rounded transition-colors text-neutral-300">
-                                <span className="text-neutral-600 shrink-0">[{new Date(step.time).toLocaleTimeString()}]</span>
-                                <span className="text-accent-coral font-bold shrink-0">{step.nodeType ? `[${step.nodeType.toUpperCase()}]` : '[SYSTEM]'}</span>
-                                <span className="text-white">{step.message}</span>
+                              <div key={i} className="flex gap-4 p-1.5 hover:bg-[#2f2a26] rounded transition-colors text-[#fffefb]">
+                                <span className="text-[#939084] shrink-0">[{new Date(step.time).toLocaleTimeString()}]</span>
+                                <span className="text-[#ff4f00] font-bold shrink-0">{step.nodeType ? `[${step.nodeType.toUpperCase()}]` : '[SYSTEM]'}</span>
+                                <span className="text-[#fffefb]">{step.message}</span>
                               </div>
                             ))
                           ) : (
-                            <div className="text-neutral-700">Empty steps console output.</div>
+                            <div className="text-[#939084]">Empty steps console output.</div>
                           )}
                         </div>
                       </div>
                     ) : (
-                      <div className="text-neutral-700 text-center py-20">Select an execution run from the left panel to review step-by-step logs.</div>
+                      <div className="text-[#939084] text-center py-20">Select an execution run from the left panel to review step-by-step logs.</div>
                     )}
                   </div>
                 </div>
@@ -3337,83 +3257,83 @@ return {
 
               {/* Sub Tab: CRM Database */}
               {historyTab === 'crm' && (
-                <div className="flex-1 flex overflow-hidden p-6 gap-6 h-full text-left">
+                <div className="flex-1 flex overflow-hidden p-6 gap-6 h-full text-left bg-[#fffefb]">
                   
                   {/* Simulator lead create form */}
-                  <form onSubmit={handleCrmLeadTrigger} className="w-80 shrink-0 flex flex-col gap-4 bg-[#0a0a0a] p-5 rounded-xl border border-outline-variant/30 h-fit">
-                    <h4 className="font-bold text-accent-coral text-sm mb-1 uppercase tracking-wider">Trigger Lead event</h4>
+                  <form onSubmit={handleCrmLeadTrigger} className="w-80 shrink-0 flex flex-col gap-4 bg-[#f8f4f0] p-5 rounded-md border border-[#c5c0b1] h-fit">
+                    <h4 className="font-bold text-[#ff4f00] text-xs uppercase tracking-wider mb-1">Trigger Lead Event</h4>
                     <div>
-                      <label className="block text-neutral-400 text-xs mb-1 font-bold">Contact Name</label>
+                      <label className="block text-[#201515] text-xs mb-1 font-bold">Contact Name</label>
                       <input
                         type="text"
                         required
                         value={newLeadName}
                         onChange={(e) => setNewLeadName(e.target.value)}
                         placeholder="Jonas Scholz"
-                        className="w-full bg-[#131313] border border-outline-variant/60 rounded-lg px-3 py-2 text-white outline-none focus:border-accent-coral/50"
+                        className="w-full bg-[#fffefb] border border-[#201515] rounded-sm px-3 py-2 text-[#201515] outline-none focus:border-[#ff4f00] text-xs"
                       />
                     </div>
                     <div>
-                      <label className="block text-neutral-400 text-xs mb-1 font-bold">Contact Email</label>
+                      <label className="block text-[#201515] text-xs mb-1 font-bold">Contact Email</label>
                       <input
                         type="email"
                         required
                         value={newLeadEmail}
                         onChange={(e) => setNewLeadEmail(e.target.value)}
                         placeholder="jonas@example.com"
-                        className="w-full bg-[#131313] border border-outline-variant/60 rounded-lg px-3 py-2 text-white outline-none focus:border-accent-coral/50"
+                        className="w-full bg-[#fffefb] border border-[#201515] rounded-sm px-3 py-2 text-[#201515] outline-none focus:border-[#ff4f00] text-xs"
                       />
                     </div>
                     <div>
-                      <label className="block text-neutral-400 text-xs mb-1 font-bold">Lead Score: {newLeadScore}</label>
+                      <label className="block text-[#201515] text-xs mb-1 font-bold">Lead Score: {newLeadScore}</label>
                       <input
                         type="range"
                         min="1"
                         max="100"
                         value={newLeadScore}
                         onChange={(e) => setNewLeadScore(parseInt(e.target.value, 10))}
-                        className="w-full accent-accent-coral bg-neutral-800"
+                        className="w-full accent-[#ff4f00]"
                       />
                     </div>
                     <button
                       type="submit"
-                      className="w-full bg-[#ef4444] text-white font-bold py-2.5 rounded-lg hover:bg-[#ef4444]/90 transition-colors uppercase tracking-widest text-[10px]"
+                      className="w-full bg-[#ff4f00] text-[#fffefb] font-bold py-2.5 rounded-md hover:opacity-90 transition-colors uppercase tracking-wider text-xs shadow-sm"
                     >
                       Fire CRM Event
                     </button>
                   </form>
 
                   {/* CRM Table */}
-                  <div className="flex-1 overflow-y-auto rounded-xl border border-outline-variant/30 bg-[#0a0a0a]">
+                  <div className="flex-1 overflow-y-auto rounded-md border border-[#c5c0b1] bg-[#fffefb]">
                     <table className="w-full text-left text-xs border-collapse">
                       <thead>
-                        <tr className="bg-[#131313] text-neutral-400 border-b border-outline-variant/30">
-                          <th className="p-3">ID</th>
-                          <th className="p-3">Name</th>
-                          <th className="p-3">Email</th>
-                          <th className="p-3">Status</th>
-                          <th className="p-3">Score</th>
-                          <th className="p-3">Created</th>
+                        <tr className="bg-[#201515] text-[#fffefb] border-b border-[#201515]">
+                          <th className="p-3.5 font-bold uppercase tracking-wider">ID</th>
+                          <th className="p-3.5 font-bold uppercase tracking-wider">Name</th>
+                          <th className="p-3.5 font-bold uppercase tracking-wider">Email</th>
+                          <th className="p-3.5 font-bold uppercase tracking-wider">Status</th>
+                          <th className="p-3.5 font-bold uppercase tracking-wider">Score</th>
+                          <th className="p-3.5 font-bold uppercase tracking-wider">Created</th>
                         </tr>
                       </thead>
                       <tbody>
                         {crmContacts.length === 0 ? (
                           <tr>
-                            <td colSpan={6} className="p-6 text-center text-neutral-600 font-bold">No contacts registered in CRM DB.</td>
+                            <td colSpan={6} className="p-6 text-center text-[#939084] font-semibold">No contacts registered in CRM DB.</td>
                           </tr>
                         ) : (
                           crmContacts.map((c) => (
-                            <tr key={c.id} className="border-b border-outline-variant/20 hover:bg-white/5">
-                              <td className="p-3 font-mono text-neutral-600">{c.id}</td>
-                              <td className="p-3 font-bold text-white">{c.name}</td>
-                              <td className="p-3 font-mono text-neutral-400">{c.email}</td>
-                              <td className="p-3">
-                                <span className="bg-[#1c1b1b] text-neutral-300 px-2.5 py-0.5 rounded-full text-[9px] uppercase border border-outline-variant/50">
+                            <tr key={c.id} className="border-b border-[#c5c0b1] hover:bg-[#f8f4f0]">
+                              <td className="p-3.5 font-mono text-[#605d52]">{c.id}</td>
+                              <td className="p-3.5 font-bold text-[#201515]">{c.name}</td>
+                              <td className="p-3.5 font-mono text-[#605d52]">{c.email}</td>
+                              <td className="p-3.5">
+                                <span className="bg-[#f8f4f0] text-[#201515] px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase border border-[#c5c0b1]">
                                   {c.status}
                                 </span>
                               </td>
-                              <td className="p-3 font-bold text-accent-coral">{c.score}</td>
-                              <td className="p-3 text-neutral-500 text-[10px]">{new Date(c.createdAt).toLocaleTimeString()}</td>
+                              <td className="p-3.5 font-bold text-[#ff4f00]">{c.score}</td>
+                              <td className="p-3.5 text-[#939084] text-[10px]">{new Date(c.createdAt).toLocaleTimeString()}</td>
                             </tr>
                           ))
                         )}
@@ -4799,7 +4719,215 @@ return {
         </div>
       )}
 
+      {/* ex-pricing-tier & ex-pricing-tier-featured: Pricing Plans Modal */}
+      {isPricingModalOpen && (
+        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-[#201515]/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="w-[860px] max-w-full bg-[#fffefb] border border-[#201515] rounded-md shadow-2xl p-6 overflow-y-auto max-h-[90vh]">
+            <div className="flex items-center justify-between border-b border-[#c5c0b1] pb-4 mb-6">
+              <div>
+                <span className="text-xs uppercase tracking-wider font-semibold text-[#ff4f00]">Zapier Inspired Pricing</span>
+                <h2 className="text-2xl font-bold text-[#201515]">Choose your automation plan</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsPricingModalOpen(false)}
+                className="w-8 h-8 rounded-md bg-[#f8f4f0] border border-[#201515] text-[#201515] hover:bg-[#201515] hover:text-[#fffefb] font-bold text-sm transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* ex-pricing-tier (Free/Starter) */}
+              <div className="bg-[#f8f4f0] border border-[#c5c0b1] rounded-md p-6 flex flex-col justify-between">
+                <div>
+                  <div className="text-sm font-bold text-[#201515]">Starter</div>
+                  <div className="text-3xl font-bold text-[#201515] my-2">$0 <span className="text-xs font-normal text-[#605d52]">/ mo</span></div>
+                  <p className="text-xs text-[#605d52] mb-4">Perfect for individual workflow automation testing.</p>
+                  <ul className="text-xs text-[#201515] space-y-2 mb-6">
+                    <li className="flex items-center gap-2">✓ 100 Tasks / month</li>
+                    <li className="flex items-center gap-2">✓ 5 Active Zaps</li>
+                    <li className="flex items-center gap-2">✓ 15 min Update time</li>
+                  </ul>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { showZapierToast("Switched to Starter Plan"); setIsPricingModalOpen(false); }}
+                  className="w-full py-2.5 bg-[#fffefb] border border-[#201515] text-[#201515] rounded-md font-semibold text-xs hover:bg-[#201515] hover:text-[#fffefb] transition"
+                >
+                  Current Plan
+                </button>
+              </div>
+
+              {/* ex-pricing-tier-featured (Professional) */}
+              <div className="bg-[#201515] text-[#fffefb] rounded-md p-6 flex flex-col justify-between shadow-xl relative scale-105">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#ff4f00] text-[#fffefb] text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full">
+                  Most Popular
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-[#fffefb]">Professional</div>
+                  <div className="text-3xl font-bold text-[#fffefb] my-2">$29 <span className="text-xs font-normal opacity-70">/ mo</span></div>
+                  <p className="text-xs text-[#c5c0b1] mb-4">Advanced multi-step zaps with AI & webhooks.</p>
+                  <ul className="text-xs text-[#fffefb] space-y-2 mb-6">
+                    <li className="flex items-center gap-2">✓ 5,000 Tasks / month</li>
+                    <li className="flex items-center gap-2">✓ Unlimited Active Zaps</li>
+                    <li className="flex items-center gap-2">✓ 2 min Update time</li>
+                    <li className="flex items-center gap-2">✓ Webhook & AI Core</li>
+                  </ul>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { showZapierToast("Upgraded to Professional Plan!"); setIsPricingModalOpen(false); }}
+                  className="w-full py-2.5 bg-[#ff4f00] text-[#fffefb] rounded-md font-bold text-xs hover:opacity-90 transition shadow-md"
+                >
+                  Upgrade to Pro
+                </button>
+              </div>
+
+              {/* ex-pricing-tier (Company/Team) */}
+              <div className="bg-[#f8f4f0] border border-[#c5c0b1] rounded-md p-6 flex flex-col justify-between">
+                <div>
+                  <div className="text-sm font-bold text-[#201515]">Team</div>
+                  <div className="text-3xl font-bold text-[#201515] my-2">$99 <span className="text-xs font-normal text-[#605d52]">/ mo</span></div>
+                  <p className="text-xs text-[#605d52] mb-4">Shared team workspace with priority execution.</p>
+                  <ul className="text-xs text-[#201515] space-y-2 mb-6">
+                    <li className="flex items-center gap-2">✓ 50,000 Tasks / month</li>
+                    <li className="flex items-center gap-2">✓ Unlimited Team Members</li>
+                    <li className="flex items-center gap-2">✓ 1 min Instant Update</li>
+                  </ul>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { showZapierToast("Contacted sales for Team Plan"); setIsPricingModalOpen(false); }}
+                  className="w-full py-2.5 bg-[#201515] text-[#fffefb] rounded-md font-semibold text-xs hover:opacity-90 transition"
+                >
+                  Get Team Plan
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ex-cart-drawer: Subscription & Add-on Drawer */}
+      {isCartDrawerOpen && (
+        <div className="fixed inset-0 z-[130] flex justify-end bg-[#201515]/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="w-[380px] max-w-full bg-[#fffefb] border-l border-[#201515] h-full p-6 flex flex-col justify-between shadow-2xl">
+            <div>
+              <div className="flex items-center justify-between border-b border-[#c5c0b1] pb-4 mb-4">
+                <div className="font-bold text-base text-[#201515]">Subscription & Add-ons</div>
+                <button
+                  type="button"
+                  onClick={() => setIsCartDrawerOpen(false)}
+                  className="text-[#201515] hover:bg-[#f8f4f0] p-1.5 rounded-md font-bold"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="p-3 bg-[#f8f4f0] border border-[#c5c0b1] rounded-md flex items-center justify-between">
+                  <div>
+                    <div className="text-xs font-bold text-[#201515]">Pro Plan Monthly</div>
+                    <div className="text-[11px] text-[#605d52]">5,000 tasks/mo</div>
+                  </div>
+                  <div className="font-bold text-xs text-[#201515]">$29.00</div>
+                </div>
+                <div className="p-3 bg-[#f8f4f0] border border-[#c5c0b1] rounded-md flex items-center justify-between">
+                  <div>
+                    <div className="text-xs font-bold text-[#201515]">AI Core Add-on</div>
+                    <div className="text-[11px] text-[#605d52]">100k OpenAI tokens</div>
+                  </div>
+                  <div className="font-bold text-xs text-[#201515]">$10.00</div>
+                </div>
+                <div className="p-3 bg-[#f8f4f0] border border-[#c5c0b1] rounded-md flex items-center justify-between">
+                  <div>
+                    <div className="text-xs font-bold text-[#201515]">Webhook Listener</div>
+                    <div className="text-[11px] text-[#605d52]">Custom domain endpoints</div>
+                  </div>
+                  <div className="font-bold text-xs text-[#201515]">$5.00</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-[#c5c0b1] pt-4">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-xs font-bold text-[#201515]">Total Monthly:</span>
+                <span className="text-lg font-bold text-[#ff4f00]">$44.00</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => { showZapierToast("Checkout complete!"); setIsCartDrawerOpen(false); }}
+                className="w-full py-3 bg-[#ff4f00] text-[#fffefb] font-bold text-xs rounded-md shadow-md hover:opacity-90 transition"
+              >
+                Proceed to Checkout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ex-auth-form-card: Sign-In / Account Auth Modal */}
+      {isAuthModalOpen && (
+        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-[#201515]/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="w-[420px] max-w-full bg-[#f8f4f0] border border-[#201515] rounded-md shadow-2xl p-6 text-left">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-[#ff4f00]"></span>
+                <span className="font-bold text-lg text-[#201515]">Sign in to Zapier Flow</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAuthModalOpen(false)}
+                className="text-[#201515] hover:bg-[#fffefb] p-1 rounded font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-[#605d52] mb-6">Enter your workspace account credentials to sync workflow graphs.</p>
+
+            <form onSubmit={(e) => { e.preventDefault(); showZapierToast("Signed in successfully!"); setIsAuthModalOpen(false); }} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-[#201515] mb-1">Work Email</label>
+                <input
+                  type="email"
+                  required
+                  placeholder="name@company.com"
+                  className="w-full bg-[#fffefb] border border-[#201515] rounded-sm px-3 py-2 text-xs text-[#201515] outline-none focus:border-[#ff4f00]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[#201515] mb-1">Password</label>
+                <input
+                  type="password"
+                  required
+                  placeholder="••••••••"
+                  className="w-full bg-[#fffefb] border border-[#201515] rounded-sm px-3 py-2 text-xs text-[#201515] outline-none focus:border-[#ff4f00]"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-2.5 bg-[#ff4f00] text-[#fffefb] font-bold text-xs rounded-md shadow-sm hover:opacity-90 transition mt-2"
+              >
+                Sign In & Connect
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ex-toast: Toast Notification */}
+      {zapierToast && (
+        <div className="fixed bottom-6 right-6 z-[150] bg-[#201515] text-[#fffefb] border-2 border-[#ff4f00] rounded-md px-4 py-3 shadow-xl flex items-center gap-3 animate-in slide-in-from-bottom-4 duration-200">
+          <span className="w-2 h-2 rounded-full bg-[#ff4f00] animate-ping"></span>
+          <span className="text-xs font-semibold">{zapierToast.message}</span>
+        </div>
+      )}
     </div>
   );
 }
+
 

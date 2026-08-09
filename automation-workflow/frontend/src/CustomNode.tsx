@@ -1,41 +1,41 @@
 import { memo } from 'react';
 import { Handle, Position } from 'reactflow';
 
-// Custom Node Card Style
+// Custom Zapier Node Card Style
 const nodeCardClass = (selected: boolean) =>
-  `node-card w-48 p-4 rounded-xl relative group cursor-pointer text-[#e5e2e1] text-left transition-all duration-300 ${
+  `node-card w-52 p-4 rounded-md relative group cursor-pointer text-[#201515] dark:text-[#f4f4f5] text-left transition-all duration-200 shadow-sm ${
     selected
-      ? 'bg-[#131313]/90 border-[#ef4444]/60 shadow-[0_0_12px_rgba(239,68,68,0.15)]'
-      : 'bg-[#131313]/40 border-white/5 hover:bg-[#131313]/60 hover:border-white/10'
+      ? 'bg-[#f8f4f0] dark:bg-[#1f1f23] border-2 border-[#ff4f00] shadow-[0_4px_16px_rgba(255,79,0,0.2)] scale-[1.02]'
+      : 'bg-[#f8f4f0] dark:bg-[#18181b] border border-[#c5c0b1] dark:border-[#27272a] hover:border-[#201515] dark:hover:border-[#ff4f00] hover:shadow-md'
   }`;
 
-// Circle start node trigger style
+// Circle start node trigger style with Zapier Orange Play Badge
 export const TriggerNode = memo(({ data, selected }: any) => {
   const isCrm = data?.triggerType === 'crm';
   return (
     <div className="relative group flex flex-col items-center">
-      <div className={`w-14 h-14 rounded-full bg-[#0a0a0a] border flex items-center justify-center relative transition-all duration-300 ${
-        selected ? 'border-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.4)] scale-105' : 'border-emerald-400/40 hover:border-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.2)]'
+      <div className={`w-14 h-14 rounded-full bg-[#f8f4f0] border-2 flex items-center justify-center relative transition-all duration-200 ${
+        selected ? 'border-[#ff4f00] shadow-[0_0_14px_rgba(255,79,0,0.35)] scale-105' : 'border-[#201515] hover:border-[#ff4f00] shadow-sm'
       }`}>
-        <span className="material-symbols-outlined !text-xl opacity-80 text-emerald-400" data-icon={isCrm ? 'group_add' : 'bolt'}>
-          {isCrm ? 'group_add' : 'bolt'}
+        <span className="text-[#ff4f00] font-bold text-xl">
+          {isCrm ? '👥' : '⚡'}
         </span>
 
-        {/* Play SVG Overlay Badge matching node color */}
-        <div className="absolute -bottom-1 -right-1 w-4.5 h-4.5 rounded-full bg-[#0a0a0a] border border-emerald-400/80 flex items-center justify-center shadow-[0_0_6px_rgba(16,185,129,0.4)]">
-          <svg className="w-2.5 h-2.5 text-emerald-400 ml-0.5" viewBox="0 0 24 24" fill="currentColor">
+        {/* Play SVG Overlay Badge in Zapier Orange */}
+        <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#ff4f00] border-2 border-[#fffefb] flex items-center justify-center shadow-sm">
+          <svg className="w-2.5 h-2.5 text-[#fffefb] ml-0.5" viewBox="0 0 24 24" fill="currentColor">
             <path d="M8 5v14l11-7z" />
           </svg>
         </div>
       </div>
-      <div className="mt-1.5 whitespace-nowrap text-[10px] uppercase tracking-widest font-bold text-emerald-400">
+      <div className="mt-2 whitespace-nowrap text-[11px] uppercase tracking-wider font-semibold text-[#201515] bg-[#fffefb] px-2 py-0.5 rounded-full border border-[#c5c0b1]">
         {data.label || 'Start Trigger'}
       </div>
       <Handle
         type="source"
         position={Position.Right}
         id="output"
-        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-emerald-400 !rounded-full !right-[-4px] hover:!bg-emerald-400"
+        className="!w-3 !h-3 !bg-[#ff4f00] !border-2 !border-[#fffefb] !rounded-full !right-[-6px] hover:scale-125 transition-transform"
       />
     </div>
   );
@@ -49,20 +49,20 @@ export const MarketingNode = memo(({ data, selected }: any) => {
         type="target"
         position={Position.Left}
         id="input"
-        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !left-[-4px] hover:!bg-[#ef4444]"
+        className="!w-3 !h-3 !bg-[#201515] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#ff4f00]"
       />
-      <div className="flex items-center gap-3 mb-2.5">
-        <span className="material-symbols-outlined opacity-40 !text-[18px] text-sky-400" data-icon="mail">mail</span>
-        <span className="text-[11px] font-medium tracking-tight opacity-80">{data.label || 'Send Email'}</span>
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-lg">✉️</span>
+        <span className="text-sm font-semibold text-[#201515]">{data.label || 'Send Email'}</span>
       </div>
-      <div className="text-[9px] font-mono opacity-30 truncate">
+      <div className="text-xs text-[#605d52] font-medium truncate">
         {data.subject || 'Welcome email'}
       </div>
       <Handle
         type="source"
         position={Position.Right}
         id="output"
-        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !right-[-4px] hover:!bg-[#ef4444]"
+        className="!w-3 !h-3 !bg-[#ff4f00] !border-2 !border-[#fffefb] !rounded-full !right-[-6px] hover:scale-125 transition-transform"
       />
     </div>
   );
@@ -76,20 +76,20 @@ export const CRMNode = memo(({ data, selected }: any) => {
         type="target"
         position={Position.Left}
         id="input"
-        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !left-[-4px] hover:!bg-[#ef4444]"
+        className="!w-3 !h-3 !bg-[#201515] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#ff4f00]"
       />
-      <div className="flex items-center gap-3 mb-2.5">
-        <span className="material-symbols-outlined opacity-40 !text-[18px] text-indigo-400" data-icon="database">database</span>
-        <span className="text-[11px] font-medium tracking-tight opacity-80">{data.label || 'CRM Contact'}</span>
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-lg">🗄️</span>
+        <span className="text-sm font-semibold text-[#201515]">{data.label || 'CRM Contact'}</span>
       </div>
-      <div className="text-[9px] font-mono opacity-30 truncate">
-        Score: {data.scoreChange || '0'}
+      <div className="text-xs text-[#605d52] font-medium truncate">
+        Score Change: <span className="font-bold text-[#201515]">+{data.scoreChange || '10'}</span>
       </div>
       <Handle
         type="source"
         position={Position.Right}
         id="output"
-        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !right-[-4px] hover:!bg-[#ef4444]"
+        className="!w-3 !h-3 !bg-[#ff4f00] !border-2 !border-[#fffefb] !rounded-full !right-[-6px] hover:scale-125 transition-transform"
       />
     </div>
   );
@@ -103,31 +103,31 @@ export const LogicNode = memo(({ data, selected }: any) => {
         type="target"
         position={Position.Left}
         id="input"
-        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !left-[-4px] hover:!bg-[#ef4444]"
+        className="!w-3 !h-3 !bg-[#201515] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#ff4f00]"
       />
-      <div className="flex items-center gap-3 mb-2.5">
-        <span className="material-symbols-outlined opacity-40 !text-[18px] text-fuchsia-400" data-icon="call_split">call_split</span>
-        <span className="text-[11px] font-medium tracking-tight opacity-80">{data.label || 'If/Else'}</span>
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-lg">🔀</span>
+        <span className="text-sm font-semibold text-[#201515]">{data.label || 'If/Else Filter'}</span>
       </div>
       
-      <div className="flex flex-col gap-1.5 text-[8px] uppercase tracking-[0.12em] font-medium mt-1">
-        <div className="flex items-center justify-end gap-2 text-emerald-400">Yes <div className="w-1 h-1 rounded-full bg-emerald-400"></div></div>
-        <div className="flex items-center justify-end gap-2 text-[#ef4444]">No <div className="w-1 h-1 rounded-full bg-[#ef4444]"></div></div>
+      <div className="flex flex-col gap-1 text-[11px] font-semibold mt-2 pt-2 border-t border-[#c5c0b1]">
+        <div className="flex items-center justify-between text-emerald-700"><span>True / Yes</span> <span className="w-2 h-2 rounded-full bg-emerald-600"></span></div>
+        <div className="flex items-center justify-between text-rose-700"><span>False / No</span> <span className="w-2 h-2 rounded-full bg-rose-600"></span></div>
       </div>
 
       <Handle
         type="source"
         position={Position.Right}
         id="true"
-        style={{ top: '65%' }}
-        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !right-[-4px] hover:!bg-emerald-400"
+        style={{ top: '60%' }}
+        className="!w-3 !h-3 !bg-emerald-600 !border-2 !border-[#fffefb] !rounded-full !right-[-6px]"
       />
       <Handle
         type="source"
         position={Position.Right}
         id="false"
         style={{ top: '85%' }}
-        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !right-[-4px] hover:!bg-[#ef4444]"
+        className="!w-3 !h-3 !bg-rose-600 !border-2 !border-[#fffefb] !rounded-full !right-[-6px]"
       />
     </div>
   );
@@ -141,20 +141,20 @@ export const DelayNode = memo(({ data, selected }: any) => {
         type="target"
         position={Position.Left}
         id="input"
-        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !left-[-4px] hover:!bg-[#ef4444]"
+        className="!w-3 !h-3 !bg-[#201515] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#ff4f00]"
       />
-      <div className="flex items-center gap-3 mb-2.5">
-        <span className="material-symbols-outlined opacity-40 !text-[18px] text-amber-400" data-icon="schedule">schedule</span>
-        <span className="text-[11px] font-medium tracking-tight opacity-80">{data.label || 'Wait'}</span>
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-lg">⏳</span>
+        <span className="text-sm font-semibold text-[#201515]">{data.label || 'Wait Delay'}</span>
       </div>
-      <div className="text-[9px] font-mono opacity-30 truncate">
-        {data.seconds || '5'} seconds delay
+      <div className="text-xs text-[#605d52] font-medium">
+        Pause for <span className="font-bold text-[#201515]">{data.seconds || '5'}s</span>
       </div>
       <Handle
         type="source"
         position={Position.Right}
         id="output"
-        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !right-[-4px] hover:!bg-[#ef4444]"
+        className="!w-3 !h-3 !bg-[#ff4f00] !border-2 !border-[#fffefb] !rounded-full !right-[-6px] hover:scale-125 transition-transform"
       />
     </div>
   );
@@ -168,20 +168,20 @@ export const CodeNode = memo(({ data, selected }: any) => {
         type="target"
         position={Position.Left}
         id="input"
-        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !left-[-4px] hover:!bg-[#ef4444]"
+        className="!w-3 !h-3 !bg-[#201515] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#ff4f00]"
       />
-      <div className="flex items-center gap-3 mb-2.5">
-        <span className="material-symbols-outlined opacity-40 !text-[18px] text-emerald-400" data-icon="terminal">terminal</span>
-        <span className="text-[11px] font-medium tracking-tight opacity-80">{data.label || 'Script'}</span>
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-lg">💻</span>
+        <span className="text-sm font-semibold text-[#201515]">{data.label || 'Run JS Script'}</span>
       </div>
-      <div className="text-[9px] font-mono opacity-30 truncate">
-        {data.code ? 'eval custom script' : 'JS logic'}
+      <div className="text-xs text-[#605d52] font-mono truncate">
+        {data.code ? 'eval custom script' : 'JS Logic Code'}
       </div>
       <Handle
         type="source"
         position={Position.Right}
         id="output"
-        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !right-[-4px] hover:!bg-[#ef4444]"
+        className="!w-3 !h-3 !bg-[#ff4f00] !border-2 !border-[#fffefb] !rounded-full !right-[-6px] hover:scale-125 transition-transform"
       />
     </div>
   );
@@ -191,21 +191,19 @@ export const CodeNode = memo(({ data, selected }: any) => {
 export const EndNode = memo(({ data, selected }: any) => {
   return (
     <div className="relative group flex flex-col items-center">
-      <div className={`w-14 h-14 rounded-full bg-[#0a0a0a] border flex items-center justify-center relative transition-all duration-300 ${
-        selected ? 'border-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.2)]' : 'border-white/5 hover:border-rose-500/30'
+      <div className={`w-14 h-14 rounded-full bg-[#f8f4f0] border-2 flex items-center justify-center relative transition-all duration-200 ${
+        selected ? 'border-rose-600 shadow-[0_0_12px_rgba(225,29,72,0.3)] scale-105' : 'border-[#201515] hover:border-rose-600 shadow-sm'
       }`}>
-        <span className="material-symbols-outlined !text-xl opacity-60 text-white">
-          stop_circle
-        </span>
+        <span className="text-rose-600 font-bold text-xl">🛑</span>
       </div>
-      <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] uppercase tracking-widest font-medium opacity-40">
+      <div className="mt-2 whitespace-nowrap text-[11px] uppercase tracking-wider font-semibold text-[#201515] bg-[#fffefb] px-2 py-0.5 rounded-full border border-[#c5c0b1]">
         {data.label || 'End'}
       </div>
       <Handle
         type="target"
         position={Position.Left}
         id="input"
-        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !left-[-4px] hover:!bg-[#ef4444]"
+        className="!w-3 !h-3 !bg-[#201515] !border-2 !border-[#fffefb] !rounded-full !left-[-6px]"
       />
     </div>
   );
@@ -215,29 +213,29 @@ export const EndNode = memo(({ data, selected }: any) => {
 export const StartNode = memo(({ data, selected }: any) => {
   return (
     <div className="relative group flex flex-col items-center">
-      <div className={`w-14 h-14 rounded-full bg-[#0a0a0a] border flex items-center justify-center relative transition-all duration-300 ${
-        selected ? 'border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.4)] scale-105' : 'border-amber-400/40 hover:border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.2)]'
+      <div className={`w-14 h-14 rounded-full bg-[#f8f4f0] border-2 flex items-center justify-center relative transition-all duration-200 ${
+        selected ? 'border-[#ff4f00] shadow-[0_0_14px_rgba(255,79,0,0.35)] scale-105' : 'border-[#201515] hover:border-[#ff4f00] shadow-sm'
       }`}>
-        <svg className="w-6 h-6 text-amber-400 opacity-90 ml-0.5" viewBox="0 0 24 24" fill="currentColor">
+        <svg className="w-6 h-6 text-[#ff4f00] ml-0.5" viewBox="0 0 24 24" fill="currentColor">
           <path d="M8 5v14l11-7z" />
         </svg>
 
-        {/* Play SVG Overlay Badge matching node color */}
-        <div className="absolute -bottom-1 -right-1 w-4.5 h-4.5 rounded-full bg-[#0a0a0a] border border-amber-400/80 flex items-center justify-center shadow-[0_0_6px_rgba(245,158,11,0.4)]">
-          <svg className="w-2.5 h-2.5 text-amber-400 ml-0.5" viewBox="0 0 24 24" fill="currentColor">
+        {/* Play SVG Overlay Badge */}
+        <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#ff4f00] border-2 border-[#fffefb] flex items-center justify-center shadow-sm">
+          <svg className="w-2.5 h-2.5 text-[#fffefb] ml-0.5" viewBox="0 0 24 24" fill="currentColor">
             <path d="M8 5v14l11-7z" />
           </svg>
         </div>
       </div>
 
-      <div className="mt-1.5 whitespace-nowrap text-[10px] uppercase tracking-widest font-bold text-amber-400">
+      <div className="mt-2 whitespace-nowrap text-[11px] uppercase tracking-wider font-semibold text-[#201515] bg-[#fffefb] px-2 py-0.5 rounded-full border border-[#c5c0b1]">
         {data.label || 'Start Trigger'}
       </div>
       <Handle
         type="source"
         position={Position.Right}
         id="output"
-        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-amber-400 !rounded-full !right-[-4px] hover:!bg-amber-400"
+        className="!w-3 !h-3 !bg-[#ff4f00] !border-2 !border-[#fffefb] !rounded-full !right-[-6px] hover:scale-125 transition-transform"
       />
     </div>
   );
@@ -246,34 +244,29 @@ export const StartNode = memo(({ data, selected }: any) => {
 // Google Form Webhook Trigger card style
 export const GoogleFormTriggerNode = memo(({ data, selected }: any) => {
   return (
-    <div className={`node-card w-56 p-4 rounded-xl relative group cursor-pointer text-[#e5e2e1] text-left transition-all duration-300 ${
+    <div className={`node-card w-60 p-4 rounded-md relative group cursor-pointer text-[#201515] text-left transition-all duration-200 ${
       selected
-        ? 'bg-[#131313]/90 border-green-500 shadow-[0_0_12px_rgba(22,163,74,0.15)]'
-        : 'bg-[#131313]/90 border-green-600/30 hover:border-green-600/50 shadow-[0_0_12px_rgba(22,163,74,0.05)]'
+        ? 'bg-[#f8f4f0] border-2 border-[#ff4f00] shadow-[0_4px_16px_rgba(255,79,0,0.2)] scale-[1.02]'
+        : 'bg-[#f8f4f0] border border-[#c5c0b1] hover:border-[#201515]'
     }`}>
-      <div className="flex items-center gap-3 mb-2.5">
-        <div className="relative flex items-center">
-          <span className="material-symbols-outlined text-green-400 !text-[18px]">description</span>
-          <svg className="w-3 h-3 text-green-400 absolute -bottom-1 -right-1" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M8 5v14l11-7z" />
-          </svg>
-        </div>
-        <span className="text-[11px] font-bold tracking-tight opacity-90 text-white">{data.label || 'Google Form Trigger'}</span>
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-lg">📋</span>
+        <span className="text-sm font-bold text-[#201515]">{data.label || 'Google Form Trigger'}</span>
       </div>
-      <div className="text-[8px] font-mono text-neutral-400 flex flex-col gap-1">
-        <div className="text-[7px] uppercase tracking-widest text-green-400 font-bold mb-1">Webhook Endpoint</div>
-        <div className="bg-black/60 p-1.5 rounded truncate text-[7px]" title={data.webhookUrl}>
-          {data.webhookUrl || 'Generate after save'}
+      <div className="text-xs text-[#605d52] flex flex-col gap-1">
+        <div className="text-[10px] uppercase tracking-wider text-[#ff4f00] font-bold">Webhook Endpoint</div>
+        <div className="bg-[#fffefb] border border-[#c5c0b1] p-1.5 rounded text-[10px] font-mono truncate select-all" title={data.webhookUrl}>
+          {data.webhookUrl || 'http://localhost:4000/api/webhook/form'}
         </div>
-        <p className="text-[7px] leading-normal opacity-60 mt-1">
-          💡 Paste this URL into Google Apps Script `onSubmit` trigger to link form submissions!
+        <p className="text-[10px] leading-tight text-[#939084] mt-1">
+          💡 Paste into Google Apps Script `onSubmit` trigger!
         </p>
       </div>
       <Handle
         type="source"
         position={Position.Right}
         id="output"
-        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !right-[-4px] hover:!bg-green-500"
+        className="!w-3 !h-3 !bg-[#ff4f00] !border-2 !border-[#fffefb] !rounded-full !right-[-6px]"
       />
     </div>
   );
@@ -293,31 +286,29 @@ export const ScheduleTriggerNode = memo(({ data, selected }: any) => {
 
   return (
     <div className="relative group flex flex-col items-center">
-      <div className={`w-14 h-14 rounded-full bg-[#0a0a0a] border flex items-center justify-center relative transition-all duration-300 ${
-        selected ? 'border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.4)] scale-105' : 'border-amber-400/40 hover:border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.2)]'
+      <div className={`w-14 h-14 rounded-full bg-[#f8f4f0] border-2 flex items-center justify-center relative transition-all duration-200 ${
+        selected ? 'border-[#ff4f00] shadow-[0_0_14px_rgba(255,79,0,0.35)] scale-105' : 'border-[#201515] hover:border-[#ff4f00] shadow-sm'
       }`}>
-        <span className="material-symbols-outlined !text-xl opacity-80 text-amber-400" data-icon="alarm">
-          alarm
-        </span>
+        <span className="text-[#ff4f00] font-bold text-xl">⏰</span>
 
         {/* Play SVG Overlay Badge matching node color */}
-        <div className="absolute -bottom-1 -right-1 w-4.5 h-4.5 rounded-full bg-[#0a0a0a] border border-amber-400/80 flex items-center justify-center shadow-[0_0_6px_rgba(245,158,11,0.4)]">
-          <svg className="w-2.5 h-2.5 text-amber-400 ml-0.5" viewBox="0 0 24 24" fill="currentColor">
+        <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#ff4f00] border-2 border-[#fffefb] flex items-center justify-center shadow-sm">
+          <svg className="w-2.5 h-2.5 text-[#fffefb] ml-0.5" viewBox="0 0 24 24" fill="currentColor">
             <path d="M8 5v14l11-7z" />
           </svg>
         </div>
       </div>
-      <div className="mt-1.5 whitespace-nowrap text-[10px] uppercase tracking-widest font-bold text-amber-400">
+      <div className="mt-2 whitespace-nowrap text-[11px] uppercase tracking-wider font-semibold text-[#201515] bg-[#fffefb] px-2 py-0.5 rounded-full border border-[#c5c0b1]">
         {data.label || 'Schedule'}
       </div>
-      <div className="text-[8px] text-neutral-400 font-mono mt-0.5">
+      <div className="text-[10px] text-[#605d52] font-mono mt-1 font-semibold">
         {scheduleText}
       </div>
       <Handle
         type="source"
         position={Position.Right}
         id="output"
-        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-amber-400 !rounded-full !right-[-4px] hover:!bg-amber-400"
+        className="!w-3 !h-3 !bg-[#ff4f00] !border-2 !border-[#fffefb] !rounded-full !right-[-6px]"
       />
     </div>
   );
@@ -336,22 +327,22 @@ export const GoogleSheetsNode = memo(({ data, selected }: any) => {
         type="target"
         position={Position.Left}
         id="input"
-        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !left-[-4px] hover:!bg-green-500"
+        className="!w-3 !h-3 !bg-[#201515] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#ff4f00]"
       />
-      <div className="flex items-center gap-3 mb-2.5">
-        <span className="material-symbols-outlined opacity-50 !text-[18px] text-emerald-500" data-icon="table_chart">table_chart</span>
-        <span className="text-[11px] font-bold tracking-tight opacity-90 text-white">{data.label || 'Google Sheets'}</span>
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-lg">📊</span>
+        <span className="text-sm font-bold text-[#201515]">{data.label || 'Google Sheets'}</span>
       </div>
-      <div className="text-[9px] font-mono text-neutral-400 flex flex-col gap-0.5 text-left">
-        <div>Action: <span className="text-emerald-400 font-bold uppercase text-[8px]">{action}</span></div>
-        <div>Sheet: <span className="opacity-80 text-white">{sheetName}</span></div>
-        {isRead && <div>Data: <span className="opacity-60">{mockType === 'blog_news' ? 'Blog Posts' : mockType === 'crm_leads' ? 'CRM Leads' : 'Custom JSON'}</span></div>}
+      <div className="text-xs text-[#605d52] flex flex-col gap-0.5">
+        <div>Action: <span className="text-[#ff4f00] font-bold uppercase text-[10px]">{action}</span></div>
+        <div>Sheet: <span className="font-semibold text-[#201515]">{sheetName}</span></div>
+        {isRead && <div className="text-[10px]">Data: {mockType === 'blog_news' ? 'Blog Posts' : mockType === 'crm_leads' ? 'CRM Leads' : 'Custom JSON'}</div>}
       </div>
       <Handle
         type="source"
         position={Position.Right}
         id="output"
-        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !right-[-4px] hover:!bg-green-500"
+        className="!w-3 !h-3 !bg-[#ff4f00] !border-2 !border-[#fffefb] !rounded-full !right-[-6px]"
       />
     </div>
   );
@@ -365,21 +356,21 @@ export const OpenAINode = memo(({ data, selected }: any) => {
         type="target"
         position={Position.Left}
         id="input"
-        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !left-[-4px] hover:!bg-purple-500"
+        className="!w-3 !h-3 !bg-[#201515] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#ff4f00]"
       />
-      <div className="flex items-center gap-3 mb-2.5">
-        <span className="material-symbols-outlined opacity-60 !text-[18px] text-purple-400" data-icon="psychology">psychology</span>
-        <span className="text-[11px] font-bold tracking-tight opacity-90 text-white">{data.label || 'OpenAI GPT'}</span>
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-lg">🤖</span>
+        <span className="text-sm font-bold text-[#201515]">{data.label || 'OpenAI GPT'}</span>
       </div>
-      <div className="text-[9px] font-mono text-neutral-400 flex flex-col gap-0.5 text-left">
-        <div>Model: <span className="text-purple-300 font-bold uppercase text-[8px]">{data.model || 'gpt-4o'}</span></div>
-        <div className="truncate opacity-70">Prompt: {data.prompt || 'Summarize text...'}</div>
+      <div className="text-xs text-[#605d52] flex flex-col gap-0.5">
+        <div>Model: <span className="text-purple-700 font-bold uppercase text-[10px]">{data.model || 'gpt-4o'}</span></div>
+        <div className="truncate text-[10px]">Prompt: {data.prompt || 'Summarize text...'}</div>
       </div>
       <Handle
         type="source"
         position={Position.Right}
         id="output"
-        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !right-[-4px] hover:!bg-purple-500"
+        className="!w-3 !h-3 !bg-[#ff4f00] !border-2 !border-[#fffefb] !rounded-full !right-[-6px]"
       />
     </div>
   );
@@ -393,20 +384,20 @@ export const SlackNode = memo(({ data, selected }: any) => {
         type="target"
         position={Position.Left}
         id="input"
-        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !left-[-4px] hover:!bg-teal-400"
+        className="!w-3 !h-3 !bg-[#201515] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#ff4f00]"
       />
-      <div className="flex items-center gap-3 mb-2.5">
-        <span className="material-symbols-outlined opacity-60 !text-[18px] text-teal-400" data-icon="forum">forum</span>
-        <span className="text-[11px] font-bold tracking-tight opacity-90 text-white">{data.label || 'Post to Slack'}</span>
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-lg">💬</span>
+        <span className="text-sm font-bold text-[#201515]">{data.label || 'Post to Slack'}</span>
       </div>
-      <div className="text-[9px] font-mono text-neutral-400 flex flex-col gap-0.5 text-left">
-        <div className="truncate opacity-70">Message: {data.text || 'Slack notification'}</div>
+      <div className="text-xs text-[#605d52]">
+        <div className="truncate text-[10px]">Msg: {data.text || 'Slack alert message'}</div>
       </div>
       <Handle
         type="source"
         position={Position.Right}
         id="output"
-        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !right-[-4px] hover:!bg-teal-400"
+        className="!w-3 !h-3 !bg-[#ff4f00] !border-2 !border-[#fffefb] !rounded-full !right-[-6px]"
       />
     </div>
   );
@@ -420,20 +411,20 @@ export const DiscordNode = memo(({ data, selected }: any) => {
         type="target"
         position={Position.Left}
         id="input"
-        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !left-[-4px] hover:!bg-indigo-400"
+        className="!w-3 !h-3 !bg-[#201515] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#ff4f00]"
       />
-      <div className="flex items-center gap-3 mb-2.5">
-        <span className="material-symbols-outlined opacity-60 !text-[18px] text-indigo-400" data-icon="mark_chat_read">mark_chat_read</span>
-        <span className="text-[11px] font-bold tracking-tight opacity-90 text-white">{data.label || 'Discord Alert'}</span>
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-lg">🎮</span>
+        <span className="text-sm font-bold text-[#201515]">{data.label || 'Discord Alert'}</span>
       </div>
-      <div className="text-[9px] font-mono text-neutral-400 flex flex-col gap-0.5 text-left">
-        <div className="truncate opacity-70">Message: {data.content || 'Discord message'}</div>
+      <div className="text-xs text-[#605d52]">
+        <div className="truncate text-[10px]">Msg: {data.content || 'Discord message'}</div>
       </div>
       <Handle
         type="source"
         position={Position.Right}
         id="output"
-        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !right-[-4px] hover:!bg-indigo-400"
+        className="!w-3 !h-3 !bg-[#ff4f00] !border-2 !border-[#fffefb] !rounded-full !right-[-6px]"
       />
     </div>
   );
@@ -449,23 +440,22 @@ export const RespondToWebhookNode = memo(({ data, selected }: any) => {
         type="target"
         position={Position.Left}
         id="input"
-        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !left-[-4px] hover:!bg-blue-400"
+        className="!w-3 !h-3 !bg-[#201515] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#ff4f00]"
       />
-      <div className="flex items-center gap-3 mb-2.5">
-        <span className="material-symbols-outlined opacity-60 !text-[18px] text-blue-400" data-icon="send">send</span>
-        <span className="text-[11px] font-bold tracking-tight opacity-90 text-white">{data.label || 'Webhook Response'}</span>
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-lg">📤</span>
+        <span className="text-sm font-bold text-[#201515]">{data.label || 'Webhook Response'}</span>
       </div>
-      <div className="text-[9px] font-mono text-neutral-400 flex flex-col gap-0.5 text-left">
-        <div>Status: <span className="text-blue-400 font-bold">{status}</span></div>
-        <div>Mode: <span className="uppercase text-[8px] opacity-80">{mode}</span></div>
+      <div className="text-xs text-[#605d52] flex flex-col gap-0.5">
+        <div>Status: <span className="text-[#ff4f00] font-bold">{status}</span></div>
+        <div>Mode: <span className="uppercase text-[10px] font-semibold">{mode}</span></div>
       </div>
       <Handle
         type="source"
         position={Position.Right}
         id="output"
-        className="!w-2 !h-2 !bg-[#0a0a0a] !border !border-white/20 !rounded-full !right-[-4px] hover:!bg-blue-400"
+        className="!w-3 !h-3 !bg-[#ff4f00] !border-2 !border-[#fffefb] !rounded-full !right-[-6px]"
       />
     </div>
   );
 });
-
