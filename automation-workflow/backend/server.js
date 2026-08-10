@@ -27,6 +27,8 @@ app.get('/health', (req, res) => {
 // RabbitMQ Connection & Queue Health Status Check
 app.get('/api/rabbitmq/status', (req, res) => {
   res.json(getRabbitMQStatus());
+});
+
 // --- USER & AUTHENTICATION ENDPOINTS ---
 
 // Get User & Workflows by Clerk ID

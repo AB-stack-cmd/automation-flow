@@ -591,8 +591,11 @@ return {
     setIsDiagnosing(false);
   };
 
-  const startConnectionStream = async (email: string, name: string, score: number) => {
-    if (!currentWorkflow) return;
+  const startConnectionStream = async (email: string, name: string, score: number, targetWf?: any, targetNodes?: any[], targetEdges?: any[]) => {
+    const activeWorkflow = targetWf || currentWorkflow;
+    const activeNodes = targetNodes || nodes;
+    const activeEdges = targetEdges || edges;
+    if (!activeWorkflow) return;
     setExecStatus('running');
     setExecLogs([{ time: new Date().toISOString(), message: "🤖 Connection established. Initializing agent orchestrator..." }]);
 
@@ -606,7 +609,7 @@ return {
     // Trigger backend execute call to persist in SQLite database
     let triggerExecutionId: number | null = null;
     try {
-      const res = await fetch(`${BACKEND_URL}/api/workflows/${currentWorkflow.id}/execute`, {
+      const res = await fetch(`${BACKEND_URL}/api/workflows/${activeWorkflow.id}/execute`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, name, score })
@@ -620,7 +623,7 @@ return {
     }
 
     // Trace the execution path on the frontend
-    const triggerNode = nodes.find(n => 
+    const triggerNode = activeNodes.find((n: any) => 
       n.type === 'trigger' || 
       n.type === 'crm_lead_trigger' || 
       n.type === 'schedule_trigger' || 
@@ -638,19 +641,19 @@ return {
     let curr: any = triggerNode;
     while (curr) {
       path.push(curr);
-      const outgoing = edges.filter(e => e.source === curr.id);
+      const outgoing = activeEdges.filter((e: any) => e.source === curr.id);
       if (outgoing.length === 0) break;
 
       if (curr.type === 'ifelse') {
         const isTrue = score > 50;
-        const targetEdge = outgoing.find(e => {
+        const targetEdge = outgoing.find((e: any) => {
           const handleId = e.sourceHandle || '';
           return isTrue ? handleId.toLowerCase() === 'true' : handleId.toLowerCase() === 'false';
         });
         const nextId = targetEdge ? targetEdge.target : outgoing[0].target;
-        curr = nodes.find(n => n.id === nextId);
+        curr = activeNodes.find((n: any) => n.id === nextId);
       } else {
-        curr = nodes.find(n => n.id === outgoing[0].target);
+        curr = activeNodes.find((n: any) => n.id === outgoing[0].target);
       }
       
       if (path.includes(curr)) break; // Cycle protection
@@ -1464,12 +1467,13 @@ return {
 
   const handleDeployTemplate = async (template: any) => {
     try {
+      const def = typeof template.definition === 'string' ? JSON.parse(template.definition) : template.definition;
       const res = await fetch(`${BACKEND_URL}/api/workflows`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: `${template.name} Preset`,
-          definition: template.definition
+          definition: def
         })
       });
       if (!res.ok) throw new Error('Deployment failed');
@@ -1477,10 +1481,27 @@ return {
       setWorkflows([createdWorkflow, ...workflows]);
       loadWorkflow(createdWorkflow);
       setViewMode('canvas');
-      alert(`Template "${template.name}" deployed successfully! Opened in canvas builder.`);
+      showAppToast(`Template "${template.name}" deployed! Running workflow...`);
+
+      // Trigger immediate live execution with the deployed template
+      const testEmail = 'preset.user@neuron.flow';
+      const testName = `${template.name} Runner`;
+      const testScore = 85;
+
+      setExecEmail(testEmail);
+      setExecName(testName);
+      setExecScore(testScore);
+      setExecStatus('idle');
+      setExecLogs([]);
+      setExecActiveNodeId(null);
+      setHumanApprovalRequired(false);
+      setPendingNode(null);
+      setIsExecModalOpen(true);
+
+      startConnectionStream(testEmail, testName, testScore, createdWorkflow, def.nodes || [], def.edges || []);
     } catch (e) {
       console.error(e);
-      alert('Failed to deploy template.');
+      showAppToast('Failed to deploy template.', 'warning');
     }
   };
 
@@ -1606,11 +1627,14 @@ return {
               <a href="http://localhost:3000" className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[#c5c0b1] hover:text-[#fffefb] hover:bg-[#2f2a26] transition">
                 <span className="w-2 h-2 rounded-full bg-[#ff4f00]"></span> Dashboard (:3000)
               </a>
-              <a href="http://localhost:5174" className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[#c5c0b1] hover:text-[#fffefb] hover:bg-[#2f2a26] transition">
-                <span className="w-2 h-2 rounded-full bg-emerald-400"></span> Prod Engine (:5174)
+              <a href="http://localhost:4000" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[#c5c0b1] hover:text-[#fffefb] hover:bg-[#2f2a26] transition">
+                <span className="w-2 h-2 rounded-full bg-emerald-400"></span> Engine API (:4000)
               </a>
-              <a href="/excel" className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[#c5c0b1] hover:text-[#fffefb] hover:bg-[#2f2a26] transition">
+              <a href="http://localhost:3000/excel" className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[#c5c0b1] hover:text-[#fffefb] hover:bg-[#2f2a26] transition">
                 <span className="w-2 h-2 rounded-full bg-sky-400"></span> Excel AI (:3000)
+              </a>
+              <a href="http://localhost:3000/files" className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[#c5c0b1] hover:text-[#fffefb] hover:bg-[#2f2a26] transition">
+                <span className="w-2 h-2 rounded-full bg-purple-400"></span> File Vault 📂
               </a>
             </div>
           </div>
@@ -1698,28 +1722,60 @@ return {
             </header>
 
             {/* Metrics cards grid (card-feature-cream) */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10 text-left">
-              <div className="bg-[#f8f4f0] border border-[#c5c0b1] p-6 rounded-md flex flex-col justify-between">
-                <span className="text-[10px] font-bold text-[#939084] uppercase tracking-wider">Pipeline Latency</span>
-                <span className="text-3xl font-bold text-[#ff4f00] my-2">10ms</span>
-                <span className="text-xs text-emerald-700 font-semibold">Within SLA limit</span>
-              </div>
-              <div className="bg-[#f8f4f0] border border-[#c5c0b1] p-6 rounded-md flex flex-col justify-between">
-                <span className="text-[10px] font-bold text-[#939084] uppercase tracking-wider">Max Throughput</span>
-                <span className="text-3xl font-bold text-[#201515] my-2">1M+ rps</span>
-                <span className="text-xs text-[#605d52]">Distributed engine</span>
-              </div>
-              <div className="bg-[#f8f4f0] border border-[#c5c0b1] p-6 rounded-md flex flex-col justify-between">
-                <span className="text-[10px] font-bold text-[#939084] uppercase tracking-wider">Uptime Guarantee</span>
-                <span className="text-3xl font-bold text-[#ff4f00] my-2">99.99%</span>
-                <span className="text-xs text-emerald-700 font-semibold">Carrier-grade reliability</span>
-              </div>
-              <div className="bg-[#f8f4f0] border border-[#c5c0b1] p-6 rounded-md flex flex-col justify-between">
-                <span className="text-[10px] font-bold text-[#939084] uppercase tracking-wider">Active Workflows</span>
-                <span className="text-3xl font-bold text-[#201515] my-2">{workflows.length}</span>
-                <span className="text-xs text-[#605d52]">Deployed in workspace</span>
-              </div>
-            </div>
+            {(() => {
+              const finishedExecs = (allExecutions || []).filter(
+                (e: any) => e.status === 'success' || e.status === 'failed'
+              );
+              const successCount = finishedExecs.filter(
+                (e: any) => e.status === 'success'
+              ).length;
+
+              const calculatedUptime =
+                finishedExecs.length > 0
+                  ? ((successCount / finishedExecs.length) * 100).toFixed(2)
+                  : '99.99';
+
+              const latencies = finishedExecs
+                .map((e: any) => {
+                  if (e.startedAt && e.finishedAt) {
+                    return new Date(e.finishedAt).getTime() - new Date(e.startedAt).getTime();
+                  }
+                  return null;
+                })
+                .filter((l: number | null): l is number => l !== null && l >= 0);
+
+              const avgLatencyMs =
+                latencies.length > 0
+                  ? Math.round(latencies.reduce((a: number, b: number) => a + b, 0) / latencies.length)
+                  : 10;
+
+              return (
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10 text-left">
+                  <div className="bg-[#f8f4f0] border border-[#c5c0b1] p-6 rounded-md flex flex-col justify-between">
+                    <span className="text-[10px] font-bold text-[#939084] uppercase tracking-wider">Pipeline Latency</span>
+                    <span className="text-3xl font-bold text-[#ff4f00] my-2">{avgLatencyMs}ms</span>
+                    <span className="text-xs text-emerald-700 font-semibold">Within SLA limit</span>
+                  </div>
+                  <div className="bg-[#f8f4f0] border border-[#c5c0b1] p-6 rounded-md flex flex-col justify-between">
+                    <span className="text-[10px] font-bold text-[#939084] uppercase tracking-wider">Max Throughput</span>
+                    <span className="text-3xl font-bold text-[#201515] my-2">1M+ rps</span>
+                    <span className="text-xs text-[#605d52]">Distributed engine</span>
+                  </div>
+                  <div className="bg-[#f8f4f0] border border-[#c5c0b1] p-6 rounded-md flex flex-col justify-between">
+                    <span className="text-[10px] font-bold text-[#939084] uppercase tracking-wider">Uptime Rate</span>
+                    <span className="text-3xl font-bold text-[#ff4f00] my-2">{calculatedUptime}%</span>
+                    <span className="text-xs text-emerald-700 font-semibold">
+                      {Number(calculatedUptime) >= 99 ? 'Carrier-grade reliability' : 'Operational'}
+                    </span>
+                  </div>
+                  <div className="bg-[#f8f4f0] border border-[#c5c0b1] p-6 rounded-md flex flex-col justify-between">
+                    <span className="text-[10px] font-bold text-[#939084] uppercase tracking-wider">Active Workflows</span>
+                    <span className="text-3xl font-bold text-[#201515] my-2">{workflows.length}</span>
+                    <span className="text-xs text-[#605d52]">Deployed in workspace</span>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Double column list */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

@@ -5,18 +5,18 @@ datasource db {
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../backend/node_modules/.prisma/client"
 }
 
 model User {
-  id        Int        @id @default(autoincrement())
-  clerkId   String?    @unique
-  email     String     @unique
+  id        Int          @id @default(autoincrement())
+  clerkId   String?      @unique
+  email     String       @unique
   name      String?
   imageUrl  String?
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @default(now()) @updatedAt
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @default(now()) @updatedAt
   workflows Workflow[]
+  files     SharedFile[]
 }
 
 model Workflow {
@@ -32,14 +32,14 @@ model Workflow {
 }
 
 model ExecutionLog {
-  id          Int       @id @default(autoincrement())
-  workflowId  Int
-  workflow    Workflow  @relation(fields: [workflowId], references: [id], onDelete: Cascade)
-  status      String    // pending, running, success, failed
-  startedAt   DateTime  @default(now())
-  finishedAt  DateTime?
-  logs        String?   // JSON string of step actions and results
-  triggerData String?
+  id           Int       @id @default(autoincrement())
+  workflowId   Int
+  workflow     Workflow  @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  status       String    // pending, running, success, failed
+  startedAt    DateTime  @default(now())
+  finishedAt   DateTime?
+  logs         String?   // JSON string of step actions and results
+  triggerData  String?
   responseData String?
 }
 
@@ -67,4 +67,22 @@ model DelayedExecution {
   nodeId      String   // The node ID where it is waiting
   resumeTime  DateTime // When the delay expires
   contextData String   // JSON string of current context variables/data
+}
+
+model SharedFile {
+  id           String    @id @default(uuid())
+  originalName String
+  storedName   String
+  mimeType     String
+  size         Int
+  path         String
+  accessKey    String    @unique
+  isPublic     Boolean   @default(true)
+  downloads    Int       @default(0)
+  maxDownloads Int?
+  expiresAt    DateTime?
+  userId       Int?
+  user         User?     @relation(fields: [userId], references: [id])
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }

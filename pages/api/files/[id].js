@@ -1,0 +1,81 @@
+import fs from 'fs';
+import path from 'path';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+export default async function handler(req, res) {
+  const { id } = req.query;
+
+  if (!id) {
+    return res.status(400).json({ error: 'File ID is required' });
+  }
+
+  try {
+    const file = await prisma.sharedFile.findUnique({
+      where: { id: String(id) },
+    });
+
+    if (!file) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    if (req.method === 'GET') {
+      const protocol = req.headers['x-forwarded-proto'] || 'http';
+      const host = req.headers.host || 'localhost:3000';
+      return res.status(200).json({
+        success: true,
+        file: {
+          ...file,
+          shareUrl: `${protocol}://${host}/share/${file.accessKey}`,
+          downloadUrl: `${protocol}://${host}/api/files/download/${file.accessKey}`,
+        },
+      });
+    }
+
+    if (req.method === 'PATCH') {
+      const { isPublic, expiresAt, maxDownloads, originalName } = req.body || {};
+
+      const updateData = {};
+      if (typeof isPublic === 'boolean') updateData.isPublic = isPublic;
+      if (originalName) updateData.originalName = originalName;
+      if (expiresAt !== undefined) {
+        updateData.expiresAt = expiresAt ? new Date(expiresAt) : null;
+      }
+      if (maxDownloads !== undefined) {
+        updateData.maxDownloads = maxDownloads ? parseInt(maxDownloads, 10) : null;
+      }
+
+      const updatedFile = await prisma.sharedFile.update({
+        where: { id: String(id) },
+        data: updateData,
+      });
+
+      return res.status(200).json({ success: true, file: updatedFile });
+    }
+
+    if (req.method === 'DELETE') {
+      // Delete record from DB
+      await prisma.sharedFile.delete({
+        where: { id: String(id) },
+      });
+
+      // Remove file from disk
+      const filePath = path.join(process.cwd(), 'public', 'uploads', file.storedName);
+      if (fs.existsSync(filePath)) {
+        try {
+          fs.unlinkSync(filePath);
+        } catch (e) {
+          console.warn('Could not remove physical file:', e);
+        }
+      }
+
+      return res.status(200).json({ success: true, message: 'File deleted successfully' });
+    }
+
+    return res.status(405).json({ error: 'Method not allowed' });
+  } catch (error) {
+    console.error('File Operations Error:', error);
+    return res.status(500).json({ error: 'Server error processing file request' });
+  }
+}

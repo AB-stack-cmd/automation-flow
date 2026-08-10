@@ -615,8 +615,8 @@ export default function ExcelAutomation() {
             <nav className="hidden md:flex items-center gap-6 text-xs">
               <a className="text-neutral-400 hover:text-white transition-colors" href="http://localhost:3000">Dashboard</a>
               <a className="text-neutral-400 hover:text-white transition-colors" href="http://localhost:5173">Visual Designer</a>
-              <a className="text-neutral-400 hover:text-white transition-colors" href="http://localhost:5174">Production Engine</a>
               <a className="text-[#facc15] font-bold border-b border-[#facc15] pb-0.5" href="/excel">Excel AI</a>
+              <a className="text-neutral-400 hover:text-white transition-colors" href="/files">File Vault 📂</a>
             </nav>
             <div className="flex items-center gap-3 text-xs text-neutral-400 font-mono">
               <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">

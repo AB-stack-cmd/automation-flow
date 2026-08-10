@@ -77,13 +77,17 @@ export default function Home() {
                 }
               }
             }
-          `
-        }} />
+        <style>{`
+          html, body {
+            background-color: #09090b !important;
+            color: #f4f4f5 !important;
+          }
+        `}</style>
       </Head>
 
-      <div className="bg-[#fffefb] dark:bg-[#121212] text-[#201515] dark:text-[#f4f4f5] font-body min-h-screen flex flex-col transition-colors duration-200">
+      <div className="bg-[#09090b] text-[#f4f4f5] font-body min-h-screen flex flex-col transition-colors duration-200">
         {/* Navigation Bar (nav-bar) */}
-        <header className="sticky top-0 z-50 bg-[#fffefb]/90 dark:bg-[#121212]/90 backdrop-blur-md border-b border-[#c5c0b1]/60 dark:border-[#27272a] px-6 py-4 transition-colors">
+        <header className="sticky top-0 z-50 bg-[#09090b]/90 backdrop-blur-md border-b border-[#27272a] px-6 py-4 transition-colors">
           <div className="max-w-6xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3 cursor-pointer">
               <div className="w-8 h-8 rounded-md bg-[#ff4f00] flex items-center justify-center text-[#fffefb] font-bold text-lg shadow-sm">
@@ -96,6 +100,7 @@ export default function Home() {
               <a href="http://localhost:3000" className="text-[#ff4f00] border-b-2 border-[#ff4f00] pb-1">Dashboard</a>
               <a href="http://localhost:5173" className="text-[#201515] dark:text-[#e4e4e7] hover:text-[#ff4f00] dark:hover:text-[#ff4f00] transition">Visual Flow Designer</a>
               <a href="/excel" className="text-[#201515] dark:text-[#e4e4e7] hover:text-[#ff4f00] dark:hover:text-[#ff4f00] transition">Excel AI</a>
+              <a href="/files" className="text-[#201515] dark:text-[#e4e4e7] hover:text-[#ff4f00] dark:hover:text-[#ff4f00] transition">File Vault 📂</a>
             </nav>
 
             <div className="flex items-center gap-3">
