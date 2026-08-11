@@ -4,6 +4,8 @@ import path from 'path';
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ['@clerk/nextjs'],
+  outputFileTracingRoot: path.resolve(process.cwd()),
 };
+
 
 export default nextConfig;

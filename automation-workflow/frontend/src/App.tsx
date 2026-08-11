@@ -25,7 +25,13 @@ import {
   DiscordNode,
   RespondToWebhookNode
 } from './CustomNode';
-import { edgeTypes } from './CustomEdge';
+import CustomButtonEdge from './CustomEdge';
+
+const edgeTypes = {
+  buttonEdge: CustomButtonEdge,
+  default: CustomButtonEdge
+};
+
 
 const nodeTypes = {
   trigger: TriggerNode,
@@ -529,7 +535,7 @@ return {
           message: 'Express orchestrator engine is active and reachable.'
         });
       }
-    } catch (e) {
+    } catch {
       report.systemChecks.push({
         name: 'Backend API Connection',
         status: 'fail',
@@ -572,7 +578,7 @@ return {
             message: 'No simulated runs recorded yet for this workflow. Try trigger run to verify end-to-end automation.'
           });
         }
-      } catch (e) {
+      } catch {
         report.systemChecks.push({
           name: 'Database Integration',
           status: 'fail',
@@ -824,7 +830,7 @@ return {
   const [isSendingWebhookTest, setIsSendingWebhookTest] = useState<boolean>(false);
   const [webhookCopied, setWebhookCopied] = useState<boolean>(false);
 
-  const openWebhookInputPopup = (node: any) => {
+  const openWebhookInputPopup = useCallback((node: any) => {
     setWebhookPopupNode(node);
     const existingPayload = node?.data?.samplePayload || node?.data?.payload || '{\n  "event": "webhook_entry",\n  "email": "alex@example.com",\n  "name": "Alex Smith",\n  "timestamp": "' + new Date().toISOString() + '"\n}';
     setWebhookPayload(typeof existingPayload === 'object' ? JSON.stringify(existingPayload, null, 2) : existingPayload);
@@ -836,7 +842,8 @@ return {
 
     setWebhookTestResponse(null);
     setShowWebhookPopup(true);
-  };
+  }, [currentWorkflow]);
+
 
   // Form input states
   const [newLeadName, setNewLeadName] = useState('');
@@ -859,8 +866,22 @@ return {
   const [newVarKey, setNewVarKey] = useState('');
   const [newVarVal, setNewVarVal] = useState('');
 
+  const loadWorkflow = useCallback((wf: any) => {
+    setCurrentWorkflow(wf);
+    setIsLiveEngineActive(wf.isActive !== false);
+    try {
+      const def = typeof wf.definition === 'string' ? JSON.parse(wf.definition) : wf.definition;
+      setNodes(def.nodes || []);
+      setEdges(def.edges || []);
+      setSelectedNode(null);
+    } catch {
+      setNodes([]);
+      setEdges([]);
+    }
+  }, [setNodes, setEdges]);
+
   // Fetch workflows
-  const fetchWorkflows = async () => {
+  const fetchWorkflows = useCallback(async () => {
     try {
       const res = await fetch(`${BACKEND_URL}/api/workflows`);
       const data = await res.json();
@@ -871,25 +892,13 @@ return {
     } catch (e) {
       console.error(e);
     }
-  };
+  }, [currentWorkflow, loadWorkflow]);
 
-  const loadWorkflow = (wf: any) => {
-    setCurrentWorkflow(wf);
-    setIsLiveEngineActive(wf.isActive !== false);
-    try {
-      const def = typeof wf.definition === 'string' ? JSON.parse(wf.definition) : wf.definition;
-      setNodes(def.nodes || []);
-      setEdges(def.edges || []);
-      setSelectedNode(null);
-    } catch (e) {
-      setNodes([]);
-      setEdges([]);
-    }
-  };
 
   useEffect(() => {
     fetchWorkflows();
-  }, []);
+  }, [fetchWorkflows]);
+
 
   const fetchMockData = useCallback(async () => {
     try {
@@ -1179,7 +1188,8 @@ return {
     if (isWebhook) {
       openWebhookInputPopup(node);
     }
-  }, []);
+  }, [openWebhookInputPopup]);
+
 
   const onPaneClick = useCallback(() => {
     setSelectedNode(null);
@@ -1338,9 +1348,11 @@ return {
       await res.json();
       alert('Workflow saved successfully!');
       fetchWorkflows();
-    } catch (e) {
+    } catch {
       alert('Failed to save workflow');
     }
+
+
   };
 
   const handleCreateNew = async () => {
@@ -3767,7 +3779,7 @@ return {
                                           isSuccess = true;
                                         }
                                       }
-                                    } catch(err) {}
+                                    } catch {}
                                   }
 
                                   let iconName = 'bolt';
@@ -4589,7 +4601,7 @@ return {
                         };
                         setNodes((nds) => nds.map((n) => (n.id === webhookPopupNode.id ? { ...n, data: updatedData } : n)));
                       }
-                    } catch (e: any) {
+                    } catch (err: any) {
                       setWebhookTestResponse({
                         status: 200,
                         statusText: 'OK (Simulated)',
@@ -4597,7 +4609,8 @@ return {
                           success: true, 
                           message: 'Webhook payload simulated successfully', 
                           targetUrl: customWebhookUrl || `${BACKEND_URL}/api/webhooks/${currentWorkflow?.id || '1'}`,
-                          payload: webhookPayload 
+                          payload: webhookPayload,
+                          simulatedError: err?.message
                         }
                       });
                       if (webhookPopupNode) {
@@ -4635,10 +4648,12 @@ return {
                             method: webhookMethod 
                           };
                           setNodes((nds) => nds.map((n) => (n.id === webhookPopupNode.id ? { ...n, data: updatedData } : n)));
-                        } catch (e) {}
+                        } catch {}
                       }
                       setShowWebhookPopup(false);
                     }}
+
+
                     className="bg-neutral-800 hover:bg-neutral-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition border border-neutral-700"
                   >
                     Save & Close

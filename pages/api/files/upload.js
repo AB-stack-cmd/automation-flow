@@ -28,9 +28,20 @@ export default async function handler(req, res) {
     }
     const boundary = boundaryMatch[1] || boundaryMatch[2];
 
-    // Read full raw body buffer
+    const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB limit
+    const contentLength = parseInt(req.headers['content-length'] || '0', 10);
+    if (contentLength > MAX_FILE_SIZE) {
+      return res.status(413).json({ error: 'File size exceeds maximum allowed limit of 50MB' });
+    }
+
+    // Read raw body buffer with accumulation limit safeguard
     const chunks = [];
+    let totalSize = 0;
     for await (const chunk of req) {
+      totalSize += chunk.length;
+      if (totalSize > MAX_FILE_SIZE) {
+        return res.status(413).json({ error: 'File size exceeds maximum allowed limit of 50MB' });
+      }
       chunks.push(chunk);
     }
     const buffer = Buffer.concat(chunks);

@@ -206,6 +206,7 @@ async function executeWorkflowAsync(workflowId, triggerNodeName, triggerPayload)
         }
         stepLogs.push({ time: new Date().toISOString(), message: "Async pipeline completed successfully." });
         await updateLogs('success', true);
+        console.log('Completed Logs', JSON.stringify(stepLogs));
         return {
             success: true,
             executionId,

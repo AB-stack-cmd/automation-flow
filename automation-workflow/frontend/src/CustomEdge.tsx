@@ -60,7 +60,5 @@ export function CustomButtonEdge({
   );
 }
 
-export const edgeTypes = {
-  buttonEdge: CustomButtonEdge,
-  default: CustomButtonEdge
-};
+export default CustomButtonEdge;
+

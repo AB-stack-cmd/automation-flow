@@ -1,5 +1,6 @@
 import { prisma } from './db.js';
 import nodemailer from 'nodemailer';
+import vm from 'node:vm';
 import { publishToQueue } from './rabbitmq.js';
 import { env } from '../../env.js';
 
@@ -9,7 +10,6 @@ import { env } from '../../env.js';
  */
 function evaluateCondition(expression, context) {
   try {
-    // 1. Replace double-curly bracket placeholders: e.g. {{trigger.score}}
     let resolvedExpr = expression.replace(/\{\{([^}]+)\}\}/g, (_, path) => {
       const parts = path.trim().split('.');
       let val = context;
@@ -19,23 +19,21 @@ function evaluateCondition(expression, context) {
       return typeof val === 'string' ? `"${val.replace(/"/g, '\\"')}"` : val ?? 'undefined';
     });
 
-    // 2. Safely evaluate simple JS expression
-    // Create a safe runner
-    const run = new Function('context', `
-      try {
-        const trigger = context.trigger || {};
-        const steps = context.steps || {};
-        return Boolean(${resolvedExpr});
-      } catch(e) {
-        return false;
-      }
-    `);
-    return run(context);
+    const sandbox = Object.freeze({
+      trigger: Object.freeze(context?.trigger || {}),
+      steps: Object.freeze(context?.steps || {}),
+      context: Object.freeze(context || {})
+    });
+    const vmContext = vm.createContext(sandbox);
+    const script = new vm.Script(`Boolean(${resolvedExpr})`);
+    const result = script.runInContext(vmContext, { timeout: 1000 });
+    return Boolean(result);
   } catch (err) {
-    console.error('Error evaluating condition:', err);
+    console.error('Error evaluating condition:', err.message);
     return false;
   }
 }
+
 
 /**
  * Resolves double curly templates resolving path items in execution context.
@@ -108,23 +106,33 @@ function interpolateTemplate(template, context) {
  */
 async function evaluateCode(codeString, context) {
   try {
-    const run = new Function('context', `
-      return (async () => {
+    const sandbox = {
+      trigger: context?.trigger || {},
+      steps: context?.steps || {},
+      context: context || {},
+      console: Object.freeze({
+        log: (...args) => console.log('[Workflow Code Node Log]:', ...args),
+        error: (...args) => console.error('[Workflow Code Node Error]:', ...args)
+      }),
+      result: {}
+    };
+    vm.createContext(sandbox);
+    const script = new vm.Script(`
+      (async () => {
         try {
-          const trigger = context.trigger || {};
-          const steps = context.steps || {};
           ${codeString}
         } catch(e) {
-          return { error: e.message };
+          result = { error: e.message };
         }
-      })();
+      })()
     `);
-    const result = await run(context);
-    return result || {};
+    await script.runInContext(sandbox, { timeout: 2000 });
+    return sandbox.result || {};
   } catch (err) {
     return { error: err.message };
   }
 }
+
 
 /**
  * Core engine execution loop.
@@ -189,9 +197,17 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
     });
 
     let queue = [currentNodeId];
+    const stepCountMap = new Map();
+    const MAX_NODE_EXECUTIONS = 200;
 
     while (queue.length > 0) {
       const activeNodeId = queue.shift();
+      const execCount = (stepCountMap.get(activeNodeId) || 0) + 1;
+      if (execCount > MAX_NODE_EXECUTIONS) {
+        throw new Error(`Execution limit of ${MAX_NODE_EXECUTIONS} steps exceeded for node "${activeNodeId}". Possible cyclic loop detected.`);
+      }
+      stepCountMap.set(activeNodeId, execCount);
+
       const node = nodesMap.get(activeNodeId);
 
       if (!node) {
@@ -201,6 +217,7 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
         });
         continue;
       }
+
 
       stepLogs.push({
         time: new Date().toISOString(),
@@ -283,6 +300,7 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
               message: `Triggering ${rows.length} separate workflow execution threads (one for each sheet row)...`
             });
 
+            const subflowPromises = [];
             for (const row of rows) {
               const subExec = await prisma.executionLog.create({
                 data: {
@@ -294,12 +312,16 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
               });
 
               for (const edge of childEdges) {
-                executeWorkflow(workflowId, subExec.id, edge.target, { trigger: row, steps: {} })
-                  .catch(err => {
-                    console.error(`Error executing sheet sub-workflow:`, err);
-                  });
+                subflowPromises.push(
+                  executeWorkflow(workflowId, subExec.id, edge.target, { trigger: row, steps: {} })
+                    .catch(err => {
+                      console.error(`Error executing sheet sub-workflow:`, err);
+                    })
+                );
               }
             }
+            await Promise.allSettled(subflowPromises);
+
 
             await prisma.executionLog.update({
               where: { id: executionId },
@@ -743,16 +765,23 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
       message: `Execution Failed: ${error.message}`
     });
 
-    await prisma.executionLog.update({
-      where: { id: executionId },
-      data: {
-        status: 'failed',
-        finishedAt: new Date(),
-        logs: JSON.stringify(stepLogs),
-        responseData: JSON.stringify(context.steps || {})
+    if (executionId) {
+      try {
+        await prisma.executionLog.update({
+          where: { id: executionId },
+          data: {
+            status: 'failed',
+            finishedAt: new Date(),
+            logs: JSON.stringify(stepLogs),
+            responseData: JSON.stringify(context?.steps || {})
+          }
+        });
+      } catch (logErr) {
+        console.error('Failed to record execution error status log:', logErr);
       }
-    });
+    }
 
     return { success: false, error: error.message };
   }
 }
+
