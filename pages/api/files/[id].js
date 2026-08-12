@@ -1,6 +1,5 @@
-import fs from 'fs';
-import path from 'path';
 import { PrismaClient } from '@prisma/client';
+import { deleteFileFromStorage } from '../../../lib/storage.js';
 
 const prisma = new PrismaClient();
 
@@ -60,15 +59,8 @@ export default async function handler(req, res) {
         where: { id: String(id) },
       });
 
-      // Remove file from disk
-      const filePath = path.join(process.cwd(), 'public', 'uploads', file.storedName);
-      if (fs.existsSync(filePath)) {
-        try {
-          fs.unlinkSync(filePath);
-        } catch (e) {
-          console.warn('Could not remove physical file:', e);
-        }
-      }
+      // Remove file from AWS S3 bucket or local disk
+      await deleteFileFromStorage(file);
 
       return res.status(200).json({ success: true, message: 'File deleted successfully' });
     }

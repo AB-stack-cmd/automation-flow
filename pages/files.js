@@ -6,7 +6,8 @@ import { UserButton, useUser } from '@clerk/nextjs';
 export default function FileVault() {
   const { isLoaded, isSignedIn, user } = useUser();
   const [files, setFiles] = useState([]);
-  const [stats, setStats] = useState({ totalFiles: 0, totalBytes: 0, totalDownloads: 0, publicCount: 0, privateCount: 0 });
+  const [stats, setStats] = useState({ totalFiles: 0, totalBytes: 0, totalDownloads: 0, publicCount: 0, privateCount: 0, s3Count: 0, localCount: 0 });
+  const [storageConfig, setStorageConfig] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -38,6 +39,7 @@ export default function FileVault() {
       if (data.success) {
         setFiles(data.files);
         setStats(data.stats);
+        if (data.storageConfig) setStorageConfig(data.storageConfig);
       }
     } catch (e) {
       console.error('Failed to fetch files:', e);
@@ -326,9 +328,18 @@ export default function FileVault() {
                 <span className="bg-[#ff4f00]/10 text-[#ff4f00] text-xs font-semibold px-3 py-1 rounded-full border border-[#ff4f00]/30">
                   Secure Storage
                 </span>
+                {storageConfig?.isS3Configured ? (
+                  <span className="bg-amber-500/10 text-amber-400 text-xs font-semibold px-3 py-1 rounded-full border border-amber-500/30 flex items-center gap-1">
+                    ☁️ AWS S3 Active ({storageConfig.bucket})
+                  </span>
+                ) : (
+                  <span className="bg-blue-500/10 text-blue-400 text-xs font-semibold px-3 py-1 rounded-full border border-blue-500/30 flex items-center gap-1">
+                    💻 Local Vault (AWS S3 Configurable)
+                  </span>
+                )}
               </h1>
               <p className="text-gray-400 text-sm mt-1">
-                Upload, manage, protect, and share files via custom URLs, email notifications, and public/private access toggles.
+                Upload, manage, protect, and share files via AWS S3 Cloud, custom URLs, email notifications, and access controls.
               </p>
             </div>
 
@@ -347,7 +358,7 @@ export default function FileVault() {
           </div>
 
           {/* Stats Analytics Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="bg-[#141417] border border-[#27272a] p-5 rounded-2xl flex items-center gap-4 shadow-sm">
               <div className="w-12 h-12 rounded-xl bg-orange-500/10 text-orange-400 flex items-center justify-center text-2xl font-bold">
                 📁
@@ -385,6 +396,16 @@ export default function FileVault() {
               <div>
                 <p className="text-xs text-gray-400 uppercase font-semibold tracking-wider">Public Shares</p>
                 <p className="text-2xl font-bold text-white mt-0.5">{stats.publicCount}</p>
+              </div>
+            </div>
+
+            <div className="bg-[#141417] border border-[#27272a] p-5 rounded-2xl flex items-center gap-4 shadow-sm">
+              <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-2xl font-bold">
+                ☁️
+              </div>
+              <div>
+                <p className="text-xs text-gray-400 uppercase font-semibold tracking-wider">AWS S3 Files</p>
+                <p className="text-2xl font-bold text-white mt-0.5">{stats.s3Count || 0}</p>
               </div>
             </div>
           </div>
@@ -501,6 +522,15 @@ export default function FileVault() {
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-3xl">{getFileIcon(file.mimeType)}</span>
                       <div className="flex items-center gap-2">
+                        {file.storageProvider === 's3' ? (
+                          <span className="bg-amber-500/10 text-amber-400 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border border-amber-500/20" title={`AWS S3 Bucket: ${file.s3Bucket || 'Default'}`}>
+                            ☁️ S3
+                          </span>
+                        ) : (
+                          <span className="bg-blue-500/10 text-blue-400 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border border-blue-500/20" title="Local Disk Storage">
+                            💻 Local
+                          </span>
+                        )}
                         {file.isPublic ? (
                           <span className="bg-emerald-500/10 text-emerald-400 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border border-emerald-500/20">
                             Public
@@ -576,6 +606,7 @@ export default function FileVault() {
                 <thead className="bg-[#09090b] text-xs uppercase text-gray-400 font-semibold border-b border-[#27272a]">
                   <tr>
                     <th className="px-6 py-3.5">Name</th>
+                    <th className="px-6 py-3.5">Storage</th>
                     <th className="px-6 py-3.5">Size</th>
                     <th className="px-6 py-3.5">Uploaded</th>
                     <th className="px-6 py-3.5">Visibility</th>
@@ -589,6 +620,17 @@ export default function FileVault() {
                       <td className="px-6 py-4 font-medium text-white flex items-center gap-3 max-w-xs truncate">
                         <span className="text-2xl">{getFileIcon(file.mimeType)}</span>
                         <span className="truncate">{file.originalName}</span>
+                      </td>
+                      <td className="px-6 py-4">
+                        {file.storageProvider === 's3' ? (
+                          <span className="bg-amber-500/10 text-amber-400 text-xs font-semibold px-2.5 py-1 rounded-full border border-amber-500/20">
+                            ☁️ AWS S3
+                          </span>
+                        ) : (
+                          <span className="bg-blue-500/10 text-blue-400 text-xs font-semibold px-2.5 py-1 rounded-full border border-blue-500/20">
+                            💻 Local
+                          </span>
+                        )}
                       </td>
                       <td className="px-6 py-4 text-gray-400">{formatSize(file.size)}</td>
                       <td className="px-6 py-4 text-gray-400">{new Date(file.createdAt).toLocaleDateString()}</td>
@@ -693,10 +735,12 @@ export default function FileVault() {
                   </div>
                 </div>
 
-                {/* Permission Quick Toggle */}
+                {/* Permission & Storage Status */}
                 <div className="bg-[#09090b] p-4 rounded-2xl border border-[#27272a] flex items-center justify-between">
                   <div>
-                    <span className="text-sm font-semibold text-white block">Visibility Status</span>
+                    <span className="text-sm font-semibold text-white block flex items-center gap-2">
+                      Storage Engine: {shareModalFile.storageProvider === 's3' ? '☁️ AWS S3 Cloud' : '💻 Local Vault'}
+                    </span>
                     <span className="text-xs text-gray-400">
                       {shareModalFile.isPublic ? 'Public - Anyone with link can download' : 'Private - Access disabled'}
                     </span>
@@ -712,6 +756,20 @@ export default function FileVault() {
                     {shareModalFile.isPublic ? '🌐 Public' : '🔒 Private'}
                   </button>
                 </div>
+
+                {shareModalFile.storageProvider === 's3' && (
+                  <div className="bg-amber-500/10 p-3 rounded-2xl border border-amber-500/20 text-xs flex items-center justify-between">
+                    <span className="text-amber-300 font-medium">⚡ AWS S3 Presigned Direct Link available</span>
+                    <a
+                      href={shareModalFile.presignedUrl || `${shareModalFile.downloadUrl}?presigned=true`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-amber-500 hover:bg-amber-600 text-black px-3 py-1 rounded-xl font-bold transition"
+                    >
+                      ☁️ AWS S3 Direct Presigned Link
+                    </a>
+                  </div>
+                )}
 
                 {/* Send via Email Section */}
                 <div className="pt-2">

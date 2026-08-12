@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import { PrismaClient } from '@prisma/client';
+import { uploadFileToStorage } from '../../../lib/storage.js';
 
 const prisma = new PrismaClient();
 
@@ -90,22 +91,18 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'No file uploaded or file is empty' });
     }
 
-    // Ensure uploads directory exists
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
-    }
-
     // Generate unique names and keys
     const accessKey = crypto.randomBytes(8).toString('hex');
     const ext = path.extname(fileData.originalName) || '';
     const storedName = `file_${Date.now()}_${crypto.randomBytes(4).toString('hex')}${ext}`;
-    const filePath = path.join(uploadsDir, storedName);
 
-    // Save to disk
-    fs.writeFileSync(filePath, fileData.buffer);
-
-    const relativePath = `/uploads/${storedName}`;
+    // Upload to AWS S3 (or local fallback)
+    const storageResult = await uploadFileToStorage({
+      buffer: fileData.buffer,
+      storedName,
+      mimeType: fileData.mimeType,
+      originalName: fileData.originalName,
+    });
 
     // Create DB record
     const sharedFile = await prisma.sharedFile.create({
@@ -114,10 +111,14 @@ export default async function handler(req, res) {
         storedName,
         mimeType: fileData.mimeType,
         size: fileData.buffer.length,
-        path: relativePath,
+        path: storageResult.path,
         accessKey,
         isPublic: true,
         downloads: 0,
+        storageProvider: storageResult.storageProvider,
+        s3Bucket: storageResult.s3Bucket,
+        s3Key: storageResult.s3Key,
+        s3Url: storageResult.s3Url,
       },
     });
 

@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { getStorageConfig } from '../../../lib/storage.js';
 
 const prisma = new PrismaClient();
 
@@ -48,6 +49,8 @@ export default async function handler(req, res) {
       orderBy: { createdAt: 'desc' },
     });
 
+    const storageConfig = getStorageConfig();
+
     // Compute stats
     const allFiles = await prisma.sharedFile.findMany();
     const stats = {
@@ -56,6 +59,8 @@ export default async function handler(req, res) {
       totalDownloads: allFiles.reduce((acc, f) => acc + (f.downloads || 0), 0),
       publicCount: allFiles.filter(f => f.isPublic).length,
       privateCount: allFiles.filter(f => !f.isPublic).length,
+      s3Count: allFiles.filter(f => f.storageProvider === 's3').length,
+      localCount: allFiles.filter(f => f.storageProvider !== 's3').length,
     };
 
     const protocol = req.headers['x-forwarded-proto'] || 'http';
@@ -65,6 +70,7 @@ export default async function handler(req, res) {
       ...file,
       shareUrl: `${protocol}://${host}/share/${file.accessKey}`,
       downloadUrl: `${protocol}://${host}/api/files/download/${file.accessKey}`,
+      presignedUrl: `${protocol}://${host}/api/files/download/${file.accessKey}?presigned=true`,
       isExpired: file.expiresAt ? new Date(file.expiresAt) < new Date() : false,
       isLimitReached: file.maxDownloads ? file.downloads >= file.maxDownloads : false,
     }));
@@ -73,6 +79,7 @@ export default async function handler(req, res) {
       success: true,
       files: enrichedFiles,
       stats,
+      storageConfig,
     });
   } catch (error) {
     console.error('List Files Error:', error);

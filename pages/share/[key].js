@@ -190,7 +190,7 @@ export default function PublicSharePage() {
               </div>
 
               {/* Status & Info Grid */}
-              <div className="bg-[#09090b] p-4 rounded-2xl border border-[#27272a] grid grid-cols-2 gap-4 text-xs">
+              <div className="bg-[#09090b] p-4 rounded-2xl border border-[#27272a] grid grid-cols-3 gap-4 text-xs">
                 <div>
                   <span className="text-gray-500 font-semibold block uppercase">Shared On</span>
                   <span className="text-gray-300 font-medium">{new Date(file.createdAt).toLocaleDateString()}</span>
@@ -198,6 +198,12 @@ export default function PublicSharePage() {
                 <div>
                   <span className="text-gray-500 font-semibold block uppercase">Downloads</span>
                   <span className="text-emerald-400 font-medium">{file.downloads} times</span>
+                </div>
+                <div>
+                  <span className="text-gray-500 font-semibold block uppercase">Storage Host</span>
+                  <span className="text-amber-400 font-semibold flex items-center gap-1">
+                    {file.storageProvider === 's3' ? '☁️ AWS S3' : '💻 Local Vault'}
+                  </span>
                 </div>
               </div>
 

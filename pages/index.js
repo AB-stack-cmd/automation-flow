@@ -76,7 +76,8 @@ export default function Home() {
                   }
                 }
               }
-            }
+          `
+        }} />
         <style>{`
           html, body {
             background-color: #09090b !important;

@@ -36,8 +36,10 @@ export default async function handler(req, res) {
         maxDownloads: file.maxDownloads,
         isPublic: file.isPublic,
         isExpired,
-        isLimitReached,
+        storageProvider: file.storageProvider,
+        s3Bucket: file.s3Bucket,
         downloadUrl: `${protocol}://${host}/api/files/download/${file.accessKey}`,
+        presignedUrl: `${protocol}://${host}/api/files/download/${file.accessKey}?presigned=true`,
       },
     });
   } catch (error) {
