@@ -1,11 +1,14 @@
 node_modules
+**/node_modules
 .next
+**/.next
 dist
 build
 .turbo
 .env
 *.db
 *.db-journal
+*.db-shm
+*.db-wal
 .git
-automation-workflow/
 automation-engine/

@@ -1,9 +1,9 @@
 import { memo } from 'react';
 import { Handle, Position } from 'reactflow';
 
-// Custom Node Card Style
+// Custom Node Card Style (Constant Uniform Dimensions)
 const nodeCardClass = (selected: boolean) =>
-  `node-card w-52 p-4 rounded-md relative group cursor-pointer text-[#201515] dark:text-[#f4f4f5] text-left transition-all duration-200 shadow-sm ${
+  `node-card w-56 p-4 rounded-md relative group cursor-pointer text-[#201515] dark:text-[#f4f4f5] text-left transition-all duration-200 shadow-sm ${
     selected
       ? 'bg-[#f8f4f0] dark:bg-[#1f1f23] border-2 border-[#ff4f00] shadow-[0_4px_16px_rgba(255,79,0,0.2)] scale-[1.02]'
       : 'bg-[#f8f4f0] dark:bg-[#18181b] border border-[#c5c0b1] dark:border-[#27272a] hover:border-[#201515] dark:hover:border-[#ff4f00] hover:shadow-md'
@@ -13,9 +13,9 @@ const nodeCardClass = (selected: boolean) =>
 export const TriggerNode = memo(({ data, selected }: any) => {
   const isCrm = data?.triggerType === 'crm';
   return (
-    <div className="relative group flex flex-col items-center">
-      <div className={`w-14 h-14 rounded-full bg-[#f8f4f0] border-2 flex items-center justify-center relative transition-all duration-200 ${
-        selected ? 'border-[#ff4f00] shadow-[0_0_14px_rgba(255,79,0,0.35)] scale-105' : 'border-[#201515] hover:border-[#ff4f00] shadow-sm'
+    <div className="relative group flex flex-col items-center cursor-grab active:cursor-grabbing">
+      <div className={`w-14 h-14 rounded-full bg-[#f8f4f0] dark:bg-[#18181b] border-2 flex items-center justify-center relative transition-all duration-200 ${
+        selected ? 'border-[#ff4f00] shadow-[0_0_14px_rgba(255,79,0,0.35)] scale-105' : 'border-[#201515] dark:border-[#3f3f46] hover:border-[#ff4f00] shadow-sm'
       }`}>
         <span className="text-[#ff4f00] font-bold text-xl">
           {isCrm ? '👥' : '⚡'}
@@ -28,7 +28,7 @@ export const TriggerNode = memo(({ data, selected }: any) => {
           </svg>
         </div>
       </div>
-      <div className="mt-2 whitespace-nowrap text-[11px] uppercase tracking-wider font-semibold text-[#201515] bg-[#fffefb] px-2 py-0.5 rounded-full border border-[#c5c0b1]">
+      <div className="mt-2 whitespace-nowrap text-[11px] uppercase tracking-wider font-semibold text-[#201515] dark:text-[#f4f4f5] bg-[#fffefb] dark:bg-[#141417] px-2.5 py-0.5 rounded-full border border-[#c5c0b1] dark:border-[#27272a]">
         {data.label || 'Start Trigger'}
       </div>
       <Handle
@@ -49,13 +49,13 @@ export const MarketingNode = memo(({ data, selected }: any) => {
         type="target"
         position={Position.Left}
         id="input"
-        className="!w-3 !h-3 !bg-[#201515] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#ff4f00]"
+        className="!w-3 !h-3 !bg-[#201515] dark:!bg-[#f4f4f5] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#ff4f00]"
       />
       <div className="flex items-center gap-2 mb-2">
         <span className="text-lg">✉️</span>
-        <span className="text-sm font-semibold text-[#201515]">{data.label || 'Send Email'}</span>
+        <span className="text-sm font-semibold text-[#201515] dark:text-[#f4f4f5]">{data.label || 'Send Email'}</span>
       </div>
-      <div className="text-xs text-[#605d52] font-medium truncate">
+      <div className="text-xs text-[#605d52] dark:text-[#a1a1aa] font-medium truncate">
         {data.subject || 'Welcome email'}
       </div>
       <Handle
@@ -76,14 +76,14 @@ export const CRMNode = memo(({ data, selected }: any) => {
         type="target"
         position={Position.Left}
         id="input"
-        className="!w-3 !h-3 !bg-[#201515] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#ff4f00]"
+        className="!w-3 !h-3 !bg-[#201515] dark:!bg-[#f4f4f5] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#ff4f00]"
       />
       <div className="flex items-center gap-2 mb-2">
         <span className="text-lg">🗄️</span>
-        <span className="text-sm font-semibold text-[#201515]">{data.label || 'CRM Contact'}</span>
+        <span className="text-sm font-semibold text-[#201515] dark:text-[#f4f4f5]">{data.label || 'CRM Contact'}</span>
       </div>
-      <div className="text-xs text-[#605d52] font-medium truncate">
-        Score Change: <span className="font-bold text-[#201515]">+{data.scoreChange || '10'}</span>
+      <div className="text-xs text-[#605d52] dark:text-[#a1a1aa] font-medium truncate">
+        Score Change: <span className="font-bold text-[#201515] dark:text-[#f4f4f5]">+{data.scoreChange || '10'}</span>
       </div>
       <Handle
         type="source"
@@ -103,23 +103,23 @@ export const LogicNode = memo(({ data, selected }: any) => {
         type="target"
         position={Position.Left}
         id="input"
-        className="!w-3 !h-3 !bg-[#201515] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#ff4f00]"
+        className="!w-3 !h-3 !bg-[#201515] dark:!bg-[#f4f4f5] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#ff4f00]"
       />
       <div className="flex items-center gap-2 mb-2">
         <span className="text-lg">🔀</span>
-        <span className="text-sm font-semibold text-[#201515]">{data.label || 'If/Else Filter'}</span>
+        <span className="text-sm font-semibold text-[#201515] dark:text-[#f4f4f5]">{data.label || 'If/Else Filter'}</span>
       </div>
       
-      <div className="flex flex-col gap-1 text-[11px] font-semibold mt-2 pt-2 border-t border-[#c5c0b1]">
-        <div className="flex items-center justify-between text-emerald-700"><span>True / Yes</span> <span className="w-2 h-2 rounded-full bg-emerald-600"></span></div>
-        <div className="flex items-center justify-between text-rose-700"><span>False / No</span> <span className="w-2 h-2 rounded-full bg-rose-600"></span></div>
+      <div className="flex flex-col gap-1 text-[11px] font-semibold mt-2 pt-2 border-t border-[#c5c0b1] dark:border-[#27272a]">
+        <div className="flex items-center justify-between text-emerald-600 dark:text-emerald-400"><span>True / Yes</span> <span className="w-2 h-2 rounded-full bg-emerald-600"></span></div>
+        <div className="flex items-center justify-between text-rose-600 dark:text-rose-400"><span>False / No</span> <span className="w-2 h-2 rounded-full bg-rose-600"></span></div>
       </div>
 
       <Handle
         type="source"
         position={Position.Right}
         id="true"
-        style={{ top: '60%' }}
+        style={{ top: '55%' }}
         className="!w-3 !h-3 !bg-emerald-600 !border-2 !border-[#fffefb] !rounded-full !right-[-6px]"
       />
       <Handle
@@ -141,14 +141,14 @@ export const DelayNode = memo(({ data, selected }: any) => {
         type="target"
         position={Position.Left}
         id="input"
-        className="!w-3 !h-3 !bg-[#201515] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#ff4f00]"
+        className="!w-3 !h-3 !bg-[#201515] dark:!bg-[#f4f4f5] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#ff4f00]"
       />
       <div className="flex items-center gap-2 mb-2">
         <span className="text-lg">⏳</span>
-        <span className="text-sm font-semibold text-[#201515]">{data.label || 'Wait Delay'}</span>
+        <span className="text-sm font-semibold text-[#201515] dark:text-[#f4f4f5]">{data.label || 'Wait Delay'}</span>
       </div>
-      <div className="text-xs text-[#605d52] font-medium">
-        Pause for <span className="font-bold text-[#201515]">{data.seconds || '5'}s</span>
+      <div className="text-xs text-[#605d52] dark:text-[#a1a1aa] font-medium">
+        Pause for <span className="font-bold text-[#201515] dark:text-[#f4f4f5]">{data.seconds || '5'}s</span>
       </div>
       <Handle
         type="source"
@@ -168,13 +168,13 @@ export const CodeNode = memo(({ data, selected }: any) => {
         type="target"
         position={Position.Left}
         id="input"
-        className="!w-3 !h-3 !bg-[#201515] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#ff4f00]"
+        className="!w-3 !h-3 !bg-[#201515] dark:!bg-[#f4f4f5] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#ff4f00]"
       />
       <div className="flex items-center gap-2 mb-2">
         <span className="text-lg">💻</span>
-        <span className="text-sm font-semibold text-[#201515]">{data.label || 'Run JS Script'}</span>
+        <span className="text-sm font-semibold text-[#201515] dark:text-[#f4f4f5]">{data.label || 'Run JS Script'}</span>
       </div>
-      <div className="text-xs text-[#605d52] font-mono truncate">
+      <div className="text-xs text-[#605d52] dark:text-[#a1a1aa] font-mono truncate">
         {data.code ? 'eval custom script' : 'JS Logic Code'}
       </div>
       <Handle
@@ -190,20 +190,20 @@ export const CodeNode = memo(({ data, selected }: any) => {
 // Circle end node trigger style
 export const EndNode = memo(({ data, selected }: any) => {
   return (
-    <div className="relative group flex flex-col items-center">
-      <div className={`w-14 h-14 rounded-full bg-[#f8f4f0] border-2 flex items-center justify-center relative transition-all duration-200 ${
-        selected ? 'border-rose-600 shadow-[0_0_12px_rgba(225,29,72,0.3)] scale-105' : 'border-[#201515] hover:border-rose-600 shadow-sm'
+    <div className="relative group flex flex-col items-center cursor-grab active:cursor-grabbing">
+      <div className={`w-14 h-14 rounded-full bg-[#f8f4f0] dark:bg-[#18181b] border-2 flex items-center justify-center relative transition-all duration-200 ${
+        selected ? 'border-rose-600 shadow-[0_0_12px_rgba(225,29,72,0.3)] scale-105' : 'border-[#201515] dark:border-[#3f3f46] hover:border-rose-600 shadow-sm'
       }`}>
         <span className="text-rose-600 font-bold text-xl">🛑</span>
       </div>
-      <div className="mt-2 whitespace-nowrap text-[11px] uppercase tracking-wider font-semibold text-[#201515] bg-[#fffefb] px-2 py-0.5 rounded-full border border-[#c5c0b1]">
+      <div className="mt-2 whitespace-nowrap text-[11px] uppercase tracking-wider font-semibold text-[#201515] dark:text-[#f4f4f5] bg-[#fffefb] dark:bg-[#141417] px-2.5 py-0.5 rounded-full border border-[#c5c0b1] dark:border-[#27272a]">
         {data.label || 'End'}
       </div>
       <Handle
         type="target"
         position={Position.Left}
         id="input"
-        className="!w-3 !h-3 !bg-[#201515] !border-2 !border-[#fffefb] !rounded-full !left-[-6px]"
+        className="!w-3 !h-3 !bg-[#201515] dark:!bg-[#f4f4f5] !border-2 !border-[#fffefb] !rounded-full !left-[-6px]"
       />
     </div>
   );
@@ -212,9 +212,9 @@ export const EndNode = memo(({ data, selected }: any) => {
 // Circle start node trigger style
 export const StartNode = memo(({ data, selected }: any) => {
   return (
-    <div className="relative group flex flex-col items-center">
-      <div className={`w-14 h-14 rounded-full bg-[#f8f4f0] border-2 flex items-center justify-center relative transition-all duration-200 ${
-        selected ? 'border-[#ff4f00] shadow-[0_0_14px_rgba(255,79,0,0.35)] scale-105' : 'border-[#201515] hover:border-[#ff4f00] shadow-sm'
+    <div className="relative group flex flex-col items-center cursor-grab active:cursor-grabbing">
+      <div className={`w-14 h-14 rounded-full bg-[#f8f4f0] dark:bg-[#18181b] border-2 flex items-center justify-center relative transition-all duration-200 ${
+        selected ? 'border-[#ff4f00] shadow-[0_0_14px_rgba(255,79,0,0.35)] scale-105' : 'border-[#201515] dark:border-[#3f3f46] hover:border-[#ff4f00] shadow-sm'
       }`}>
         <svg className="w-6 h-6 text-[#ff4f00] ml-0.5" viewBox="0 0 24 24" fill="currentColor">
           <path d="M8 5v14l11-7z" />
@@ -228,7 +228,7 @@ export const StartNode = memo(({ data, selected }: any) => {
         </div>
       </div>
 
-      <div className="mt-2 whitespace-nowrap text-[11px] uppercase tracking-wider font-semibold text-[#201515] bg-[#fffefb] px-2 py-0.5 rounded-full border border-[#c5c0b1]">
+      <div className="mt-2 whitespace-nowrap text-[11px] uppercase tracking-wider font-semibold text-[#201515] dark:text-[#f4f4f5] bg-[#fffefb] dark:bg-[#141417] px-2.5 py-0.5 rounded-full border border-[#c5c0b1] dark:border-[#27272a]">
         {data.label || 'Start Trigger'}
       </div>
       <Handle
@@ -244,23 +244,20 @@ export const StartNode = memo(({ data, selected }: any) => {
 // Google Form Webhook Trigger card style
 export const GoogleFormTriggerNode = memo(({ data, selected }: any) => {
   return (
-    <div className={`node-card w-60 p-4 rounded-md relative group cursor-pointer text-[#201515] text-left transition-all duration-200 ${
+    <div className={`node-card w-60 p-4 rounded-md relative group cursor-pointer text-[#201515] dark:text-[#f4f4f5] text-left transition-all duration-200 shadow-sm ${
       selected
-        ? 'bg-[#f8f4f0] border-2 border-[#ff4f00] shadow-[0_4px_16px_rgba(255,79,0,0.2)] scale-[1.02]'
-        : 'bg-[#f8f4f0] border border-[#c5c0b1] hover:border-[#201515]'
+        ? 'bg-[#f8f4f0] dark:bg-[#1f1f23] border-2 border-[#ff4f00] shadow-[0_4px_16px_rgba(255,79,0,0.2)] scale-[1.02]'
+        : 'bg-[#f8f4f0] dark:bg-[#18181b] border border-[#c5c0b1] dark:border-[#27272a] hover:border-[#201515] dark:hover:border-[#ff4f00] hover:shadow-md'
     }`}>
       <div className="flex items-center gap-2 mb-2">
         <span className="text-lg">📋</span>
-        <span className="text-sm font-bold text-[#201515]">{data.label || 'Google Form Trigger'}</span>
+        <span className="text-sm font-bold text-[#201515] dark:text-[#f4f4f5]">{data.label || 'Google Form Trigger'}</span>
       </div>
-      <div className="text-xs text-[#605d52] flex flex-col gap-1">
+      <div className="text-xs text-[#605d52] dark:text-[#a1a1aa] flex flex-col gap-1">
         <div className="text-[10px] uppercase tracking-wider text-[#ff4f00] font-bold">Webhook Endpoint</div>
-        <div className="bg-[#fffefb] border border-[#c5c0b1] p-1.5 rounded text-[10px] font-mono truncate select-all" title={data.webhookUrl}>
+        <div className="bg-[#fffefb] dark:bg-[#0a0a0a] border border-[#c5c0b1] dark:border-[#27272a] p-1.5 rounded text-[10px] font-mono truncate select-all" title={data.webhookUrl}>
           {data.webhookUrl || 'http://localhost:4000/api/webhook/form'}
         </div>
-        <p className="text-[10px] leading-tight text-[#939084] mt-1">
-          💡 Paste into Google Apps Script `onSubmit` trigger!
-        </p>
       </div>
       <Handle
         type="source"
@@ -285,9 +282,9 @@ export const ScheduleTriggerNode = memo(({ data, selected }: any) => {
   if (type === 'date') scheduleText = `Once: ${cDate || 'Not Set'}`;
 
   return (
-    <div className="relative group flex flex-col items-center">
-      <div className={`w-14 h-14 rounded-full bg-[#f8f4f0] border-2 flex items-center justify-center relative transition-all duration-200 ${
-        selected ? 'border-[#ff4f00] shadow-[0_0_14px_rgba(255,79,0,0.35)] scale-105' : 'border-[#201515] hover:border-[#ff4f00] shadow-sm'
+    <div className="relative group flex flex-col items-center cursor-grab active:cursor-grabbing">
+      <div className={`w-14 h-14 rounded-full bg-[#f8f4f0] dark:bg-[#18181b] border-2 flex items-center justify-center relative transition-all duration-200 ${
+        selected ? 'border-[#ff4f00] shadow-[0_0_14px_rgba(255,79,0,0.35)] scale-105' : 'border-[#201515] dark:border-[#3f3f46] hover:border-[#ff4f00] shadow-sm'
       }`}>
         <span className="text-[#ff4f00] font-bold text-xl">⏰</span>
 
@@ -298,10 +295,10 @@ export const ScheduleTriggerNode = memo(({ data, selected }: any) => {
           </svg>
         </div>
       </div>
-      <div className="mt-2 whitespace-nowrap text-[11px] uppercase tracking-wider font-semibold text-[#201515] bg-[#fffefb] px-2 py-0.5 rounded-full border border-[#c5c0b1]">
+      <div className="mt-2 whitespace-nowrap text-[11px] uppercase tracking-wider font-semibold text-[#201515] dark:text-[#f4f4f5] bg-[#fffefb] dark:bg-[#141417] px-2.5 py-0.5 rounded-full border border-[#c5c0b1] dark:border-[#27272a]">
         {data.label || 'Schedule'}
       </div>
-      <div className="text-[10px] text-[#605d52] font-mono mt-1 font-semibold">
+      <div className="text-[10px] text-[#605d52] dark:text-[#a1a1aa] font-mono mt-1 font-semibold">
         {scheduleText}
       </div>
       <Handle
@@ -327,15 +324,15 @@ export const GoogleSheetsNode = memo(({ data, selected }: any) => {
         type="target"
         position={Position.Left}
         id="input"
-        className="!w-3 !h-3 !bg-[#201515] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#ff4f00]"
+        className="!w-3 !h-3 !bg-[#201515] dark:!bg-[#f4f4f5] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#ff4f00]"
       />
       <div className="flex items-center gap-2 mb-2">
         <span className="text-lg">📊</span>
-        <span className="text-sm font-bold text-[#201515]">{data.label || 'Google Sheets'}</span>
+        <span className="text-sm font-bold text-[#201515] dark:text-[#f4f4f5]">{data.label || 'Google Sheets'}</span>
       </div>
-      <div className="text-xs text-[#605d52] flex flex-col gap-0.5">
+      <div className="text-xs text-[#605d52] dark:text-[#a1a1aa] flex flex-col gap-0.5">
         <div>Action: <span className="text-[#ff4f00] font-bold uppercase text-[10px]">{action}</span></div>
-        <div>Sheet: <span className="font-semibold text-[#201515]">{sheetName}</span></div>
+        <div>Sheet: <span className="font-semibold text-[#201515] dark:text-[#f4f4f5]">{sheetName}</span></div>
         {isRead && <div className="text-[10px]">Data: {mockType === 'blog_news' ? 'Blog Posts' : mockType === 'crm_leads' ? 'CRM Leads' : 'Custom JSON'}</div>}
       </div>
       <Handle
@@ -356,14 +353,14 @@ export const OpenAINode = memo(({ data, selected }: any) => {
         type="target"
         position={Position.Left}
         id="input"
-        className="!w-3 !h-3 !bg-[#201515] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#ff4f00]"
+        className="!w-3 !h-3 !bg-[#201515] dark:!bg-[#f4f4f5] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#ff4f00]"
       />
       <div className="flex items-center gap-2 mb-2">
         <span className="text-lg">🤖</span>
-        <span className="text-sm font-bold text-[#201515]">{data.label || 'OpenAI GPT'}</span>
+        <span className="text-sm font-bold text-[#201515] dark:text-[#f4f4f5]">{data.label || 'OpenAI GPT'}</span>
       </div>
-      <div className="text-xs text-[#605d52] flex flex-col gap-0.5">
-        <div>Model: <span className="text-purple-700 font-bold uppercase text-[10px]">{data.model || 'gpt-4o'}</span></div>
+      <div className="text-xs text-[#605d52] dark:text-[#a1a1aa] flex flex-col gap-0.5">
+        <div>Model: <span className="text-purple-600 dark:text-purple-400 font-bold uppercase text-[10px]">{data.model || 'gpt-4o'}</span></div>
         <div className="truncate text-[10px]">Prompt: {data.prompt || 'Summarize text...'}</div>
       </div>
       <Handle
@@ -384,13 +381,13 @@ export const SlackNode = memo(({ data, selected }: any) => {
         type="target"
         position={Position.Left}
         id="input"
-        className="!w-3 !h-3 !bg-[#201515] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#ff4f00]"
+        className="!w-3 !h-3 !bg-[#201515] dark:!bg-[#f4f4f5] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#ff4f00]"
       />
       <div className="flex items-center gap-2 mb-2">
         <span className="text-lg">💬</span>
-        <span className="text-sm font-bold text-[#201515]">{data.label || 'Post to Slack'}</span>
+        <span className="text-sm font-bold text-[#201515] dark:text-[#f4f4f5]">{data.label || 'Post to Slack'}</span>
       </div>
-      <div className="text-xs text-[#605d52]">
+      <div className="text-xs text-[#605d52] dark:text-[#a1a1aa]">
         <div className="truncate text-[10px]">Msg: {data.text || 'Slack alert message'}</div>
       </div>
       <Handle
@@ -411,13 +408,13 @@ export const DiscordNode = memo(({ data, selected }: any) => {
         type="target"
         position={Position.Left}
         id="input"
-        className="!w-3 !h-3 !bg-[#201515] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#ff4f00]"
+        className="!w-3 !h-3 !bg-[#201515] dark:!bg-[#f4f4f5] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#ff4f00]"
       />
       <div className="flex items-center gap-2 mb-2">
         <span className="text-lg">🎮</span>
-        <span className="text-sm font-bold text-[#201515]">{data.label || 'Discord Alert'}</span>
+        <span className="text-sm font-bold text-[#201515] dark:text-[#f4f4f5]">{data.label || 'Discord Alert'}</span>
       </div>
-      <div className="text-xs text-[#605d52]">
+      <div className="text-xs text-[#605d52] dark:text-[#a1a1aa]">
         <div className="truncate text-[10px]">Msg: {data.content || 'Discord message'}</div>
       </div>
       <Handle
@@ -440,13 +437,13 @@ export const RespondToWebhookNode = memo(({ data, selected }: any) => {
         type="target"
         position={Position.Left}
         id="input"
-        className="!w-3 !h-3 !bg-[#201515] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#ff4f00]"
+        className="!w-3 !h-3 !bg-[#201515] dark:!bg-[#f4f4f5] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#ff4f00]"
       />
       <div className="flex items-center gap-2 mb-2">
         <span className="text-lg">📤</span>
-        <span className="text-sm font-bold text-[#201515]">{data.label || 'Webhook Response'}</span>
+        <span className="text-sm font-bold text-[#201515] dark:text-[#f4f4f5]">{data.label || 'Webhook Response'}</span>
       </div>
-      <div className="text-xs text-[#605d52] flex flex-col gap-0.5">
+      <div className="text-xs text-[#605d52] dark:text-[#a1a1aa] flex flex-col gap-0.5">
         <div>Status: <span className="text-[#ff4f00] font-bold">{status}</span></div>
         <div>Mode: <span className="uppercase text-[10px] font-semibold">{mode}</span></div>
       </div>

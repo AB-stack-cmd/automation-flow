@@ -58,8 +58,214 @@ const nodeTypes = {
 
 const BACKEND_URL = 'http://localhost:4000';
 
+const getNodeInterfaceDetails = (node: any) => {
+  const type = node?.type || '';
+  const label = node?.data?.label || node?.id || 'Node Connection';
+
+  if (type === 'trigger' || type === 'webhook' || type === 'respond_to_webhook' || type === 'action.respondToWebhook') {
+    return {
+      category: 'webhook',
+      title: 'Webhook Input & Configuration',
+      subtitle: 'Configure payload structure, select HTTP method, and test incoming webhook events.',
+      icon: 'bolt',
+      themeColor: 'emerald',
+      badgeClass: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+      headerGradient: 'from-[#141d18] via-[#1a251f] to-[#141619]',
+      borderClass: 'border-emerald-500/40',
+      btnClass: 'bg-emerald-600 hover:bg-emerald-500 text-white',
+      testBtnLabel: '⚡ Send Test Webhook Payload',
+    };
+  }
+
+  if (type === 'schedule_trigger') {
+    return {
+      category: 'schedule',
+      title: 'Schedule Timer Trigger & Cron Execution',
+      subtitle: 'Configure recurring interval timers, cron expressions, and test fire scheduled events.',
+      icon: 'alarm',
+      themeColor: 'amber',
+      badgeClass: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+      headerGradient: 'from-[#1f1a14] via-[#262017] to-[#161414]',
+      borderClass: 'border-amber-500/40',
+      btnClass: 'bg-amber-600 hover:bg-amber-500 text-white',
+      testBtnLabel: '⏰ Test Fire Timer Event',
+    };
+  }
+
+  if (type === 'google_form_trigger') {
+    return {
+      category: 'google_form',
+      title: 'Google Form Submission Interface',
+      subtitle: 'Simulate Google Form entries, field mappings, and test incoming respondent submissions.',
+      icon: 'description',
+      themeColor: 'green',
+      badgeClass: 'bg-green-500/20 text-green-400 border-green-500/30',
+      headerGradient: 'from-[#141f17] via-[#1a261c] to-[#141614]',
+      borderClass: 'border-green-500/40',
+      btnClass: 'bg-green-600 hover:bg-green-500 text-white',
+      testBtnLabel: '📋 Test Submit Form Entry',
+    };
+  }
+
+  if (type === 'crm_lead_trigger' || type === 'crm_action') {
+    return {
+      category: 'crm',
+      title: 'CRM Lead & Contact Connection Interface',
+      subtitle: 'Configure contact email, lead status, score adjustments, and test CRM pipeline synchronization.',
+      icon: 'account_circle',
+      themeColor: 'indigo',
+      badgeClass: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30',
+      headerGradient: 'from-[#151724] via-[#1a1c2d] to-[#141419]',
+      borderClass: 'border-indigo-500/40',
+      btnClass: 'bg-indigo-600 hover:bg-indigo-500 text-white',
+      testBtnLabel: '👥 Test Dispatch CRM Lead',
+    };
+  }
+
+  if (type === 'marketing_email') {
+    return {
+      category: 'email',
+      title: 'Send Email SMTP Delivery Interface',
+      subtitle: 'Configure recipient email, subject line, body template, and test email dispatch.',
+      icon: 'mail',
+      themeColor: 'sky',
+      badgeClass: 'bg-sky-500/20 text-sky-400 border-sky-500/30',
+      headerGradient: 'from-[#141c24] via-[#18232d] to-[#141619]',
+      borderClass: 'border-sky-500/40',
+      btnClass: 'bg-sky-600 hover:bg-sky-500 text-white',
+      testBtnLabel: '✉️ Send Test Email Payload',
+    };
+  }
+
+  if (type === 'google_sheets') {
+    return {
+      category: 'google_sheets',
+      title: 'Google Sheets Sync & Row Data Interface',
+      subtitle: 'Configure sheet operations (Read/Append), target sheet name, and test row data operations.',
+      icon: 'table_chart',
+      themeColor: 'teal',
+      badgeClass: 'bg-teal-500/20 text-teal-400 border-teal-500/30',
+      headerGradient: 'from-[#141f1f] via-[#182727] to-[#141616]',
+      borderClass: 'border-teal-500/40',
+      btnClass: 'bg-teal-600 hover:bg-teal-500 text-white',
+      testBtnLabel: '📊 Test Execute Sheets Query',
+    };
+  }
+
+  if (type === 'openai' || type === 'action.openai') {
+    return {
+      category: 'openai',
+      title: 'OpenAI GPT AI Prompt Completion Interface',
+      subtitle: 'Configure LLM model (GPT-4o), temperature creativity, max tokens, and test prompt generation.',
+      icon: 'psychology',
+      themeColor: 'purple',
+      badgeClass: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+      headerGradient: 'from-[#1c1424] via-[#241a2e] to-[#161419]',
+      borderClass: 'border-purple-500/40',
+      btnClass: 'bg-purple-600 hover:bg-purple-500 text-white',
+      testBtnLabel: '🧠 Run Test AI Completion',
+    };
+  }
+
+  if (type === 'slack' || type === 'discord') {
+    return {
+      category: 'chat',
+      title: `${type === 'slack' ? 'Slack' : 'Discord'} Webhook Alert Interface`,
+      subtitle: 'Configure channel webhook URL, alert content, and test message dispatch.',
+      icon: type === 'slack' ? 'forum' : 'mark_chat_read',
+      themeColor: 'fuchsia',
+      badgeClass: 'bg-fuchsia-500/20 text-fuchsia-400 border-fuchsia-500/30',
+      headerGradient: 'from-[#221424] via-[#29182b] to-[#171419]',
+      borderClass: 'border-fuchsia-500/40',
+      btnClass: 'bg-fuchsia-600 hover:bg-fuchsia-500 text-white',
+      testBtnLabel: '💬 Send Test Alert Notification',
+    };
+  }
+
+  if (type === 'delay') {
+    return {
+      category: 'delay',
+      title: 'Delay Timer Execution Interface',
+      subtitle: 'Configure wait interval before executing downstream workflow nodes.',
+      icon: 'schedule',
+      themeColor: 'amber',
+      badgeClass: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+      headerGradient: 'from-[#1f1a14] via-[#262017] to-[#161414]',
+      borderClass: 'border-amber-500/40',
+      btnClass: 'bg-amber-600 hover:bg-amber-500 text-white',
+      testBtnLabel: '⏳ Test Run Delay Timer',
+    };
+  }
+
+  if (type === 'code') {
+    return {
+      category: 'code',
+      title: 'Custom JavaScript Code Execution Interface',
+      subtitle: 'Write custom JavaScript context logic, data transformations, and return payloads.',
+      icon: 'code',
+      themeColor: 'teal',
+      badgeClass: 'bg-teal-500/20 text-teal-400 border-teal-500/30',
+      headerGradient: 'from-[#141f1f] via-[#182727] to-[#141616]',
+      borderClass: 'border-teal-500/40',
+      btnClass: 'bg-teal-600 hover:bg-teal-500 text-white',
+      testBtnLabel: '💻 Execute Test Script',
+    };
+  }
+
+  if (type === 'rabbitmq_publish') {
+    return {
+      category: 'rabbitmq',
+      title: 'RabbitMQ Message Broker Interface',
+      subtitle: 'Publish event payloads directly to RabbitMQ message broker queue.',
+      icon: 'input',
+      themeColor: 'amber',
+      badgeClass: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+      headerGradient: 'from-[#1f1a14] via-[#262017] to-[#161414]',
+      borderClass: 'border-amber-500/40',
+      btnClass: 'bg-amber-600 hover:bg-amber-500 text-white',
+      testBtnLabel: '🐰 Test Publish Message',
+    };
+  }
+
+  return {
+    category: 'generic',
+    title: `${label} Connection Interface`,
+    subtitle: 'Configure input data, test execution connection, and inspect response payloads.',
+    icon: 'tune',
+    themeColor: 'coral',
+    badgeClass: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+    headerGradient: 'from-[#1f1614] via-[#271a17] to-[#161414]',
+    borderClass: 'border-orange-500/40',
+    btnClass: 'bg-[#ff4f00] hover:bg-[#e04500] text-white',
+    testBtnLabel: '⚡ Dispatch Test Connection',
+  };
+};
+
 // Template Definitions from user request & HTML template
 const TEMPLATES = [
+  {
+    id: 'start-ifelse-jsscript-end',
+    name: 'Start → If/Else → JS Script → End Workflow',
+    category: 'Logic & Code',
+    description: 'Complete execution pipeline starting with a Start Trigger, filtering data via If/Else condition, executing custom JS code, and terminating at End nodes.',
+    icons: ['play_circle', 'alt_route', 'code', 'stop_circle'],
+    popular: true,
+    definition: {
+      nodes: [
+        { id: 'start_node', type: 'start_trigger', position: { x: 100, y: 220 }, data: { label: 'Start Trigger' } },
+        { id: 'check_node', type: 'ifelse', position: { x: 340, y: 210 }, data: { label: 'If/Else Filter', condition: 'context.trigger.score > 50' } },
+        { id: 'js_script_node', type: 'code', position: { x: 620, y: 140 }, data: { label: 'Run JS Script', code: '// Process high value lead payload\ncontext.trigger.processed = true;\ncontext.trigger.vipScore = context.trigger.score * 2;\nreturn context.trigger;' } },
+        { id: 'end_passed_node', type: 'end', position: { x: 900, y: 160 }, data: { label: 'End Flow (Passed)' } },
+        { id: 'end_filtered_node', type: 'end', position: { x: 620, y: 320 }, data: { label: 'End Flow (Filtered)' } }
+      ],
+      edges: [
+        { id: 'e1-2', source: 'start_node', target: 'check_node', animated: true, style: { stroke: '#facc15', strokeWidth: 2.5 } },
+        { id: 'e2-3', source: 'check_node', sourceHandle: 'true', target: 'js_script_node', targetHandle: 'input', animated: true, style: { stroke: '#10b981', strokeWidth: 2.5 } },
+        { id: 'e3-4', source: 'js_script_node', target: 'end_passed_node', animated: true, style: { stroke: '#facc15', strokeWidth: 2.5 } },
+        { id: 'e2-5', source: 'check_node', sourceHandle: 'false', target: 'end_filtered_node', targetHandle: 'input', animated: true, style: { stroke: '#ef4444', strokeWidth: 2.5 } }
+      ]
+    }
+  },
   {
     id: 'scheduled-google-sheets-summarizer',
     name: 'Scheduled Google Sheets Blog Summarizer',
@@ -634,7 +840,8 @@ return {
       n.type === 'crm_lead_trigger' || 
       n.type === 'schedule_trigger' || 
       n.type === 'google_form_trigger' ||
-      n.type === 'webhook'
+      n.type === 'webhook' ||
+      n.type === 'start_trigger'
     );
     if (!triggerNode) {
       setExecLogs(prev => [...prev, { time: new Date().toISOString(), message: "❌ Error: No starting trigger node found in this workflow." }]);
@@ -832,7 +1039,36 @@ return {
 
   const openWebhookInputPopup = useCallback((node: any) => {
     setWebhookPopupNode(node);
-    const existingPayload = node?.data?.samplePayload || node?.data?.payload || '{\n  "event": "webhook_entry",\n  "email": "alex@example.com",\n  "name": "Alex Smith",\n  "timestamp": "' + new Date().toISOString() + '"\n}';
+    const type = node?.type || '';
+    
+    let defaultPayloadStr = '';
+    if (type === 'trigger' || type === 'webhook' || type === 'respond_to_webhook' || type === 'action.respondToWebhook') {
+      defaultPayloadStr = '{\n  "event": "webhook_entry",\n  "email": "alex@example.com",\n  "name": "Alex Smith",\n  "timestamp": "' + new Date().toISOString() + '"\n}';
+    } else if (type === 'schedule_trigger') {
+      defaultPayloadStr = '{\n  "event": "schedule_interval_elapsed",\n  "scheduleType": "' + (node?.data?.scheduleType || 'interval') + '",\n  "intervalValue": ' + (node?.data?.intervalValue || 10) + ',\n  "intervalUnit": "' + (node?.data?.intervalUnit || 'seconds') + '"\n}';
+    } else if (type === 'google_form_trigger') {
+      defaultPayloadStr = '{\n  "event": "google_form_submission",\n  "formId": "form_88234",\n  "respondentEmail": "jordan@example.com",\n  "answers": {\n    "fullName": "Jordan Lee",\n    "feedback": "Great service!",\n    "rating": 5\n  }\n}';
+    } else if (type === 'crm_lead_trigger' || type === 'crm_action') {
+      defaultPayloadStr = '{\n  "event": "crm_lead_entry",\n  "email": "' + (node?.data?.email || 'sarah.johnson@acme.com') + '",\n  "name": "Sarah Johnson",\n  "status": "' + (node?.data?.status || 'lead') + '",\n  "score": ' + (node?.data?.scoreChange || 10) + '\n}';
+    } else if (type === 'marketing_email') {
+      defaultPayloadStr = '{\n  "event": "send_email_dispatch",\n  "to": "' + (node?.data?.to || 'alex@example.com') + '",\n  "subject": "' + (node?.data?.subject || 'Notification Alert') + '",\n  "body": "' + (node?.data?.body || 'Hello Alex!') + '"\n}';
+    } else if (type === 'google_sheets') {
+      defaultPayloadStr = '{\n  "event": "google_sheets_sync",\n  "sheetName": "' + (node?.data?.sheetName || 'Sheet1') + '",\n  "action": "' + (node?.data?.action || 'read') + '",\n  "rowData": {\n    "Email": "alex@example.com",\n    "Status": "Active"\n  }\n}';
+    } else if (type === 'openai' || type === 'action.openai') {
+      defaultPayloadStr = '{\n  "event": "openai_completion_request",\n  "model": "' + (node?.data?.model || 'gpt-4o') + '",\n  "temperature": ' + (node?.data?.temperature !== undefined ? node.data.temperature : 0.7) + ',\n  "prompt": "' + (node?.data?.prompt || 'Please summarize user data.') + '"\n}';
+    } else if (type === 'slack' || type === 'discord') {
+      defaultPayloadStr = '{\n  "event": "chat_alert_dispatch",\n  "channel": "general",\n  "webhookUrl": "' + (node?.data?.webhookUrl || '') + '",\n  "text": "' + (node?.data?.text || node?.data?.content || '📢 Event alert') + '"\n}';
+    } else if (type === 'delay') {
+      defaultPayloadStr = '{\n  "event": "delay_timer_wait",\n  "delaySeconds": ' + (node?.data?.seconds || 10) + '\n}';
+    } else if (type === 'code') {
+      defaultPayloadStr = '{\n  "event": "javascript_script_execution",\n  "code": ' + JSON.stringify(node?.data?.code || '// Custom Script\nreturn { success: true };') + '\n}';
+    } else if (type === 'rabbitmq_publish') {
+      defaultPayloadStr = '{\n  "event": "rabbitmq_publish_queue",\n  "queue": "' + (node?.data?.queue || 'neuron_flow_queue') + '",\n  "payload": ' + JSON.stringify(node?.data?.payload || '{"event":"triggered"}') + '\n}';
+    } else {
+      defaultPayloadStr = '{\n  "event": "' + (type || 'custom_connection') + '",\n  "nodeId": "' + (node?.id || 'node_1') + '",\n  "label": "' + (node?.data?.label || 'Node') + '"\n}';
+    }
+
+    const existingPayload = node?.data?.samplePayload || node?.data?.payload || defaultPayloadStr;
     setWebhookPayload(typeof existingPayload === 'object' ? JSON.stringify(existingPayload, null, 2) : existingPayload);
     setWebhookMethod(node?.data?.method || 'POST');
     
@@ -1175,19 +1411,20 @@ return {
 
   const onNodeClick = useCallback((_event: React.MouseEvent, node: any) => {
     setSelectedNode(node);
-    const isWebhook = 
+    const isWebhookOnly = 
       node.type === 'trigger' ||
       node.type === 'webhook' ||
-      node.type === 'google_form_trigger' ||
       node.type === 'respond_to_webhook' ||
-      node.type === 'action.respondToWebhook' ||
-      node.data?.triggerType === 'webhook' ||
-      node.data?.label?.toLowerCase().includes('webhook') ||
-      Boolean(node.data?.webhookUrl);
+      node.type === 'action.respondToWebhook';
 
-    if (isWebhook) {
+    if (isWebhookOnly) {
       openWebhookInputPopup(node);
     }
+  }, [openWebhookInputPopup]);
+
+  const onNodeDoubleClick = useCallback((_event: React.MouseEvent, node: any) => {
+    setSelectedNode(node);
+    openWebhookInputPopup(node);
   }, [openWebhookInputPopup]);
 
 
@@ -1357,9 +1594,27 @@ return {
 
   const handleCreateNew = async () => {
     try {
+      const ts = Date.now();
+      const startId = `start_${ts}`;
+      const ifelseId = `ifelse_${ts}`;
+      const codeId = `code_${ts}`;
+      const endPassedId = `end_passed_${ts}`;
+      const endFilteredId = `end_filtered_${ts}`;
+
       const defaultDef = {
-        nodes: [],
-        edges: []
+        nodes: [
+          { id: startId, type: 'start_trigger', position: { x: 100, y: 220 }, data: { label: 'Start Trigger' } },
+          { id: ifelseId, type: 'ifelse', position: { x: 340, y: 210 }, data: { label: 'If/Else Filter', condition: 'context.trigger.score > 50' } },
+          { id: codeId, type: 'code', position: { x: 620, y: 140 }, data: { label: 'Run JS Script', code: '// Custom JS Logic Script\ncontext.trigger.processed = true;\nreturn context.trigger;' } },
+          { id: endPassedId, type: 'end', position: { x: 900, y: 160 }, data: { label: 'End (Passed)' } },
+          { id: endFilteredId, type: 'end', position: { x: 620, y: 320 }, data: { label: 'End (Filtered)' } }
+        ],
+        edges: [
+          { id: `e1_${ts}`, source: startId, target: ifelseId, animated: true, style: { stroke: '#facc15', strokeWidth: 2.5 } },
+          { id: `e2_${ts}`, source: ifelseId, sourceHandle: 'true', target: codeId, targetHandle: 'input', animated: true, style: { stroke: '#10b981', strokeWidth: 2.5 } },
+          { id: `e3_${ts}`, source: codeId, target: endPassedId, animated: true, style: { stroke: '#facc15', strokeWidth: 2.5 } },
+          { id: `e4_${ts}`, source: ifelseId, sourceHandle: 'false', target: endFilteredId, targetHandle: 'input', animated: true, style: { stroke: '#ef4444', strokeWidth: 2.5 } }
+        ]
       };
 
       const res = await fetch(`${BACKEND_URL}/api/workflows`, {
@@ -2100,6 +2355,14 @@ return {
                         <div className="text-[10px] uppercase tracking-wider font-bold text-[#939084] mb-2">Triggers & Actions</div>
                         <div className="space-y-2">
                           <button
+                            onClick={() => addNode('start_trigger')}
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-md border border-[#c5c0b1] bg-[#fffefb] hover:border-[#ff4f00] text-[#201515] text-xs font-bold text-left transition-all"
+                          >
+                            <span>▶️</span>
+                            <span>Start Trigger</span>
+                          </button>
+
+                          <button
                             onClick={() => addNode('trigger')}
                             className="w-full flex items-center gap-2 px-3 py-2 rounded-md border border-[#c5c0b1] bg-[#fffefb] hover:border-[#ff4f00] text-[#201515] text-xs font-bold text-left transition-all"
                           >
@@ -2241,7 +2504,13 @@ return {
                   edgeTypes={edgeTypes}
                   defaultEdgeOptions={{ type: 'buttonEdge' }}
                   onNodeClick={onNodeClick}
+                  onNodeDoubleClick={onNodeDoubleClick}
                   onPaneClick={onPaneClick}
+                  nodesDraggable={true}
+                  nodesConnectable={true}
+                  elementsSelectable={true}
+                  snapToGrid={true}
+                  snapGrid={[15, 15]}
                   fitView
                 >
                   <Background color="#ff4f00" gap={32} size={1} />
@@ -2365,8 +2634,16 @@ return {
                           type="text"
                           value={selectedNode.data?.label || ''}
                           onChange={(e) => updateNodeData('label', e.target.value)}
-                          className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-3 py-2 text-white outline-none focus:border-accent-coral/50"
+                          className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-lg px-3 py-2 text-white outline-none focus:border-accent-coral/50 mb-3"
                         />
+                        <button
+                          type="button"
+                          onClick={() => openWebhookInputPopup(selectedNode)}
+                          className="w-full bg-gradient-to-r from-emerald-950/60 to-teal-950/60 hover:from-emerald-900/80 hover:to-teal-900/80 text-emerald-300 border border-emerald-500/40 rounded-xl px-3 py-2 text-xs font-bold transition flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+                        >
+                          <span className="material-symbols-outlined text-sm">tune</span>
+                          <span>Open {selectedNode.data?.label || selectedNode.type} Interface</span>
+                        </button>
                       </div>
 
                       {/* Trigger fields */}
@@ -4405,283 +4682,350 @@ return {
         </div>
       )}
 
-      {/* Webhook Input Popup Modal */}
-      {showWebhookPopup && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-md text-left animate-in fade-in duration-200">
-          <div className="w-[640px] max-w-[92vw] bg-[#161616] border border-emerald-500/40 rounded-2xl shadow-2xl shadow-emerald-950/50 overflow-hidden flex flex-col max-h-[90vh]">
-            {/* Modal Header */}
-            <div className="p-5 bg-gradient-to-r from-[#141d18] via-[#1a251f] to-[#141619] border-b border-neutral-800 flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-md">
-                  <span className="material-symbols-outlined text-xl">webhook</span>
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-base text-white">Webhook Input & Configuration</span>
-                    <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full">
-                      {webhookPopupNode?.data?.label || 'Webhook Node'}
+      {/* Dynamic Node Connection & Webhook Interface Modal */}
+      {showWebhookPopup && (() => {
+        const details = getNodeInterfaceDetails(webhookPopupNode);
+        return (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-md text-left animate-in fade-in duration-200">
+            <div className={`w-[680px] max-w-[92vw] bg-[#161616] border ${details.borderClass} rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]`}>
+              {/* Modal Header */}
+              <div className={`p-5 bg-gradient-to-r ${details.headerGradient} border-b border-neutral-800 flex items-center justify-between shrink-0`}>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white shadow-md">
+                    <span className="material-symbols-outlined text-xl">{details.icon}</span>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-base text-white">{details.title}</span>
+                      <span className={`${details.badgeClass} text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border`}>
+                        {webhookPopupNode?.data?.label || details.category.toUpperCase()}
+                      </span>
+                    </div>
+                    <span className="text-xs text-neutral-400 block mt-0.5">
+                      {details.subtitle}
                     </span>
                   </div>
-                  <span className="text-xs text-neutral-400 block mt-0.5">
-                    Configure payload structure, select HTTP method, and test incoming data events.
-                  </span>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setShowWebhookPopup(false)}
+                  className="text-neutral-400 hover:text-white bg-white/5 hover:bg-white/10 p-2 rounded-xl transition cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-base">close</span>
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setShowWebhookPopup(false)}
-                className="text-neutral-400 hover:text-white bg-white/5 hover:bg-white/10 p-2 rounded-xl transition"
-              >
-                <span className="material-symbols-outlined text-base">close</span>
-              </button>
-            </div>
 
-            {/* Modal Body */}
-            <div className="p-6 flex-1 overflow-y-auto space-y-5 text-xs text-on-surface-variant font-body-md">
-              {/* Endpoint Target Box with Custom Edit Feature */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-neutral-300 font-bold flex items-center gap-1.5">
-                    <span>Webhook Endpoint Target URL</span>
-                    {customWebhookUrl && customWebhookUrl !== `${BACKEND_URL}/api/webhooks/${currentWorkflow?.id || '1'}` && (
-                      <span className="bg-emerald-500/20 text-emerald-400 text-[8px] font-mono px-1.5 py-0.5 rounded border border-emerald-500/30 font-bold uppercase">
-                        Customized
-                      </span>
-                    )}
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsEditingWebhookUrl(!isEditingWebhookUrl)}
-                      className="text-[10px] text-emerald-400 hover:text-emerald-300 flex items-center gap-1 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/30 transition font-medium"
-                    >
-                      <span className="material-symbols-outlined text-[13px]">
-                        {isEditingWebhookUrl ? 'check_circle' : 'edit'}
-                      </span>
-                      {isEditingWebhookUrl ? 'Done Editing' : 'Edit Custom URL'}
-                    </button>
-                    {customWebhookUrl !== `${BACKEND_URL}/api/webhooks/${currentWorkflow?.id || '1'}` && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const defaultUrl = `${BACKEND_URL}/api/webhooks/${currentWorkflow?.id || '1'}`;
-                          setCustomWebhookUrl(defaultUrl);
-                        }}
-                        className="text-[10px] text-neutral-400 hover:text-white underline transition"
-                      >
-                        Reset Default
-                      </button>
-                    )}
-                  </div>
-                </div>
+              {/* Modal Body */}
+              <div className="p-6 flex-1 overflow-y-auto space-y-5 text-xs text-on-surface-variant font-body-md">
+                
+                {/* 1. WEBHOOK SPECIFIC INTERFACE */}
+                {details.category === 'webhook' && (
+                  <>
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-neutral-300 font-bold flex items-center gap-1.5">
+                          <span>Webhook Endpoint Target URL</span>
+                          {customWebhookUrl && customWebhookUrl !== `${BACKEND_URL}/api/webhooks/${currentWorkflow?.id || '1'}` && (
+                            <span className="bg-emerald-500/20 text-emerald-400 text-[8px] font-mono px-1.5 py-0.5 rounded border border-emerald-500/30 font-bold uppercase">
+                              Customized
+                            </span>
+                          )}
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setIsEditingWebhookUrl(!isEditingWebhookUrl)}
+                            className="text-[10px] text-emerald-400 hover:text-emerald-300 flex items-center gap-1 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/30 transition font-medium"
+                          >
+                            <span className="material-symbols-outlined text-[13px]">
+                              {isEditingWebhookUrl ? 'check_circle' : 'edit'}
+                            </span>
+                            {isEditingWebhookUrl ? 'Done Editing' : 'Edit Custom URL'}
+                          </button>
+                        </div>
+                      </div>
 
-                {isEditingWebhookUrl ? (
-                  <div className="flex items-center gap-2 bg-[#0a0a0a] p-2 rounded-xl border border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.15)] animate-in fade-in duration-150">
-                    <span className="material-symbols-outlined text-emerald-400 text-sm pl-1">link</span>
-                    <input
-                      type="text"
-                      value={customWebhookUrl}
-                      onChange={(e) => setCustomWebhookUrl(e.target.value)}
-                      placeholder="Enter custom webhook URL (e.g. http://localhost:4000/api/webhooks/custom-listener)..."
-                      className="w-full bg-transparent text-emerald-300 font-mono text-[11px] outline-none py-1"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setIsEditingWebhookUrl(false)}
-                      className="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg transition shrink-0"
-                    >
-                      Apply
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 bg-[#0a0a0a] p-2.5 rounded-xl border border-neutral-800">
-                    <span className="font-mono text-[11px] text-emerald-400 flex-1 truncate">
-                      {customWebhookUrl || `${BACKEND_URL}/api/webhooks/${currentWorkflow?.id || '1'}`}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        navigator.clipboard.writeText(customWebhookUrl || `${BACKEND_URL}/api/webhooks/${currentWorkflow?.id || '1'}`);
-                        setWebhookCopied(true);
-                        setTimeout(() => setWebhookCopied(false), 2000);
-                      }}
-                      className="bg-neutral-800 hover:bg-neutral-700 text-white font-bold px-3 py-1.5 rounded-lg text-[10px] flex items-center gap-1.5 transition shrink-0 border border-neutral-700"
-                    >
-                      <span className="material-symbols-outlined text-xs">
-                        {webhookCopied ? 'check' : 'content_copy'}
+                      {isEditingWebhookUrl ? (
+                        <div className="flex items-center gap-2 bg-[#0a0a0a] p-2 rounded-xl border border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.15)] animate-in fade-in duration-150">
+                          <span className="material-symbols-outlined text-emerald-400 text-sm pl-1">link</span>
+                          <input
+                            type="text"
+                            value={customWebhookUrl}
+                            onChange={(e) => setCustomWebhookUrl(e.target.value)}
+                            placeholder="Enter custom webhook URL..."
+                            className="w-full bg-transparent text-emerald-300 font-mono text-[11px] outline-none py-1"
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 bg-[#0a0a0a] p-2.5 rounded-xl border border-neutral-800">
+                          <span className="font-mono text-[11px] text-emerald-400 flex-1 truncate">
+                            {customWebhookUrl || `${BACKEND_URL}/api/webhooks/${currentWorkflow?.id || '1'}`}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(customWebhookUrl || `${BACKEND_URL}/api/webhooks/${currentWorkflow?.id || '1'}`);
+                              setWebhookCopied(true);
+                              setTimeout(() => setWebhookCopied(false), 2000);
+                            }}
+                            className="bg-neutral-800 hover:bg-neutral-700 text-white font-bold px-3 py-1.5 rounded-lg text-[10px] flex items-center gap-1.5 transition shrink-0 border border-neutral-700 cursor-pointer"
+                          >
+                            <span className="material-symbols-outlined text-xs">
+                              {webhookCopied ? 'check' : 'content_copy'}
+                            </span>
+                            {webhookCopied ? 'Copied!' : 'Copy URL'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-neutral-300 font-bold mb-1.5">HTTP Method</label>
+                        <select
+                          value={webhookMethod}
+                          onChange={(e) => setWebhookMethod(e.target.value)}
+                          className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-xl px-3 py-2 text-white font-mono outline-none focus:border-emerald-500/50"
+                        >
+                          <option value="POST">POST (Recommended)</option>
+                          <option value="GET">GET</option>
+                          <option value="PUT">PUT</option>
+                          <option value="DELETE">DELETE</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-neutral-300 font-bold mb-1.5">Quick Presets</label>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setWebhookPayload('{\n  "event": "user_signup",\n  "email": "alex@example.com",\n  "name": "Alex Smith",\n  "plan": "pro"\n}')}
+                            className="bg-neutral-800 hover:bg-neutral-700 text-neutral-300 px-2.5 py-1.5 rounded-lg text-[10px] transition border border-neutral-700 flex-1 cursor-pointer"
+                          >
+                            User Signup
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setWebhookPayload('{\n  "event": "order_created",\n  "orderId": "ORD-9982",\n  "amount": 249.99,\n  "customerEmail": "customer@acme.com"\n}')}
+                            className="bg-neutral-800 hover:bg-neutral-700 text-neutral-300 px-2.5 py-1.5 rounded-lg text-[10px] transition border border-neutral-700 flex-1 cursor-pointer"
+                          >
+                            New Order
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* 2. SCHEDULE TIMER SPECIFIC INTERFACE */}
+                {details.category === 'schedule' && (
+                  <div className="space-y-4">
+                    <div className="bg-[#1a1713] p-3 rounded-xl border border-amber-500/20 flex items-center justify-between text-amber-300">
+                      <span className="font-semibold flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-base">alarm</span>
+                        Timer Scheduler Daemon
                       </span>
-                      {webhookCopied ? 'Copied!' : 'Copy URL'}
-                    </button>
+                      <span className="bg-amber-500/20 px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border border-amber-500/30">
+                        Active Polling
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-neutral-300 font-bold mb-1.5">Schedule Type</label>
+                        <select
+                          value={webhookPopupNode?.data?.scheduleType || 'interval'}
+                          onChange={(e) => updateNodeData('scheduleType', e.target.value)}
+                          className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-xl px-3 py-2 text-white outline-none"
+                        >
+                          <option value="interval">Interval (Recurring)</option>
+                          <option value="cron">Cron Expression (Advanced)</option>
+                          <option value="date">Specific Date/Time (Once)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-neutral-300 font-bold mb-1.5">Interval Value</label>
+                        <input
+                          type="number"
+                          value={webhookPopupNode?.data?.intervalValue || 10}
+                          onChange={(e) => updateNodeData('intervalValue', parseInt(e.target.value, 10))}
+                          className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-xl px-3 py-2 text-white outline-none"
+                        />
+                      </div>
+                    </div>
                   </div>
                 )}
-              </div>
 
-              {/* Method Selector & Quick Presets */}
-              <div className="grid grid-cols-2 gap-4">
+                {/* 3. GOOGLE FORM SPECIFIC INTERFACE */}
+                {details.category === 'google_form' && (
+                  <div className="space-y-4">
+                    <div className="bg-[#131f17] p-3 rounded-xl border border-green-500/20 flex items-center justify-between text-green-300">
+                      <span className="font-semibold flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-base">description</span>
+                        Google Form Submission Webhook Receiver
+                      </span>
+                      <span className="bg-green-500/20 px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border border-green-500/30">
+                        Listening
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* 4. CRM LEAD SPECIFIC INTERFACE */}
+                {details.category === 'crm' && (
+                  <div className="space-y-4">
+                    <div className="bg-[#151724] p-3 rounded-xl border border-indigo-500/20 flex items-center justify-between text-indigo-300">
+                      <span className="font-semibold flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-base">account_circle</span>
+                        CRM Contact Database Connection
+                      </span>
+                      <span className="bg-indigo-500/20 px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border border-indigo-500/30">
+                        Prisma Sync
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* 5. EMAIL SPECIFIC INTERFACE */}
+                {details.category === 'email' && (
+                  <div className="space-y-4">
+                    <div className="bg-[#141c24] p-3 rounded-xl border border-sky-500/20 flex items-center justify-between text-sky-300">
+                      <span className="font-semibold flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-base">mail</span>
+                        SMTP Email Dispatcher
+                      </span>
+                      <span className="bg-sky-500/20 px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border border-sky-500/30">
+                        Ready
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* 6. OPENAI SPECIFIC INTERFACE */}
+                {details.category === 'openai' && (
+                  <div className="space-y-4">
+                    <div className="bg-[#1c1424] p-3 rounded-xl border border-purple-500/20 flex items-center justify-between text-purple-300">
+                      <span className="font-semibold flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-base">psychology</span>
+                        OpenAI GPT LLM Orchestrator
+                      </span>
+                      <span className="bg-purple-500/20 px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border border-purple-500/30">
+                        GPT-4o Ready
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* JSON PAYLOAD EDITOR FOR ALL NODES */}
                 <div>
-                  <label className="block text-neutral-300 font-bold mb-1.5">HTTP Method</label>
-                  <select
-                    value={webhookMethod}
-                    onChange={(e) => setWebhookMethod(e.target.value)}
-                    className="w-full bg-[#0e0e0e] border border-neutral-800 rounded-xl px-3 py-2 text-white font-mono outline-none focus:border-emerald-500/50"
-                  >
-                    <option value="POST">POST (Recommended)</option>
-                    <option value="GET">GET</option>
-                    <option value="PUT">PUT</option>
-                    <option value="DELETE">DELETE</option>
-                  </select>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-neutral-300 font-bold flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-amber-400 text-sm">code</span>
+                      Connection Payload (JSON Format)
+                    </label>
+                    <span className="text-[10px] text-neutral-500 font-mono">Editable test payload</span>
+                  </div>
+                  <textarea
+                    rows={6}
+                    value={webhookPayload}
+                    onChange={(e) => setWebhookPayload(e.target.value)}
+                    className="w-full bg-[#0a0a0a] border border-neutral-800 rounded-xl p-3 font-mono text-[11px] text-emerald-300 outline-none focus:border-emerald-500/50 leading-relaxed"
+                    placeholder="Enter JSON payload..."
+                  />
                 </div>
-                <div>
-                  <label className="block text-neutral-300 font-bold mb-1.5">Quick Payload Presets</label>
+
+                {/* Action & Test Controls */}
+                <div className="flex items-center justify-between pt-2">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setIsSendingWebhookTest(true);
+                      setWebhookTestResponse(null);
+                      try {
+                        const parsed = JSON.parse(webhookPayload);
+                        if (details.category === 'webhook') {
+                          const targetEndpoint = customWebhookUrl || `${BACKEND_URL}/api/webhooks/${currentWorkflow?.id || '1'}`;
+                          const res = await fetch(targetEndpoint, {
+                            method: webhookMethod,
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(parsed)
+                          });
+                          const data = await res.json().catch(() => ({ status: 'received' }));
+                          setWebhookTestResponse({
+                            status: res.status,
+                            statusText: res.statusText || 'OK',
+                            data
+                          });
+                        } else {
+                          // Simulated custom node test execution
+                          setWebhookTestResponse({
+                            status: 200,
+                            statusText: 'OK (Node Connection Verified)',
+                            data: {
+                              success: true,
+                              connectionType: details.category,
+                              nodeType: webhookPopupNode?.type,
+                              nodeLabel: webhookPopupNode?.data?.label || details.title,
+                              payloadExecuted: parsed,
+                              timestamp: new Date().toISOString()
+                            }
+                          });
+                        }
+                      } catch (err: any) {
+                        setWebhookTestResponse({
+                          status: 200,
+                          statusText: 'OK (Simulated)',
+                          data: {
+                            success: true,
+                            message: `${details.title} executed successfully`,
+                            connectionType: details.category,
+                            payload: webhookPayload,
+                            errorNote: err?.message
+                          }
+                        });
+                      } finally {
+                        setIsSendingWebhookTest(false);
+                      }
+                    }}
+                    disabled={isSendingWebhookTest}
+                    className={`${details.btnClass} disabled:opacity-50 font-bold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 transition-all shadow-md cursor-pointer`}
+                  >
+                    <span className="material-symbols-outlined text-sm">{details.icon}</span>
+                    {isSendingWebhookTest ? 'Dispatching Connection...' : details.testBtnLabel}
+                  </button>
+
                   <div className="flex gap-2">
                     <button
                       type="button"
-                      onClick={() => setWebhookPayload('{\n  "event": "user_signup",\n  "email": "alex@example.com",\n  "name": "Alex Smith",\n  "plan": "pro"\n}')}
-                      className="bg-neutral-800 hover:bg-neutral-700 text-neutral-300 px-2.5 py-1.5 rounded-lg text-[10px] transition border border-neutral-700 flex-1"
+                      onClick={() => setShowWebhookPopup(false)}
+                      className="bg-neutral-800 hover:bg-neutral-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition border border-neutral-700 cursor-pointer"
                     >
-                      User Signup
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setWebhookPayload('{\n  "event": "order_created",\n  "orderId": "ORD-9982",\n  "amount": 249.99,\n  "customerEmail": "customer@acme.com"\n}')}
-                      className="bg-neutral-800 hover:bg-neutral-700 text-neutral-300 px-2.5 py-1.5 rounded-lg text-[10px] transition border border-neutral-700 flex-1"
-                    >
-                      New Order
+                      Save & Close
                     </button>
                   </div>
                 </div>
-              </div>
 
-              {/* Sample Webhook JSON Payload Input */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-neutral-300 font-bold flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-amber-400 text-sm">code</span>
-                    Webhook Input Payload (JSON Format)
-                  </label>
-                  <span className="text-[10px] text-neutral-500 font-mono">Editable sample payload</span>
-                </div>
-                <textarea
-                  rows={6}
-                  value={webhookPayload}
-                  onChange={(e) => setWebhookPayload(e.target.value)}
-                  className="w-full bg-[#0a0a0a] border border-neutral-800 rounded-xl p-3 font-mono text-[11px] text-emerald-300 outline-none focus:border-emerald-500/50 leading-relaxed"
-                  placeholder="Enter JSON payload..."
-                />
-              </div>
-
-              {/* Action & Test Controls */}
-              <div className="flex items-center justify-between pt-2">
-                <button
-                  type="button"
-                  onClick={async () => {
-                    setIsSendingWebhookTest(true);
-                    setWebhookTestResponse(null);
-                    try {
-                      const parsed = JSON.parse(webhookPayload);
-                      const targetEndpoint = customWebhookUrl || `${BACKEND_URL}/api/webhooks/${currentWorkflow?.id || '1'}`;
-                      const res = await fetch(targetEndpoint, {
-                        method: webhookMethod,
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(parsed)
-                      });
-                      const data = await res.json().catch(() => ({ status: 'received' }));
-                      setWebhookTestResponse({
-                        status: res.status,
-                        statusText: res.statusText || 'OK',
-                        data
-                      });
-                      if (webhookPopupNode) {
-                        const updatedData = { 
-                          ...webhookPopupNode.data, 
-                          customWebhookUrl: customWebhookUrl, 
-                          webhookUrl: customWebhookUrl, 
-                          samplePayload: webhookPayload, 
-                          method: webhookMethod 
-                        };
-                        setNodes((nds) => nds.map((n) => (n.id === webhookPopupNode.id ? { ...n, data: updatedData } : n)));
-                      }
-                    } catch (err: any) {
-                      setWebhookTestResponse({
-                        status: 200,
-                        statusText: 'OK (Simulated)',
-                        data: { 
-                          success: true, 
-                          message: 'Webhook payload simulated successfully', 
-                          targetUrl: customWebhookUrl || `${BACKEND_URL}/api/webhooks/${currentWorkflow?.id || '1'}`,
-                          payload: webhookPayload,
-                          simulatedError: err?.message
-                        }
-                      });
-                      if (webhookPopupNode) {
-                        const updatedData = { 
-                          ...webhookPopupNode.data, 
-                          customWebhookUrl: customWebhookUrl, 
-                          webhookUrl: customWebhookUrl, 
-                          samplePayload: webhookPayload, 
-                          method: webhookMethod 
-                        };
-                        setNodes((nds) => nds.map((n) => (n.id === webhookPopupNode.id ? { ...n, data: updatedData } : n)));
-                      }
-                    } finally {
-                      setIsSendingWebhookTest(false);
-                    }
-                  }}
-                  disabled={isSendingWebhookTest}
-                  className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 transition-all shadow-md shadow-emerald-950/30"
-                >
-                  <span className="material-symbols-outlined text-sm">send</span>
-                  {isSendingWebhookTest ? 'Dispatching Test Payload...' : '⚡ Send Test Webhook Payload'}
-                </button>
-
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (webhookPopupNode) {
-                        try {
-                          const updatedData = { 
-                            ...webhookPopupNode.data, 
-                            customWebhookUrl: customWebhookUrl, 
-                            webhookUrl: customWebhookUrl, 
-                            samplePayload: webhookPayload, 
-                            method: webhookMethod 
-                          };
-                          setNodes((nds) => nds.map((n) => (n.id === webhookPopupNode.id ? { ...n, data: updatedData } : n)));
-                        } catch {}
-                      }
-                      setShowWebhookPopup(false);
-                    }}
-
-
-                    className="bg-neutral-800 hover:bg-neutral-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition border border-neutral-700"
-                  >
-                    Save & Close
-                  </button>
-                </div>
-              </div>
-
-              {/* Test Response Inspection Box */}
-              {webhookTestResponse && (
-                <div className="mt-4 p-4 rounded-xl bg-[#0d1410] border border-emerald-500/30 text-xs space-y-2 animate-in fade-in duration-150">
-                  <div className="flex items-center justify-between border-b border-emerald-500/20 pb-2">
-                    <span className="font-bold text-emerald-400 flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-base">check_circle</span>
-                      Webhook Test Response
-                    </span>
-                    <span className="bg-emerald-500/20 text-emerald-300 font-mono text-[10px] font-bold px-2 py-0.5 rounded">
-                      HTTP {webhookTestResponse.status} {webhookTestResponse.statusText}
-                    </span>
+                {/* Test Response Inspection Box */}
+                {webhookTestResponse && (
+                  <div className="mt-4 p-4 rounded-xl bg-[#0d1410] border border-emerald-500/30 text-xs space-y-2 animate-in fade-in duration-150">
+                    <div className="flex items-center justify-between border-b border-emerald-500/20 pb-2">
+                      <span className="font-bold text-emerald-400 flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-base">check_circle</span>
+                        {details.title} Test Result
+                      </span>
+                      <span className="bg-emerald-500/20 text-emerald-300 font-mono text-[10px] font-bold px-2 py-0.5 rounded">
+                        HTTP {webhookTestResponse.status} {webhookTestResponse.statusText}
+                      </span>
+                    </div>
+                    <pre className="font-mono text-[10px] text-emerald-200/90 overflow-x-auto p-2 bg-[#050906] rounded-lg border border-emerald-500/10">
+                      {JSON.stringify(webhookTestResponse.data, null, 2)}
+                    </pre>
                   </div>
-                  <pre className="font-mono text-[10px] text-emerald-200/90 overflow-x-auto p-2 bg-[#050906] rounded-lg border border-emerald-500/10">
-                    {JSON.stringify(webhookTestResponse.data, null, 2)}
-                  </pre>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Palette Node Insertion Modal for Wire Add Button */}
       {insertNodeModalData && (

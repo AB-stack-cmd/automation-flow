@@ -1,8 +1,8 @@
 /* NEURON_FLOW Design System - React Flow & Base Styles (Dark Mode Default) */
 
 :root {
-  --bg-canvas: #121212;
-  --bg-surface: #18181b;
+  --bg-canvas: #09090b;
+  --bg-surface: #141417;
   --bg-card: #1f1f23;
   --text-main: #f4f4f5;
   --text-muted: #a1a1aa;
@@ -17,10 +17,45 @@ html, body, #root {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  background-color: var(--bg-canvas);
-  color: var(--text-main);
+  background-color: var(--bg-canvas) !important;
+  color: var(--text-main) !important;
   font-family: 'Inter', system-ui, sans-serif;
   transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Ensure dark theme container classes */
+.bg-surface-container,
+div.bg-surface-container,
+aside.bg-surface-container {
+  background-color: #141417 !important;
+  color: #f4f4f5 !important;
+}
+
+.bg-surface-container-low {
+  background-color: #0e0e11 !important;
+  color: #f4f4f5 !important;
+}
+
+.bg-surface-container-high {
+  background-color: #1c1c21 !important;
+  color: #f4f4f5 !important;
+}
+
+.bg-surface {
+  background-color: #09090b !important;
+  color: #f4f4f5 !important;
+}
+
+.text-on-surface-variant {
+  color: #a1a1aa !important;
+}
+
+.text-on-surface {
+  color: #f4f4f5 !important;
+}
+
+.border-surface {
+  border-color: #27272a !important;
 }
 
 .react-flow,
