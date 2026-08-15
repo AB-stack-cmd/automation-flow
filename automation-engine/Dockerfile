@@ -23,6 +23,8 @@ COPY . .
 # Ensure sqlite volume directory exists
 RUN mkdir -p /app/packages/db/prisma/data
 
+ENV DATABASE_URL="file:/app/packages/db/prisma/data/dev.db"
+
 # Generate the database prisma client
 RUN npm run db:generate
 

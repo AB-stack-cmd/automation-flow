@@ -489,54 +489,17 @@ export default function ExcelAutomation() {
     <>
       <Head>
         <title>Excel AI Automation | NEURON_FLOW</title>
-        <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-        <script dangerouslySetInnerHTML={{
-          __html: `
-            tailwind.config = {
-              darkMode: "class",
-              theme: {
-                extend: {
-                  "colors": {
-                    "secondary-container": "#a40217",
-                  colors: {
-                    "primary": "#ff4f00",
-                    "on-primary": "#fffefb",
-                    "ink": "#201515",
-                    "body": "#605d52",
-                    "mute": "#c5c0b1",
-                    "canvas": "#fffefb",
-                    "canvas-soft": "#f8f4f0"
-                  },
-                  borderRadius: {
-                    "none": "0px",
-                    "sm": "6px",
-                    "md": "12px",
-                    "pill": "9999px"
-                  }
-                }
-              }
-            }
-          `
-        }} />
         <style>{`
           body {
-            background-color: #fffefb;
-            color: #201515;
+            background-color: #09090b !important;
+            color: #f4f4f5 !important;
             font-family: 'Inter', sans-serif;
             transition: background-color 0.2s, color 0.2s;
           }
-          html.dark body, body.dark {
-            background-color: #121212;
-            color: #f4f4f5;
-          }
           .glass-panel {
-            background: #f8f4f0;
-            border: 1px solid #c5c0b1;
-            border-radius: 12px;
-          }
-          html.dark .glass-panel, .dark .glass-panel {
-            background: #18181b;
+            background: #141417;
             border: 1px solid #27272a;
+            border-radius: 12px;
           }
           .excel-grid input {
             background: transparent;
@@ -545,44 +508,30 @@ export default function ExcelAutomation() {
             width: 100%;
             height: 100%;
             padding: 8px 12px;
-            color: #201515;
-          }
-          html.dark .excel-grid input, .dark .excel-grid input {
             color: #f4f4f5;
           }
           .excel-grid input:focus {
-            background: #fffefb;
-            box-shadow: inset 0 0 0 2px #ff4f00;
-          }
-          html.dark .excel-grid input:focus, .dark .excel-grid input:focus {
             background: #1f1f23;
             box-shadow: inset 0 0 0 2px #ff4f00;
           }
-          /* Custom scrollbars */
           ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
           }
           ::-webkit-scrollbar-track {
-            background: #f8f4f0;
-          }
-          html.dark ::-webkit-scrollbar-track, .dark ::-webkit-scrollbar-track {
             background: #18181b;
           }
           ::-webkit-scrollbar-thumb {
-            background: #c5c0b1;
+            background: #3f3f46;
             border-radius: 6px;
           }
-          html.dark ::-webkit-scrollbar-thumb, .dark ::-webkit-scrollbar-thumb {
-            background: #3f3f46;
-          }
           ::-webkit-scrollbar-thumb:hover {
-            background: #939084;
+            background: #ff4f00;
           }
         `}</style>
       </Head>
 
-      <div className="bg-[#fffefb] dark:bg-[#121212] text-[#201515] dark:text-[#f4f4f5] font-sans min-h-screen relative overflow-x-hidden transition-colors">
+      <div className="bg-[#09090b] text-[#f4f4f5] font-sans min-h-screen relative overflow-x-hidden transition-colors">
 
         {/* Glow overlay */}
         <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary-container/5 rounded-full blur-3xl pointer-events-none"></div>

@@ -1962,25 +1962,25 @@ return {
       </aside>
 
       {/* Main Workspace Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative bg-[#fffefb] text-[#201515]">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative bg-[#09090b] text-[#f4f4f5]">
 
         {/* 1. OVERVIEW VIEW */}
         {viewMode === 'overview' && (
-          <div className="flex-1 flex flex-col overflow-y-auto p-8 bg-[#fffefb]">
+          <div className="flex-1 flex flex-col overflow-y-auto p-8 bg-[#09090b]">
             {/* Header */}
             <header className="flex justify-between items-center mb-10 shrink-0 text-left">
               <div>
-                <h1 className="text-3xl font-bold text-[#201515] tracking-tight mb-1">Overview Dashboard</h1>
-                <p className="text-[#605d52] text-sm">Real-time status metrics and automation activity control hub.</p>
+                <h1 className="text-3xl font-bold text-white tracking-tight mb-1">Overview Dashboard</h1>
+                <p className="text-[#a1a1aa] text-sm">Real-time status metrics and automation activity control hub.</p>
               </div>
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#f8f4f0] text-emerald-700 border border-[#c5c0b1] text-xs font-semibold">
-                  <div className="w-2 h-2 bg-emerald-600 rounded-full animate-pulse"></div>
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#141d18] text-emerald-400 border border-emerald-500/30 text-xs font-semibold">
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
                   <span>Systems Operational</span>
                 </div>
                 <div 
                   onClick={() => setIsAvatarModalOpen(true)}
-                  className="w-9 h-9 rounded-full bg-[#f8f4f0] border border-[#201515] overflow-hidden cursor-pointer hover:opacity-85 transition-opacity"
+                  className="w-9 h-9 rounded-full bg-[#141417] border border-[#27272a] overflow-hidden cursor-pointer hover:opacity-85 transition-opacity"
                   title="Change Profile Picture"
                 >
                   <img className="w-full h-full object-cover" alt="User Avatar" src={profilePic} />
@@ -1988,7 +1988,7 @@ return {
               </div>
             </header>
 
-            {/* Metrics cards grid (card-feature-cream) */}
+            {/* Metrics cards grid */}
             {(() => {
               const finishedExecs = (allExecutions || []).filter(
                 (e: any) => e.status === 'success' || e.status === 'failed'
@@ -2018,27 +2018,27 @@ return {
 
               return (
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10 text-left">
-                  <div className="bg-[#f8f4f0] border border-[#c5c0b1] p-6 rounded-md flex flex-col justify-between">
-                    <span className="text-[10px] font-bold text-[#939084] uppercase tracking-wider">Pipeline Latency</span>
+                  <div className="bg-[#141417] border border-[#27272a] p-6 rounded-xl flex flex-col justify-between shadow-sm">
+                    <span className="text-[10px] font-bold text-[#a1a1aa] uppercase tracking-wider">Pipeline Latency</span>
                     <span className="text-3xl font-bold text-[#ff4f00] my-2">{avgLatencyMs}ms</span>
-                    <span className="text-xs text-emerald-700 font-semibold">Within SLA limit</span>
+                    <span className="text-xs text-emerald-400 font-semibold">Within SLA limit</span>
                   </div>
-                  <div className="bg-[#f8f4f0] border border-[#c5c0b1] p-6 rounded-md flex flex-col justify-between">
-                    <span className="text-[10px] font-bold text-[#939084] uppercase tracking-wider">Max Throughput</span>
-                    <span className="text-3xl font-bold text-[#201515] my-2">1M+ rps</span>
-                    <span className="text-xs text-[#605d52]">Distributed engine</span>
+                  <div className="bg-[#141417] border border-[#27272a] p-6 rounded-xl flex flex-col justify-between shadow-sm">
+                    <span className="text-[10px] font-bold text-[#a1a1aa] uppercase tracking-wider">Max Throughput</span>
+                    <span className="text-3xl font-bold text-white my-2">1M+ rps</span>
+                    <span className="text-xs text-[#a1a1aa]">Distributed engine</span>
                   </div>
-                  <div className="bg-[#f8f4f0] border border-[#c5c0b1] p-6 rounded-md flex flex-col justify-between">
-                    <span className="text-[10px] font-bold text-[#939084] uppercase tracking-wider">Uptime Rate</span>
+                  <div className="bg-[#141417] border border-[#27272a] p-6 rounded-xl flex flex-col justify-between shadow-sm">
+                    <span className="text-[10px] font-bold text-[#a1a1aa] uppercase tracking-wider">Uptime Rate</span>
                     <span className="text-3xl font-bold text-[#ff4f00] my-2">{calculatedUptime}%</span>
-                    <span className="text-xs text-emerald-700 font-semibold">
+                    <span className="text-xs text-emerald-400 font-semibold">
                       {Number(calculatedUptime) >= 99 ? 'Carrier-grade reliability' : 'Operational'}
                     </span>
                   </div>
-                  <div className="bg-[#f8f4f0] border border-[#c5c0b1] p-6 rounded-md flex flex-col justify-between">
-                    <span className="text-[10px] font-bold text-[#939084] uppercase tracking-wider">Active Workflows</span>
-                    <span className="text-3xl font-bold text-[#201515] my-2">{workflows.length}</span>
-                    <span className="text-xs text-[#605d52]">Deployed in workspace</span>
+                  <div className="bg-[#141417] border border-[#27272a] p-6 rounded-xl flex flex-col justify-between shadow-sm">
+                    <span className="text-[10px] font-bold text-[#a1a1aa] uppercase tracking-wider">Active Workflows</span>
+                    <span className="text-3xl font-bold text-white my-2">{workflows.length}</span>
+                    <span className="text-xs text-[#a1a1aa]">Deployed in workspace</span>
                   </div>
                 </div>
               );
@@ -2047,22 +2047,22 @@ return {
             {/* Double column list */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Workflows List */}
-              <div className="bg-[#f8f4f0] border border-[#c5c0b1] p-6 rounded-md flex flex-col text-left">
+              <div className="bg-[#141417] border border-[#27272a] p-6 rounded-xl flex flex-col text-left shadow-sm">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-bold text-[#201515]">Automation Pipelines</h3>
+                  <h3 className="text-lg font-bold text-white">Automation Pipelines</h3>
                   <button onClick={handleCreateNew} className="text-xs font-bold text-[#ff4f00] hover:underline">
                     + Create Fresh Canvas
                   </button>
                 </div>
                 <div className="space-y-3 flex-1 overflow-y-auto max-h-[350px]">
                   {workflows.length === 0 ? (
-                    <div className="text-center py-8 text-[#939084] text-xs">No pipelines registered. Go to templates to deploy one!</div>
+                    <div className="text-center py-8 text-[#a1a1aa] text-xs">No pipelines registered. Go to templates to deploy one!</div>
                   ) : (
                     workflows.map(wf => (
-                      <div key={wf.id} className="p-4 bg-[#fffefb] border border-[#c5c0b1] rounded-md flex items-center justify-between hover:border-[#201515] transition-all">
+                      <div key={wf.id} className="p-4 bg-[#1f1f23] border border-[#27272a] rounded-lg flex items-center justify-between hover:border-[#ff4f00] transition-all">
                         <div className="flex flex-col text-left">
-                          <span className="font-bold text-[#201515] text-sm">{wf.name}</span>
-                          <span className="text-xs text-[#605d52]">ID: #{wf.id} • Active</span>
+                          <span className="font-bold text-white text-sm">{wf.name}</span>
+                          <span className="text-xs text-[#a1a1aa]">ID: #{wf.id} • Active</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <button
@@ -2070,7 +2070,7 @@ return {
                               loadWorkflow(wf);
                               setViewMode('canvas');
                             }}
-                            className="px-3 py-1.5 bg-[#201515] text-[#fffefb] rounded-md text-xs font-semibold hover:opacity-90 transition"
+                            className="px-3.5 py-1.5 bg-[#27272a] hover:bg-[#3f3f46] text-white rounded-md text-xs font-semibold transition"
                           >
                             Edit
                           </button>
@@ -2079,7 +2079,7 @@ return {
                               loadWorkflow(wf);
                               handleRunWorkflow();
                             }}
-                            className="px-3 py-1.5 bg-[#ff4f00] text-[#fffefb] rounded-md text-xs font-bold hover:opacity-90 transition shadow-sm"
+                            className="px-3.5 py-1.5 bg-[#ff4f00] hover:bg-[#e04500] text-white rounded-md text-xs font-bold transition shadow-sm"
                           >
                             Trigger
                           </button>
@@ -2090,17 +2090,17 @@ return {
                 </div>
               </div>
 
-              {/* Execution logs overview (ex-data-table-cell) */}
-              <div className="bg-[#f8f4f0] border border-[#c5c0b1] p-6 rounded-md flex flex-col text-left">
+              {/* Execution logs overview */}
+              <div className="bg-[#141417] border border-[#27272a] p-6 rounded-xl flex flex-col text-left shadow-sm">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-bold text-[#201515]">Recent Activity</h3>
+                  <h3 className="text-lg font-bold text-white">Recent Activity</h3>
                   <button onClick={() => { setViewMode('history'); setHistoryTab('logs'); }} className="text-xs font-bold text-[#ff4f00] hover:underline">
                     View Outbox Logs →
                   </button>
                 </div>
                 <div className="space-y-3 flex-1 overflow-y-auto max-h-[350px]">
                   {executions.length === 0 ? (
-                    <div className="text-center py-8 text-[#939084] text-xs">No logs recorded. Trigger a workflow to start simulation.</div>
+                    <div className="text-center py-8 text-[#a1a1aa] text-xs">No logs recorded. Trigger a workflow to start simulation.</div>
                   ) : (
                     executions.slice(0, 5).map(exec => (
                       <div
@@ -2110,15 +2110,15 @@ return {
                           setViewMode('history');
                           setHistoryTab('logs');
                         }}
-                        className="p-3 bg-[#fffefb] border border-[#c5c0b1] rounded-md flex items-center justify-between hover:border-[#201515] transition cursor-pointer"
+                        className="p-3 bg-[#1f1f23] border border-[#27272a] rounded-lg flex items-center justify-between hover:border-[#ff4f00] transition cursor-pointer"
                       >
                         <div className="flex flex-col">
-                          <span className="font-bold text-[#201515] text-xs">Run ID #{exec.id}</span>
-                          <span className="text-[10px] text-[#605d52] font-mono">{new Date(exec.startedAt).toLocaleString()}</span>
+                          <span className="font-bold text-white text-xs">Run ID #{exec.id}</span>
+                          <span className="text-[10px] text-[#a1a1aa] font-mono">{new Date(exec.startedAt).toLocaleString()}</span>
                         </div>
                         <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                          exec.status === 'success' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' :
-                          exec.status === 'failed' ? 'bg-rose-100 text-rose-800 border border-rose-300' : 'bg-amber-100 text-amber-800 border border-amber-300'
+                          exec.status === 'success' ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-500/30' :
+                          exec.status === 'failed' ? 'bg-rose-950/80 text-rose-400 border border-rose-500/30' : 'bg-amber-950/80 text-amber-400 border border-amber-500/30'
                         }`}>
                           {exec.status}
                         </span>
@@ -3250,28 +3250,28 @@ return {
 
         {/* 3. TEMPLATES (TEMPLATE LIBRARY) VIEW */}
         {viewMode === 'templates' && (
-          <div className="flex-1 flex flex-col overflow-y-auto p-8 bg-[#fffefb] text-[#201515]">
+          <div className="flex-1 flex flex-col overflow-y-auto p-8 bg-[#09090b] text-[#f4f4f5]">
             {/* Template TopNavBar */}
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 shrink-0 text-left">
               <div>
-                <h1 className="text-3xl font-bold text-[#201515] tracking-tight mb-1">Template Library</h1>
-                <p className="text-[#605d52] text-sm max-w-xl">Curated automation workflows ready to deploy into your visual workspace in seconds.</p>
+                <h1 className="text-3xl font-bold text-white tracking-tight mb-1">Template Library</h1>
+                <p className="text-[#a1a1aa] text-sm max-w-xl font-normal">Curated automation workflows ready to deploy into your visual workspace in seconds.</p>
               </div>
 
               <div className="flex items-center gap-4 w-full md:w-auto">
                 <div className="relative flex-1 md:w-72">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-[#939084] font-bold">🔍</span>
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-[#a1a1aa] font-bold">🔍</span>
                   <input
                     value={templateSearchQuery}
                     onChange={(e) => setTemplateSearchQuery(e.target.value)}
-                    className="w-full bg-[#f8f4f0] border border-[#c5c0b1] pl-9 pr-4 py-2 rounded-md text-xs text-[#201515] placeholder-[#939084] focus:outline-none focus:border-[#ff4f00] transition-all"
+                    className="w-full bg-[#141417] border border-[#27272a] pl-9 pr-4 py-2 rounded-md text-xs text-white placeholder-[#a1a1aa] focus:outline-none focus:border-[#ff4f00] transition-all font-medium"
                     placeholder="Search templates..."
                     type="text"
                   />
                 </div>
                 <div 
                   onClick={() => setIsAvatarModalOpen(true)}
-                  className="w-9 h-9 rounded-full bg-[#f8f4f0] border border-[#201515] overflow-hidden cursor-pointer hover:opacity-85 transition-opacity shrink-0"
+                  className="w-9 h-9 rounded-full bg-[#141417] border border-[#27272a] overflow-hidden cursor-pointer hover:opacity-85 transition-opacity shrink-0"
                   title="Change Profile Picture"
                 >
                   <img className="w-full h-full object-cover" alt="User Avatar" src={profilePic} />
@@ -3280,7 +3280,7 @@ return {
             </header>
 
             {/* Category Filter Pills */}
-            <div className="flex gap-2 mb-8 border-b border-[#c5c0b1] pb-3 overflow-x-auto shrink-0 text-left">
+            <div className="flex gap-2 mb-8 border-b border-[#27272a] pb-3 overflow-x-auto shrink-0 text-left">
               {['All', 'CRM', 'AI Agents', 'E-Commerce', 'Marketing', 'DevOps', 'Security'].map((cat) => {
                 const isActive = selectedTemplateCategory === cat;
                 return (
@@ -3290,8 +3290,8 @@ return {
                     onClick={() => setSelectedTemplateCategory(cat)}
                     className={`px-3.5 py-1.5 rounded-md text-xs font-bold transition-all whitespace-nowrap ${
                       isActive
-                        ? 'bg-[#ff4f00] text-[#fffefb] shadow-sm'
-                        : 'bg-[#f8f4f0] text-[#605d52] hover:text-[#201515] hover:bg-[#eae4dc] border border-[#c5c0b1]'
+                        ? 'bg-[#ff4f00] text-white shadow-sm'
+                        : 'bg-[#141417] text-[#a1a1aa] hover:text-white hover:bg-[#1f1f23] border border-[#27272a]'
                     }`}
                   >
                     {cat}
@@ -3313,17 +3313,17 @@ return {
                 if (!matchesCategory || !matchesSearch) return null;
 
                 return (
-                  <div className="lg:col-span-2 clean-card group cursor-pointer flex flex-row p-5 rounded-lg overflow-hidden min-h-[170px] bg-[#1a1918] text-[#fffefb] border border-[#353330] hover:border-[#ff4f00] shadow-sm hover:shadow-md transition-all relative">
+                  <div className="lg:col-span-2 clean-card group cursor-pointer flex flex-row p-5 rounded-xl overflow-hidden min-h-[170px] bg-[#141417] text-white border border-[#27272a] hover:border-[#ff4f00] shadow-sm hover:shadow-md transition-all relative">
                     <div className="flex-1 flex flex-col justify-between z-10 pr-4 text-left">
                       <div>
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="text-[10px] font-bold text-[#c5c0b1] uppercase tracking-wider">{featuredTemplate.category}</span>
+                          <span className="text-[10px] font-bold text-[#a1a1aa] uppercase tracking-wider">{featuredTemplate.category}</span>
                           <span className="px-2 py-0.5 bg-[#ff4f00]/20 text-[#ff4f00] text-[9px] font-bold tracking-wider rounded border border-[#ff4f00]/30">
                             ★ FEATURED
                           </span>
                         </div>
                         <h3 className="text-lg font-bold text-white mb-1 tracking-tight">{featuredTemplate.name}</h3>
-                        <p className="text-[#c5c0b1] text-xs leading-relaxed max-w-md mb-3">{featuredTemplate.description}</p>
+                        <p className="text-[#a1a1aa] text-xs leading-relaxed max-w-md mb-3 font-normal">{featuredTemplate.description}</p>
                       </div>
                       <div className="mt-auto">
                         <button
@@ -3340,9 +3340,9 @@ return {
                     </div>
 
                     {/* Graphic diagram on right side */}
-                    <div className="hidden md:flex w-1/4 items-center justify-center border-l border-[#353330] ml-3 pl-3 z-10 opacity-80 group-hover:opacity-100 transition-opacity">
+                    <div className="hidden md:flex w-1/4 items-center justify-center border-l border-[#27272a] ml-3 pl-3 z-10 opacity-80 group-hover:opacity-100 transition-opacity">
                       <div className="relative flex items-center justify-center">
-                        <div className="w-14 h-14 rounded-full border border-[#ff4f00]/60 bg-[#252321] flex items-center justify-center text-xl shadow-inner text-[#ff4f00]">
+                        <div className="w-14 h-14 rounded-full border border-[#ff4f00]/60 bg-[#1f1f23] flex items-center justify-center text-xl shadow-inner text-[#ff4f00]">
                           ⚡
                         </div>
                         <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full animate-ping"></div>
@@ -3361,24 +3361,24 @@ return {
                 <div
                   key={tpl.id}
                   onClick={() => handleDeployTemplate(tpl)}
-                  className="bg-[#fcfaf7] border border-[#c5c0b1] hover:border-[#ff4f00] p-5 rounded-lg flex flex-col justify-between transition-all cursor-pointer group shadow-sm hover:shadow-md text-left min-h-[170px]"
+                  className="bg-[#141417] border border-[#27272a] hover:border-[#ff4f00] p-5 rounded-xl flex flex-col justify-between transition-all cursor-pointer group shadow-sm hover:shadow-md text-left min-h-[170px]"
                 >
                   <div>
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-[10px] font-bold text-[#807d75] uppercase tracking-wider">{tpl.category}</span>
-                      <span className="text-[#201515] font-bold text-xs group-hover:text-[#ff4f00] transition-colors">↗</span>
+                      <span className="text-[10px] font-bold text-[#a1a1aa] uppercase tracking-wider">{tpl.category}</span>
+                      <span className="text-white font-bold text-xs group-hover:text-[#ff4f00] transition-colors">↗</span>
                     </div>
-                    <h3 className="text-base font-bold text-[#201515] mb-1">{tpl.name}</h3>
-                    <p className="text-[#504d44] text-xs leading-relaxed mb-4">{tpl.description}</p>
+                    <h3 className="text-base font-bold text-white mb-1">{tpl.name}</h3>
+                    <p className="text-[#a1a1aa] text-xs leading-relaxed mb-4 font-normal">{tpl.description}</p>
                   </div>
                   
-                  <div className="flex items-center justify-between pt-2.5 border-t border-[#e5e0d3] mt-auto">
+                  <div className="flex items-center justify-between pt-2.5 border-t border-[#27272a] mt-auto">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] font-bold text-[#807d75]">Nodes:</span>
+                      <span className="text-[10px] font-bold text-[#a1a1aa]">Nodes:</span>
                       <div className="flex items-center gap-1">
-                        <span className="px-1.5 py-0.5 rounded bg-[#f0ebd9] border border-[#d5d0c1] text-[10px] font-bold text-[#201515]">⚡</span>
-                        <span className="px-1.5 py-0.5 rounded bg-[#f0ebd9] border border-[#d5d0c1] text-[10px] font-bold text-[#201515]">✉️</span>
-                        <span className="px-1.5 py-0.5 rounded bg-[#f0ebd9] border border-[#d5d0c1] text-[10px] font-bold text-[#201515]">🤖</span>
+                        <span className="px-1.5 py-0.5 rounded bg-[#1f1f23] border border-[#27272a] text-[10px] font-bold text-[#f4f4f5]">⚡</span>
+                        <span className="px-1.5 py-0.5 rounded bg-[#1f1f23] border border-[#27272a] text-[10px] font-bold text-[#f4f4f5]">✉️</span>
+                        <span className="px-1.5 py-0.5 rounded bg-[#1f1f23] border border-[#27272a] text-[10px] font-bold text-[#f4f4f5]">🤖</span>
                       </div>
                     </div>
                     {tpl.popular && (
@@ -3395,16 +3395,16 @@ return {
 
         {/* 4. VARIABLES MANAGER VIEW */}
         {viewMode === 'variables' && (
-          <div className="flex-1 flex flex-col overflow-y-auto p-8 bg-[#fffefb] text-[#201515]">
+          <div className="flex-1 flex flex-col overflow-y-auto p-8 bg-[#09090b] text-[#f4f4f5]">
             {/* Header */}
             <header className="flex justify-between items-center mb-8 shrink-0 text-left">
               <div>
-                <h1 className="text-3xl font-bold text-[#201515] tracking-tight mb-1">Environment Variables</h1>
-                <p className="text-[#605d52] text-sm max-w-2xl">Manage environment variables accessible securely by execution engines and custom script runner nodes.</p>
+                <h1 className="text-3xl font-bold text-white tracking-tight mb-1">Environment Variables</h1>
+                <p className="text-[#a1a1aa] text-sm max-w-2xl font-normal">Manage environment variables accessible securely by execution engines and custom script runner nodes.</p>
               </div>
               <div 
                 onClick={() => setIsAvatarModalOpen(true)}
-                className="w-9 h-9 rounded-full bg-[#f8f4f0] border border-[#201515] overflow-hidden cursor-pointer hover:opacity-85 transition-opacity"
+                className="w-9 h-9 rounded-full bg-[#141417] border border-[#27272a] overflow-hidden cursor-pointer hover:opacity-85 transition-opacity"
                 title="Change Profile Picture"
               >
                 <img className="w-full h-full object-cover" alt="User Avatar" src={profilePic} />
@@ -3413,34 +3413,34 @@ return {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 text-left">
               {/* Creator Form */}
-              <div className="bg-[#f8f4f0] border border-[#c5c0b1] p-6 rounded-md h-fit">
+              <div className="bg-[#141417] border border-[#27272a] p-6 rounded-xl h-fit shadow-sm">
                 <h3 className="font-bold text-[#ff4f00] text-xs uppercase tracking-wider mb-4">Add Variable</h3>
                 <form onSubmit={handleAddVar} className="space-y-4">
                   <div>
-                    <label className="block text-[#201515] text-xs mb-1 font-bold">Key / Variable Name</label>
+                    <label className="block text-white text-xs mb-1 font-bold">Key / Variable Name</label>
                     <input
                       type="text"
                       required
                       value={newVarKey}
                       onChange={(e) => setNewVarKey(e.target.value.toUpperCase())}
                       placeholder="MY_API_SECRET"
-                      className="w-full bg-[#fffefb] border border-[#201515] rounded-sm px-3 py-2 text-[#201515] outline-none focus:border-[#ff4f00] text-xs font-mono"
+                      className="w-full bg-[#1f1f23] border border-[#27272a] rounded-md px-3 py-2 text-white placeholder-[#a1a1aa] outline-none focus:border-[#ff4f00] text-xs font-mono"
                     />
                   </div>
                   <div>
-                    <label className="block text-[#201515] text-xs mb-1 font-bold">Value</label>
+                    <label className="block text-white text-xs mb-1 font-bold">Value</label>
                     <textarea
                       required
                       value={newVarVal}
                       onChange={(e) => setNewVarVal(e.target.value)}
                       placeholder="xoxb-secret-token"
                       rows={4}
-                      className="w-full bg-[#fffefb] border border-[#201515] rounded-sm px-3 py-2 text-[#201515] outline-none focus:border-[#ff4f00] text-xs font-mono"
+                      className="w-full bg-[#1f1f23] border border-[#27272a] rounded-md px-3 py-2 text-white placeholder-[#a1a1aa] outline-none focus:border-[#ff4f00] text-xs font-mono"
                     />
                   </div>
                   <button
                     type="submit"
-                    className="w-full bg-[#ff4f00] text-[#fffefb] font-bold py-2.5 rounded-md hover:opacity-90 transition-colors uppercase tracking-wider text-xs shadow-sm"
+                    className="w-full bg-[#ff4f00] text-white font-bold py-2.5 rounded-md hover:bg-[#e04500] transition-colors uppercase tracking-wider text-xs shadow-sm"
                   >
                     Save Variable
                   </button>
@@ -3448,12 +3448,12 @@ return {
               </div>
 
               {/* Variables List Table */}
-              <div className="lg:col-span-2 bg-[#f8f4f0] border border-[#c5c0b1] p-6 rounded-md">
-                <h3 className="text-lg font-bold text-[#201515] mb-4">Configured Values</h3>
-                <div className="overflow-x-auto rounded-md border border-[#c5c0b1]">
-                  <table className="w-full border-collapse text-xs text-left bg-[#fffefb]">
+              <div className="lg:col-span-2 bg-[#141417] border border-[#27272a] p-6 rounded-xl shadow-sm">
+                <h3 className="text-lg font-bold text-white mb-4">Configured Values</h3>
+                <div className="overflow-x-auto rounded-lg border border-[#27272a]">
+                  <table className="w-full border-collapse text-xs text-left bg-[#1f1f23]">
                     <thead>
-                      <tr className="bg-[#201515] text-[#fffefb] border-b border-[#201515]">
+                      <tr className="bg-[#141417] text-white border-b border-[#27272a]">
                         <th className="p-3.5 font-bold uppercase tracking-wider">Key</th>
                         <th className="p-3.5 font-bold uppercase tracking-wider">Masked Value</th>
                         <th className="p-3.5 text-right">Actions</th>
@@ -3462,20 +3462,20 @@ return {
                     <tbody>
                       {variables.length === 0 ? (
                         <tr>
-                          <td colSpan={3} className="p-6 text-center text-[#939084] font-semibold">No global variables configured.</td>
+                          <td colSpan={3} className="p-6 text-center text-[#a1a1aa] font-semibold">No global variables configured.</td>
                         </tr>
                       ) : (
                         variables.map((v) => (
-                          <tr key={v.key} className="border-b border-[#c5c0b1] hover:bg-[#f8f4f0]">
-                            <td className="p-3.5 font-mono font-bold text-[#201515]">{v.key}</td>
-                            <td className="p-3.5 font-mono text-[#605d52]">
+                          <tr key={v.key} className="border-b border-[#27272a] hover:bg-[#27272a]/50">
+                            <td className="p-3.5 font-mono font-bold text-white">{v.key}</td>
+                            <td className="p-3.5 font-mono text-[#a1a1aa]">
                               {v.value.length > 20 ? `${v.value.substring(0, 15)}... [encrypted]` : v.value}
                             </td>
                             <td className="p-3.5 text-right">
                               <button
                                 type="button"
                                 onClick={() => handleDeleteVar(v.key)}
-                                className="text-rose-600 hover:text-rose-800 font-bold hover:underline"
+                                className="text-rose-400 hover:text-rose-300 font-bold hover:underline"
                               >
                                 Delete
                               </button>
@@ -3493,15 +3493,15 @@ return {
 
         {/* 5. HISTORY & DB SIMULATIONS VIEW */}
         {viewMode === 'history' && (
-          <div className="flex-1 flex flex-col h-full w-full bg-[#fffefb] text-[#201515]">
+          <div className="flex-1 flex flex-col h-full w-full bg-[#09090b] text-[#f4f4f5]">
             
             {/* Tab Selector */}
-            <div className="flex border-b border-[#c5c0b1] text-xs font-bold text-[#fffefb] shrink-0 bg-[#201515]">
+            <div className="flex border-b border-[#27272a] text-xs font-bold text-white shrink-0 bg-[#141417]">
               <button
                 type="button"
                 onClick={() => setHistoryTab('logs')}
                 className={`px-6 py-3.5 transition-all flex items-center gap-2 ${
-                  historyTab === 'logs' ? 'bg-[#ff4f00] text-[#fffefb]' : 'text-[#c5c0b1] hover:text-[#fffefb] hover:bg-[#2f2a26]'
+                  historyTab === 'logs' ? 'bg-[#ff4f00] text-white' : 'text-[#a1a1aa] hover:text-white hover:bg-[#1f1f23]'
                 }`}
               >
                 <span>📜</span>
@@ -3511,7 +3511,7 @@ return {
                 type="button"
                 onClick={() => setHistoryTab('crm')}
                 className={`px-6 py-3.5 transition-all flex items-center gap-2 ${
-                  historyTab === 'crm' ? 'bg-[#ff4f00] text-[#fffefb]' : 'text-[#c5c0b1] hover:text-[#fffefb] hover:bg-[#2f2a26]'
+                  historyTab === 'crm' ? 'bg-[#ff4f00] text-white' : 'text-[#a1a1aa] hover:text-white hover:bg-[#1f1f23]'
                 }`}
               >
                 <span>🗄️</span>
@@ -3521,7 +3521,7 @@ return {
                 type="button"
                 onClick={() => setHistoryTab('emails')}
                 className={`px-6 py-3.5 transition-all flex items-center gap-2 ${
-                  historyTab === 'emails' ? 'bg-[#ff4f00] text-[#fffefb]' : 'text-[#c5c0b1] hover:text-[#fffefb] hover:bg-[#2f2a26]'
+                  historyTab === 'emails' ? 'bg-[#ff4f00] text-white' : 'text-[#a1a1aa] hover:text-white hover:bg-[#1f1f23]'
                 }`}
               >
                 <span>✉️</span>
@@ -3530,16 +3530,16 @@ return {
             </div>
 
             {/* Tab Contents container */}
-            <div className="flex-1 overflow-hidden flex bg-[#fffefb]">
+            <div className="flex-1 overflow-hidden flex bg-[#09090b]">
 
               {/* Sub Tab: Logs */}
               {historyTab === 'logs' && (
                 <div className="flex-1 flex overflow-hidden h-full text-left">
                   {/* Execution runs list */}
-                  <div className="w-80 border-r border-[#c5c0b1] overflow-y-auto p-4 flex flex-col gap-2 bg-[#f8f4f0] shrink-0 text-left">
-                    <h4 className="text-[10px] uppercase font-bold tracking-wider text-[#939084] px-1 mb-2">Execution Runs</h4>
+                  <div className="w-80 border-r border-[#27272a] overflow-y-auto p-4 flex flex-col gap-2 bg-[#141417] shrink-0 text-left">
+                    <h4 className="text-[10px] uppercase font-bold tracking-wider text-[#a1a1aa] px-1 mb-2">Execution Runs</h4>
                     {executions.length === 0 ? (
-                      <div className="text-center py-8 text-[#939084] text-xs">No runs recorded yet. Trigger a workflow to start.</div>
+                      <div className="text-center py-8 text-[#a1a1aa] text-xs">No runs recorded yet. Trigger a workflow to start.</div>
                     ) : (
                       executions.map((exec) => {
                         const isSel = selectedExecution?.id === exec.id;
@@ -3547,22 +3547,22 @@ return {
                           <div
                             key={exec.id}
                             onClick={() => setSelectedExecution(exec)}
-                            className={`p-3 rounded-md border transition-all cursor-pointer text-xs ${
+                            className={`p-3 rounded-lg border transition-all cursor-pointer text-xs ${
                               isSel
-                                ? 'bg-[#fffefb] border-[#ff4f00] shadow-sm'
-                                : 'bg-[#fffefb] border-[#c5c0b1] hover:border-[#201515]'
+                                ? 'bg-[#1f1f23] border-[#ff4f00] shadow-sm'
+                                : 'bg-[#141417] border-[#27272a] hover:border-white/50'
                             }`}
                           >
                             <div className="flex justify-between items-center mb-1">
-                              <span className="font-bold text-[#201515] font-mono">Run ID #{exec.id}</span>
+                              <span className="font-bold text-white font-mono">Run ID #{exec.id}</span>
                               <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
-                                exec.status === 'success' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' :
-                                exec.status === 'failed' ? 'bg-rose-100 text-rose-800 border border-rose-300' : 'bg-amber-100 text-amber-800 border border-amber-300'
+                                exec.status === 'success' ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-500/30' :
+                                exec.status === 'failed' ? 'bg-rose-950/80 text-rose-400 border border-rose-500/30' : 'bg-amber-950/80 text-amber-400 border border-amber-500/30'
                               }`}>
                                 {exec.status}
                               </span>
                             </div>
-                            <div className="text-[10px] text-[#605d52] font-mono">
+                            <div className="text-[10px] text-[#a1a1aa] font-mono">
                               {new Date(exec.startedAt).toLocaleString()}
                             </div>
                           </div>
@@ -3572,29 +3572,29 @@ return {
                   </div>
 
                   {/* Step log list console */}
-                  <div className="flex-1 p-6 overflow-y-auto bg-[#201515] text-left font-mono text-xs text-[#fffefb]">
+                  <div className="flex-1 p-6 overflow-y-auto bg-[#0d0d10] text-left font-mono text-xs text-white">
                     {selectedExecution ? (
                       <div className="space-y-4">
-                        <div className="flex justify-between items-center border-b border-[#2f2a26] pb-3 mb-4">
-                          <span className="font-bold text-[#fffefb]">Console Output trace Log #{selectedExecution.id}</span>
-                          <span className="text-[10px] text-[#c5c0b1]">Status: {selectedExecution.status}</span>
+                        <div className="flex justify-between items-center border-b border-[#27272a] pb-3 mb-4">
+                          <span className="font-bold text-white">Console Output trace Log #{selectedExecution.id}</span>
+                          <span className="text-[10px] text-[#a1a1aa]">Status: {selectedExecution.status}</span>
                         </div>
                         <div className="flex flex-col gap-2">
                           {selectedExecution.logs ? (
                             JSON.parse(selectedExecution.logs).map((step: any, i: number) => (
-                              <div key={i} className="flex gap-4 p-1.5 hover:bg-[#2f2a26] rounded transition-colors text-[#fffefb]">
-                                <span className="text-[#939084] shrink-0">[{new Date(step.time).toLocaleTimeString()}]</span>
+                              <div key={i} className="flex gap-4 p-1.5 hover:bg-[#1f1f23] rounded transition-colors text-white">
+                                <span className="text-[#a1a1aa] shrink-0">[{new Date(step.time).toLocaleTimeString()}]</span>
                                 <span className="text-[#ff4f00] font-bold shrink-0">{step.nodeType ? `[${step.nodeType.toUpperCase()}]` : '[SYSTEM]'}</span>
-                                <span className="text-[#fffefb]">{step.message}</span>
+                                <span className="text-white">{step.message}</span>
                               </div>
                             ))
                           ) : (
-                            <div className="text-[#939084]">Empty steps console output.</div>
+                            <div className="text-[#a1a1aa]">Empty steps console output.</div>
                           )}
                         </div>
                       </div>
                     ) : (
-                      <div className="text-[#939084] text-center py-20">Select an execution run from the left panel to review step-by-step logs.</div>
+                      <div className="text-[#a1a1aa] text-center py-20">Select an execution run from the left panel to review step-by-step logs.</div>
                     )}
                   </div>
                 </div>

@@ -1,6 +1,12 @@
 import { PrismaClient } from '@prisma/client';
 
-export const prisma = new PrismaClient();
+export const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.WORKFLOW_DATABASE_URL || 'file:./dev.db'
+    }
+  }
+});
 
 // Configure SQLite WAL mode and busy timeout on startup to prevent SQLite database lock timeouts
 async function configureDatabase() {

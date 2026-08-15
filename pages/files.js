@@ -247,38 +247,6 @@ export default function FileVault() {
     <>
       <Head>
         <title>Neuron Vault | File Sharing System</title>
-        <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Mona+Sans:wght@500;600;700&display=swap" rel="stylesheet" />
-        <script dangerouslySetInnerHTML={{
-          __html: `
-            tailwind.config = {
-              darkMode: "class",
-              theme: {
-                extend: {
-                  colors: {
-                    "primary": "#ff4f00",
-                    "primary-hover": "#e04500",
-                    "dark-bg": "#09090b",
-                    "dark-card": "#141417",
-                    "dark-border": "#27272a",
-                  },
-                  fontFamily: {
-                    "display": ["Mona Sans", "Inter", "sans-serif"],
-                    "body": ["Inter", "sans-serif"]
-                  }
-                }
-              }
-            }
-          `
-        }} />
-        <style>{`
-          html, body {
-            background-color: #09090b !important;
-            color: #f4f4f5 !important;
-          }
-        `}</style>
       </Head>
 
       <div className="bg-[#09090b] text-[#f4f4f5] font-body min-h-screen flex flex-col">

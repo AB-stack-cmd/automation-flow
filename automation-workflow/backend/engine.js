@@ -20,9 +20,9 @@ function evaluateCondition(expression, context) {
     });
 
     const sandbox = Object.freeze({
-      trigger: Object.freeze(context?.trigger || {}),
-      steps: Object.freeze(context?.steps || {}),
-      context: Object.freeze(context || {})
+      trigger: { ...(context?.trigger || {}) },
+      steps: { ...(context?.steps || {}) },
+      context: { ...(context || {}) }
     });
     const vmContext = vm.createContext(sandbox);
     const script = new vm.Script(`Boolean(${resolvedExpr})`);
@@ -110,6 +110,7 @@ async function evaluateCode(codeString, context) {
       trigger: context?.trigger || {},
       steps: context?.steps || {},
       context: context || {},
+      fetch: globalThis.fetch,
       console: Object.freeze({
         log: (...args) => console.log('[Workflow Code Node Log]:', ...args),
         error: (...args) => console.error('[Workflow Code Node Error]:', ...args)

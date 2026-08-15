@@ -6,9 +6,17 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const { Pool } = pkg;
-const connectionString = process.env.DATABASE_URL;
+let connectionString = process.env.DATABASE_URL || "";
 
-const pool = new Pool({ connectionString });
+// Append sslmode=verify-full if missing to suppress pg-connection-string SSL deprecation warnings
+if (connectionString && !connectionString.includes("sslmode=")) {
+  connectionString += connectionString.includes("?") ? "&sslmode=verify-full" : "?sslmode=verify-full";
+}
+
+const pool = new Pool({
+  connectionString,
+  ssl: { rejectUnauthorized: false }
+});
 const adapter = new PrismaPg(pool);
 
 const globalForPrisma = globalThis as unknown as {

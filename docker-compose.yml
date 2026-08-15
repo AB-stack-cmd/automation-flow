@@ -12,20 +12,27 @@ services:
       - PORT=3000
       - EXPRESS_PORT=4001
       - NODE_ENV=production
+      - WORKFLOW_DATABASE_URL=file:./dev.db
     restart: always
 
   # 2. Automation Workflow Core Backend Engine
   automation-backend:
     build:
-      context: ./automation-workflow
-      dockerfile: backend/Dockerfile
+      context: .
+      dockerfile: automation-workflow/backend/Dockerfile
     ports:
       - "4000:4000" # REST Engine API Port
     environment:
       - PORT=4000
       - DATABASE_URL=file:/app/database/dev.db
+      - WORKFLOW_DATABASE_URL=file:/app/database/dev.db
+      - RABBITMQ_URL=amqp://guest:guest@automation-engine-rabbitmq:5672
+      - RABBITMQ_QUEUE_NAME=neuron_flow_queue
     volumes:
       - db-data:/app/database
+    depends_on:
+      automation-engine-rabbitmq:
+        condition: service_healthy
     restart: always
 
   # 3. Automation Workflow React Flow Frontend Canvas
@@ -93,9 +100,30 @@ services:
         condition: service_healthy
     restart: always
 
+  # 7. Automation Engine RabbitMQ
+  automation-engine-rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: automation-engine-rabbitmq
+    ports:
+      - "5672:5672"   # AMQP protocol port
+      - "15672:15672" # Management UI dashboard
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - engine-rabbitmqdata:/var/lib/rabbitmq
+    restart: always
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
 volumes:
   db-data:
   engine-db-data:
   engine-pgdata:
   engine-redisdata:
+  engine-rabbitmqdata:
+
 

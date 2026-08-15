@@ -5,7 +5,15 @@ import { env } from "../env.js";
 const app = express();
 const PORT = env.EXPRESS_PORT || env.PORT || 4001;
 
-// Simple health‑check endpoint
+// Base route & health-check endpoints
+app.get("/", (req, res) => {
+  res.json({ service: "Companion Express API", status: "ok", timestamp: new Date() });
+});
+
+app.get("/health", (req, res) => {
+  res.json({ status: "ok", timestamp: new Date() });
+});
+
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date() });
 });
