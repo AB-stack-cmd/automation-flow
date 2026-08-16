@@ -9,29 +9,27 @@ import { env } from '../../env.js';
  * Supporting template placeholders: {{trigger.email}}, {{steps.nodeId.score}}, etc.
  */
 function evaluateCondition(expression, context) {
-  try {
-    let resolvedExpr = expression.replace(/\{\{([^}]+)\}\}/g, (_, path) => {
-      const parts = path.trim().split('.');
-      let val = context;
-      for (const part of parts) {
-        val = val?.[part];
-      }
-      return typeof val === 'string' ? `"${val.replace(/"/g, '\\"')}"` : val ?? 'undefined';
-    });
-
-    const sandbox = Object.freeze({
-      trigger: { ...(context?.trigger || {}) },
-      steps: { ...(context?.steps || {}) },
-      context: { ...(context || {}) }
-    });
-    const vmContext = vm.createContext(sandbox);
-    const script = new vm.Script(`Boolean(${resolvedExpr})`);
-    const result = script.runInContext(vmContext, { timeout: 1000 });
-    return Boolean(result);
-  } catch (err) {
-    console.error('Error evaluating condition:', err.message);
-    return false;
+  if (!expression || typeof expression !== 'string') {
+    throw new Error('[Condition Error] Condition expression is missing or invalid.');
   }
+
+  let resolvedExpr = expression.replace(/\{\{([^}]+)\}\}/g, (_, path) => {
+    const parts = path.trim().split('.');
+    let val = context;
+    for (const part of parts) {
+      val = val?.[part];
+    }
+    return typeof val === 'string' ? JSON.stringify(val) : val ?? 'undefined';
+  });
+
+  const sandbox = Object.freeze({
+    trigger: Object.freeze({ ...(context?.trigger || {}) }),
+    steps: Object.freeze({ ...(context?.steps || {}) }),
+    context: Object.freeze({ ...(context || {}) })
+  });
+  const vmContext = vm.createContext(sandbox);
+  const script = new vm.Script(`Boolean(${resolvedExpr})`);
+  return Boolean(script.runInContext(vmContext, { timeout: 1000 }));
 }
 
 
@@ -661,22 +659,26 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
         const apiKey = env.OPENAI_API_KEY || 'mock-key';
         let resultText = "Mock OpenAI completion success!";
         if (apiKey && apiKey !== 'mock-key') {
-          try {
-            const res = await fetch('https://api.openai.com/v1/chat/completions', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                model: node.data?.model || 'gpt-4o',
-                messages: [{ role: 'user', content: prompt }]
-              })
-            });
-            const resJson = await res.json();
-            resultText = resJson.choices?.[0]?.message?.content || resultText;
-          } catch (e) {
-            console.error('Real OpenAI call failed, falling back to mock:', e.message);
+          const res = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${apiKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              model: node.data?.model || 'gpt-4o',
+              messages: [{ role: 'user', content: prompt }]
+            })
+          });
+
+          if (!res.ok) {
+            const errText = await res.text();
+            throw new Error(`[OpenAI Error] API call failed with HTTP ${res.status}: ${errText}`);
+          }
+          const resJson = await res.json();
+          resultText = resJson.choices?.[0]?.message?.content;
+          if (!resultText) {
+            throw new Error('[OpenAI Error] Response body returned no valid message choices.');
           }
         }
         nodeOutput = { result: resultText, prompt };
@@ -689,17 +691,21 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
       else if (node.type === 'slack' || node.type === 'action.slack') {
         const webhookUrl = interpolateTemplate(node.data?.webhookUrl || '', context);
         const text = interpolateTemplate(node.data?.text || '', context);
-        if (webhookUrl && webhookUrl.startsWith('http')) {
-          try {
-            await fetch(webhookUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ text })
-            });
-          } catch (e) {
-            console.error('Slack publish failed:', e.message);
-          }
+        if (!webhookUrl || !webhookUrl.startsWith('http')) {
+          throw new Error(`[Slack Error] Invalid or missing Webhook URL: "${webhookUrl}"`);
         }
+
+        const res = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text })
+        });
+
+        if (!res.ok) {
+          const errBody = await res.text();
+          throw new Error(`[Slack Error] Delivery failed HTTP ${res.status}: ${errBody}`);
+        }
+
         nodeOutput = { success: true, text };
         stepLogs.push({
           time: new Date().toISOString(),
@@ -710,17 +716,21 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
       else if (node.type === 'discord' || node.type === 'action.discord') {
         const webhookUrl = interpolateTemplate(node.data?.webhookUrl || '', context);
         const content = interpolateTemplate(node.data?.content || '', context);
-        if (webhookUrl && webhookUrl.startsWith('http')) {
-          try {
-            await fetch(webhookUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ content })
-            });
-          } catch (e) { 
-            console.error('Discord publish failed:', e.message);
-          }
+        if (!webhookUrl || !webhookUrl.startsWith('http')) {
+          throw new Error(`[Discord Error] Invalid or missing Webhook URL: "${webhookUrl}"`);
         }
+
+        const res = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content })
+        });
+
+        if (!res.ok) {
+          const errBody = await res.text();
+          throw new Error(`[Discord Error] Delivery failed HTTP ${res.status}: ${errBody}`);
+        }
+
         nodeOutput = { success: true, content };
         stepLogs.push({
           time: new Date().toISOString(),

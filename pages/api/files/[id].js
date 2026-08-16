@@ -37,12 +37,26 @@ export default async function handler(req, res) {
 
       const updateData = {};
       if (typeof isPublic === 'boolean') updateData.isPublic = isPublic;
-      if (originalName) updateData.originalName = originalName;
-      if (expiresAt !== undefined) {
-        updateData.expiresAt = expiresAt ? new Date(expiresAt) : null;
+      if (originalName && typeof originalName === 'string') updateData.originalName = originalName.trim();
+
+      if (expiresAt !== undefined && expiresAt !== null) {
+        const parsedDate = new Date(expiresAt);
+        if (Number.isNaN(parsedDate.getTime())) {
+          return res.status(400).json({ error: '[Validation Error] "expiresAt" must be a valid ISO date string.' });
+        }
+        updateData.expiresAt = parsedDate;
+      } else if (expiresAt === null) {
+        updateData.expiresAt = null;
       }
-      if (maxDownloads !== undefined) {
-        updateData.maxDownloads = maxDownloads ? parseInt(maxDownloads, 10) : null;
+
+      if (maxDownloads !== undefined && maxDownloads !== null) {
+        const parsedMax = parseInt(maxDownloads, 10);
+        if (Number.isNaN(parsedMax) || parsedMax < 1) {
+          return res.status(400).json({ error: '[Validation Error] "maxDownloads" must be a positive integer greater than 0.' });
+        }
+        updateData.maxDownloads = parsedMax;
+      } else if (maxDownloads === null) {
+        updateData.maxDownloads = null;
       }
 
       const updatedFile = await prisma.sharedFile.update({

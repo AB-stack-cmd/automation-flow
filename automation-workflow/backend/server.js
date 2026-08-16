@@ -64,8 +64,12 @@ app.get('/api/workflows', async (req, res) => {
 app.get('/api/workflows/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const parsedId = parseInt(id, 10);
+    if (Number.isNaN(parsedId) || parsedId < 1) {
+      return res.status(400).json({ error: '[Validation Error] Workflow ID must be a positive integer.' });
+    }
     const workflow = await prisma.workflow.findUnique({
-      where: { id: parseInt(id, 10) }
+      where: { id: parsedId }
     });
     if (!workflow) return res.status(404).json({ error: 'Workflow not found' });
     res.json(workflow);
@@ -95,17 +99,21 @@ app.post('/api/workflows', async (req, res) => {
 app.put('/api/workflows/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const parsedId = parseInt(id, 10);
+    if (Number.isNaN(parsedId) || parsedId < 1) {
+      return res.status(400).json({ error: '[Validation Error] Workflow ID must be a positive integer.' });
+    }
     const { name, definition, isActive } = req.body;
 
     const data = {};
-    if (name !== undefined) data.name = name;
+    if (name !== undefined) data.name = String(name);
     if (definition !== undefined) {
       data.definition = typeof definition === 'string' ? definition : JSON.stringify(definition);
     }
-    if (isActive !== undefined) data.isActive = isActive;
+    if (isActive !== undefined) data.isActive = Boolean(isActive);
 
     const workflow = await prisma.workflow.update({
-      where: { id: parseInt(id, 10) },
+      where: { id: parsedId },
       data
     });
     res.json(workflow);
@@ -118,8 +126,12 @@ app.put('/api/workflows/:id', async (req, res) => {
 app.delete('/api/workflows/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const parsedId = parseInt(id, 10);
+    if (Number.isNaN(parsedId) || parsedId < 1) {
+      return res.status(400).json({ error: '[Validation Error] Workflow ID must be a positive integer.' });
+    }
     await prisma.workflow.delete({
-      where: { id: parseInt(id, 10) }
+      where: { id: parsedId }
     });
     res.json({ success: true });
   } catch (err) {
