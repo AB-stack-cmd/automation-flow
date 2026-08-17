@@ -149,3 +149,17 @@ model Account {
   expiresAt    DateTime?
   createdAt    DateTime  @default(now())
 }
+
+model McpConnection {
+  id           String   @id @default(cuid())
+  workflowId   String
+  nodeId       String
+  serverUrl    String
+  appName      String
+  credentialId String
+  toolSchema   String   // JSON string representation of tools/list result
+  selectedTool String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+

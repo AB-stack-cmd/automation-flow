@@ -23,7 +23,9 @@ import {
   OpenAINode,
   SlackNode,
   DiscordNode,
-  RespondToWebhookNode
+  RespondToWebhookNode,
+  ExcelNode,
+  McpConnectorNode
 } from './CustomNode';
 import CustomButtonEdge from './CustomEdge';
 
@@ -53,7 +55,11 @@ const nodeTypes = {
   discord: DiscordNode,
   'action.discord': DiscordNode,
   respond_to_webhook: RespondToWebhookNode,
-  'action.respondToWebhook': RespondToWebhookNode
+  'action.respondToWebhook': RespondToWebhookNode,
+  excel: ExcelNode,
+  'action.excel': ExcelNode,
+  mcp_connector: McpConnectorNode,
+  'action.mcpConnector': McpConnectorNode
 };
 
 const BACKEND_URL = 'http://localhost:4000';
@@ -2408,6 +2414,22 @@ return {
                           >
                             <span>📊</span>
                             <span>Google Sheets</span>
+                          </button>
+
+                          <button
+                            onClick={() => addNode('action.excel')}
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-md border border-[#c5c0b1] bg-[#fffefb] hover:border-[#ff4f00] text-[#201515] text-xs font-bold text-left transition-all"
+                          >
+                            <span>📈</span>
+                            <span>Excel Processor</span>
+                          </button>
+
+                          <button
+                            onClick={() => addNode('action.mcpConnector')}
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-md border border-[#c5c0b1] bg-[#fffefb] hover:border-[#ff4f00] text-[#201515] text-xs font-bold text-left transition-all"
+                          >
+                            <span>🔌</span>
+                            <span>MCP Productivity Connector</span>
                           </button>
 
                           <button

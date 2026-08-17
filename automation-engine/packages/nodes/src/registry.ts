@@ -13,6 +13,8 @@ import { GoogleFormTrigger } from './googleForm';
 import { WebhookTrigger } from './webhookTrigger';
 import { RespondToWebhookNode } from './respondToWebhook';
 import { GoogleSheetsNode } from './googleSheets';
+import { ExcelNode } from './excel/excel.node';
+import { McpConnectorNode } from './mcp-connector/mcp-connector.node';
 
 export const NodeRegistry: Record<string, INodeType> = {
   'trigger.manual': ManualTrigger,
@@ -29,4 +31,7 @@ export const NodeRegistry: Record<string, INodeType> = {
   'action.discord': DiscordNode,
   'action.respondToWebhook': RespondToWebhookNode,
   'action.googleSheets': GoogleSheetsNode,
+  'action.excel': ExcelNode,
+  'action.mcpConnector': McpConnectorNode,
 };
+

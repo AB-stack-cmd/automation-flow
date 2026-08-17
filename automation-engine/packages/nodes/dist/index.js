@@ -27,4 +27,8 @@ __exportStar(require("./discord"), exports);
 __exportStar(require("./webhookTrigger"), exports);
 __exportStar(require("./respondToWebhook"), exports);
 __exportStar(require("./googleSheets"), exports);
+__exportStar(require("./excel/excel.node"), exports);
+__exportStar(require("./excel/excel.schema"), exports);
+__exportStar(require("./mcp-connector/mcp-connector.node"), exports);
+__exportStar(require("./mcp-connector/mcp-app-registry"), exports);
 __exportStar(require("./registry"), exports);

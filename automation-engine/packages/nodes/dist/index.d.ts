@@ -11,4 +11,8 @@ export * from './discord';
 export * from './webhookTrigger';
 export * from './respondToWebhook';
 export * from './googleSheets';
+export * from './excel/excel.node';
+export * from './excel/excel.schema';
+export * from './mcp-connector/mcp-connector.node';
+export * from './mcp-connector/mcp-app-registry';
 export * from './registry';

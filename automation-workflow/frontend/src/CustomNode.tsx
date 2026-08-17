@@ -456,3 +456,64 @@ export const RespondToWebhookNode = memo(({ data, selected }: any) => {
     </div>
   );
 });
+
+// Excel Node Component
+export const ExcelNode = memo(({ data, selected }: any) => {
+  const operation = data?.operation || 'readSheet';
+  const sheetName = data?.sheetName || 'Sheet1';
+  return (
+    <div className={nodeCardClass(selected)}>
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="input"
+        className="!w-3 !h-3 !bg-[#201515] dark:!bg-[#f4f4f5] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#ff4f00]"
+      />
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-lg">📊</span>
+        <span className="text-sm font-bold text-[#201515] dark:text-[#f4f4f5]">{data.label || 'Excel Processor'}</span>
+      </div>
+      <div className="text-xs text-[#605d52] dark:text-[#a1a1aa] flex flex-col gap-0.5">
+        <div>Op: <span className="text-[#ff4f00] font-semibold">{operation}</span></div>
+        <div>Sheet: <span className="font-mono text-[11px]">{sheetName}</span></div>
+      </div>
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="output"
+        className="!w-3 !h-3 !bg-[#ff4f00] !border-2 !border-[#fffefb] !rounded-full !right-[-6px]"
+      />
+    </div>
+  );
+});
+
+// MCP Productivity App Connector Node Component
+export const McpConnectorNode = memo(({ data, selected }: any) => {
+  const appName = data?.appName || 'Notion';
+  const selectedTool = data?.selectedTool || 'Select MCP Tool';
+  return (
+    <div className={nodeCardClass(selected)}>
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="input"
+        className="!w-3 !h-3 !bg-[#201515] dark:!bg-[#f4f4f5] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#ff4f00]"
+      />
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-lg">🔌</span>
+        <span className="text-sm font-bold text-[#201515] dark:text-[#f4f4f5]">{data.label || 'MCP Connector'}</span>
+      </div>
+      <div className="text-xs text-[#605d52] dark:text-[#a1a1aa] flex flex-col gap-0.5">
+        <div>App: <span className="text-[#ff4f00] uppercase font-semibold text-[10px]">{appName}</span></div>
+        <div className="truncate text-[10px]">Tool: <span className="font-mono">{selectedTool}</span></div>
+      </div>
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="output"
+        className="!w-3 !h-3 !bg-[#ff4f00] !border-2 !border-[#fffefb] !rounded-full !right-[-6px]"
+      />
+    </div>
+  );
+});
+

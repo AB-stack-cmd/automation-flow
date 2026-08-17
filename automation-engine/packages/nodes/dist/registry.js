@@ -15,6 +15,8 @@ const googleForm_1 = require("./googleForm");
 const webhookTrigger_1 = require("./webhookTrigger");
 const respondToWebhook_1 = require("./respondToWebhook");
 const googleSheets_1 = require("./googleSheets");
+const excel_node_1 = require("./excel/excel.node");
+const mcp_connector_node_1 = require("./mcp-connector/mcp-connector.node");
 exports.NodeRegistry = {
     'trigger.manual': manual_1.ManualTrigger,
     'trigger.googleForm': googleForm_1.GoogleFormTrigger,
@@ -30,4 +32,6 @@ exports.NodeRegistry = {
     'action.discord': discord_1.DiscordNode,
     'action.respondToWebhook': respondToWebhook_1.RespondToWebhookNode,
     'action.googleSheets': googleSheets_1.GoogleSheetsNode,
+    'action.excel': excel_node_1.ExcelNode,
+    'action.mcpConnector': mcp_connector_node_1.McpConnectorNode,
 };
