@@ -95,6 +95,35 @@ export default function FormsPage() {
   const [copiedDev, setCopiedDev] = useState(false);
   const [copiedProd, setCopiedProd] = useState(false);
 
+  // Real-time execution monitoring state
+  const [activeExecutionId, setActiveExecutionId] = useState<string | null>(null);
+  const [realtimeLogs, setRealtimeLogs] = useState<any[]>([]);
+  const [realtimeSteps, setRealtimeSteps] = useState<Record<string, any>>({});
+  const [realtimeStatus, setRealtimeStatus] = useState<string>('idle');
+
+  useEffect(() => {
+    if (!activeExecutionId) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/executions/${activeExecutionId}/logs`);
+        if (res.ok) {
+          const data = await res.json();
+          setRealtimeStatus(data.status);
+          setRealtimeLogs(data.logs || []);
+          setRealtimeSteps(data.steps || {});
+          if (data.status === 'success' || data.status === 'failed' || data.status === 'completed') {
+            clearInterval(interval);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to poll execution logs:', e);
+      }
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, [activeExecutionId]);
+
   // Field types catalog
   const FIELD_TYPES = [
     { type: 'text', label: 'Single Line Text' },
@@ -301,17 +330,27 @@ export default function FormsPage() {
   // Submission Testing
   const handleTestSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!linkedWorkflowId) {
-      alert('Please connect this form to an active automation workflow first.');
-      return;
-    }
 
     setTestingStatus('loading');
     setTestResult(null);
     setValidationErrors({});
+    setActiveExecutionId(null);
+    setRealtimeLogs([]);
+    setRealtimeSteps({});
 
     try {
-      const url = `/api/webhook-test/${linkedWorkflowId}`;
+      const url = selectedForm?.id
+        ? `/api/forms/${selectedForm.id}/submit`
+        : linkedWorkflowId
+        ? `/api/workflows/${linkedWorkflowId}/execute`
+        : null;
+
+      if (!url) {
+        alert('Please save the form or connect an active workflow first.');
+        setTestingStatus('idle');
+        return;
+      }
+
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
@@ -322,16 +361,19 @@ export default function FormsPage() {
         headers['Authorization'] = 'Basic dGVzdC11c2VyOnNlY3JldC1wYXNz';
       }
 
+      const bodyPayload = selectedForm?.id
+        ? testFormData
+        : { triggerNodeName: selectedTriggerNodeName || 'trigger', payload: testFormData };
+
       const res = await fetch(url, {
         method: 'POST',
         headers,
-        body: JSON.stringify(testFormData)
+        body: JSON.stringify(bodyPayload)
       });
 
       const data = await res.json();
 
-      if (res.status === 400 && data.validationErrors) {
-        setValidationErrors(data.validationErrors);
+      if (res.status === 400 && data.error) {
         setTestingStatus('error');
         setTestResult(data);
       } else {
@@ -341,6 +383,11 @@ export default function FormsPage() {
           headers: Object.fromEntries(res.headers.entries()),
           body: data
         });
+
+        if (data.executionId) {
+          setActiveExecutionId(data.executionId);
+          setRealtimeStatus(data.status || 'running');
+        }
       }
     } catch (err: any) {
       setTestingStatus('error');
@@ -909,6 +956,59 @@ export default function FormsPage() {
                   {testingStatus === 'idle' && !testResult && (
                     <div className="p-6 border border-dashed border-white/5 rounded-xl text-center text-[10px] text-zinc-600 leading-normal">
                       🔌 Fill out form fields and click Submit to run a test execution. Result headers/payloads will be captured here.
+                    </div>
+                  )}
+
+                  {/* Real-Time Live Execution & Ingest Monitor */}
+                  {(activeExecutionId || realtimeLogs.length > 0) && (
+                    <div className="mt-4 p-4 rounded-xl border border-amber-500/20 bg-[#0f0e0c] space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="relative flex h-2 w-2">
+                            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${realtimeStatus === 'success' || realtimeStatus === 'completed' ? 'bg-emerald-400' : 'bg-amber-400'} opacity-75`}></span>
+                            <span className={`relative inline-flex rounded-full h-2 w-2 ${realtimeStatus === 'success' || realtimeStatus === 'completed' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+                          </span>
+                          <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">
+                            Real-Time Ingest & Node Monitor
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 font-bold uppercase">
+                          {realtimeStatus}
+                        </span>
+                      </div>
+
+                      {/* Node progression badges */}
+                      <div className="flex items-center justify-between text-[10px] py-1 px-2 rounded-lg bg-zinc-900/80 border border-white/5 font-medium text-zinc-300">
+                        <div className="flex items-center gap-1 text-emerald-400">
+                          <span>📋 Form Submitted</span>
+                        </div>
+                        <ChevronRight className="w-3 h-3 text-zinc-600" />
+                        <div className="flex items-center gap-1 text-amber-400">
+                          <span>⚡ Inngest Queue</span>
+                        </div>
+                        <ChevronRight className="w-3 h-3 text-zinc-600" />
+                        <div className={`flex items-center gap-1 ${realtimeStatus === 'success' || realtimeStatus === 'completed' ? 'text-emerald-400' : 'text-sky-400'}`}>
+                          <span>⚙️ Graph Engine</span>
+                        </div>
+                      </div>
+
+                      {/* Live log feed */}
+                      <div className="space-y-1 max-h-48 overflow-y-auto font-mono text-[9px] text-zinc-400 bg-black/40 p-2.5 rounded-lg border border-white/5">
+                        {realtimeLogs.length === 0 ? (
+                          <div className="text-zinc-600 italic">Streaming live execution trace...</div>
+                        ) : (
+                          realtimeLogs.map((log: any, idx: number) => (
+                            <div key={idx} className="flex items-start gap-2 leading-relaxed">
+                              <span className="text-zinc-600 shrink-0">
+                                {log.time ? new Date(log.time).toLocaleTimeString() : '•'}
+                              </span>
+                              <span className={log.message?.includes('Error') || log.message?.includes('failed') ? 'text-rose-400' : log.message?.includes('completed') || log.message?.includes('success') ? 'text-emerald-400 font-semibold' : 'text-zinc-300'}>
+                                {log.message}
+                              </span>
+                            </div>
+                          ))
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

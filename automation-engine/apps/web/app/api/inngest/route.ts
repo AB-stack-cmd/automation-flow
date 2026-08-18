@@ -1,8 +1,8 @@
 import { serve } from 'inngest/next';
 import { inngest } from './client';
-import { runWorkflowFunction } from './functions';
+import { runWorkflowFunction, processFormSubmissionFunction } from './functions';
 
 export const { GET, POST, PUT } = serve({
   client: inngest,
-  functions: [runWorkflowFunction],
+  functions: [runWorkflowFunction, processFormSubmissionFunction],
 });

@@ -250,6 +250,50 @@ const getNodeInterfaceDetails = (node: any) => {
 // Template Definitions from user request & HTML template
 const TEMPLATES = [
   {
+    id: 'every-10s-email-check',
+    name: '10s Interval Health Check & Email Dispatcher',
+    category: 'Monitoring & Health',
+    description: 'Triggers automatically every 10 seconds to dispatch a system health check email payload and verify workflow execution status.',
+    icons: ['alarm', 'mail', 'check_circle'],
+    popular: true,
+    featured: true,
+    definition: {
+      nodes: [
+        {
+          id: 'schedule_trigger_10s',
+          type: 'schedule_trigger',
+          position: { x: 100, y: 200 },
+          data: {
+            label: 'Trigger Every 10s',
+            scheduleType: 'interval',
+            intervalValue: 10,
+            intervalUnit: 'seconds'
+          }
+        },
+        {
+          id: 'email_dispatch_node',
+          type: 'marketing_email',
+          position: { x: 420, y: 190 },
+          data: {
+            label: 'Send Email Health Alert',
+            subject: '⚡ System Status Alert - Every 10s Check',
+            body: 'Automation engine heartbeat test sent at {{timestamp}}. Status: Operational.'
+          }
+        }
+      ],
+      edges: [
+        {
+          id: 'edge_schedule_to_email',
+          source: 'schedule_trigger_10s',
+          target: 'email_dispatch_node',
+          targetHandle: 'input',
+          animated: true,
+          style: { stroke: '#ff4f00', strokeWidth: 2.5 }
+        }
+      ]
+    }
+  },
+  {
     id: 'start-ifelse-jsscript-end',
     name: 'Start → If/Else → JS Script → End Workflow',
     category: 'Logic & Code',
