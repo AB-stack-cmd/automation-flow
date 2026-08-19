@@ -1,14 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { SignInButton, UserButton, useUser } from '@clerk/nextjs';
+import { getFlowCanvasUrl, getDashboardUrl } from '../lib/config';
 
 export default function Home() {
   const { isLoaded, isSignedIn, user } = useUser();
   const [syncedUser, setSyncedUser] = useState(null);
+  const [flowCanvasUrl, setFlowCanvasUrl] = useState('http://localhost:5173');
+  const [dashboardUrl, setDashboardUrl] = useState('/');
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     document.documentElement.classList.add('dark');
+    setFlowCanvasUrl(getFlowCanvasUrl());
+    setDashboardUrl(getDashboardUrl());
   }, []);
 
   // Automatic Prisma Sync when user signs in via Clerk
@@ -56,10 +61,13 @@ export default function Home() {
             </div>
 
             <nav className="hidden md:flex items-center gap-8 text-base font-medium">
-              <a href="http://localhost:3000" className="text-[#ff4f00] border-b-2 border-[#ff4f00] pb-1 font-semibold">Dashboard</a>
-              <a href="http://localhost:5173" className="text-[#a1a1aa] hover:text-[#ff4f00] transition">Visual Flow Designer</a>
+              <a href={dashboardUrl} className="text-[#ff4f00] border-b-2 border-[#ff4f00] pb-1 font-semibold">Dashboard</a>
+              <a href={flowCanvasUrl} className="text-[#a1a1aa] hover:text-[#ff4f00] transition">Visual Flow Designer</a>
               <a href="/excel" className="text-[#a1a1aa] hover:text-[#ff4f00] transition">Excel AI</a>
               <a href="/files" className="text-[#a1a1aa] hover:text-[#ff4f00] transition">File Vault 📂</a>
+              <a href="/docs" className="text-[#a1a1aa] hover:text-[#ff4f00] transition">Docs</a>
+              <a href="/support" className="text-[#a1a1aa] hover:text-[#ff4f00] transition">Support</a>
+              <a href="/privacy" className="text-[#a1a1aa] hover:text-[#ff4f00] transition">Privacy</a>
             </nav>
 
             <div className="flex items-center gap-3">
@@ -86,7 +94,7 @@ export default function Home() {
               )}
 
               <a
-                href="http://localhost:5173"
+                href={flowCanvasUrl}
                 className="px-5 py-2.5 bg-[#ff4f00] text-white font-medium text-base rounded-md hover:bg-[#e04500] transition shadow-sm"
               >
                 Launch Visual Editor
@@ -113,16 +121,22 @@ export default function Home() {
 
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <a
-              href="http://localhost:5173"
+              href={flowCanvasUrl}
               className="px-8 py-3.5 bg-[#ff4f00] text-white text-base font-medium rounded-md shadow-md hover:bg-[#e04500] transition active:scale-98"
             >
               Start Automating Free
             </a>
             <a
-              href="/excel"
+              href="/docs"
               className="px-8 py-3.5 bg-[#18181b] border border-[#27272a] text-[#f4f4f5] text-base font-medium rounded-md hover:bg-[#27272a] hover:border-[#ff4f00] transition"
             >
-              Try Excel AI Generator
+              📚 Platform Documentation
+            </a>
+            <a
+              href="/excel"
+              className="px-8 py-3.5 bg-[#18181b] border border-[#27272a] text-[#a1a1aa] text-base font-medium rounded-md hover:bg-[#27272a] hover:text-white transition"
+            >
+              Excel AI
             </a>
           </div>
         </section>
@@ -148,7 +162,7 @@ export default function Home() {
                   </p>
                 </div>
                 <a
-                  href="http://localhost:5173"
+                  href={flowCanvasUrl}
                   className="w-full py-3 bg-[#ff4f00] text-white text-sm font-medium rounded-md text-center hover:bg-[#e04500] transition"
                 >
                   Open Canvas Editor →
@@ -235,7 +249,8 @@ export default function Home() {
             <div className="flex gap-6 text-sm text-[#a1a1aa] font-normal">
               <a href="http://localhost:5173" className="hover:text-[#ff4f00] transition">Visual Flow Designer</a>
               <a href="/excel" className="hover:text-[#ff4f00] transition">Excel AI</a>
-              <a href="http://localhost:4000/health" className="hover:text-[#ff4f00] transition">Engine Status</a>
+              <a href="/support" className="hover:text-[#ff4f00] transition">Support</a>
+              <a href="/privacy" className="hover:text-[#ff4f00] transition">Privacy</a>
             </div>
           </div>
         </footer>

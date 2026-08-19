@@ -1,83 +1,109 @@
 # 📘 Workspace Architecture & Project Guide
 
-Welcome to the **NEURON_FLOW** workspace guide. This document provides an easy-to-understand breakdown of the workspace layout, core backend/frontend apps, database models, and instructions for running and extending the project.
+Welcome to the **NEURON_FLOW** workspace guide. This document provides a complete breakdown of the monorepo layout, core subprojects, database schemas, API routes, node execution engine, and deployment guides.
 
 ---
 
-## 📂 Layout Overview
+## 📂 Monorepo Layout Overview
 
 ```
 .
-├── automation-workflow/         # Visual Workflow Canvas & Automation Engine Subproject
-│   ├── backend/                 # Node.js + Express backend orchestrator
-│   │   ├── db.js                # Shared Prisma client (SQLite WAL mode & connection queue limit)
-│   │   ├── engine.js            # Node execution engine (BFS traversal algorithm)
-│   │   ├── scheduler.js         # Delayed job & recurring timer scheduler
-│   │   ├── clean_db.js          # DB maintenance script (vacuums & clears old execution logs)
-│   │   └── server.js            # Express API routes
-│   ├── frontend/                # React + Vite drag-and-drop workflow canvas UI
-│   │   ├── src/
-│   │   │   ├── App.tsx          # Workflow editor layout, canvas state & interactive sidebar sliders
-│   │   │   ├── CustomNode.tsx   # React Flow node visual components & Play SVG badges
-│   │   │   └── CustomEdge.tsx   # Connection edge buttons & animation wires
-│   │   └── vite.config.ts       # Vite build setup
-│   └── prisma/                  # Prisma ORM Database Models
-│       └── schema.prisma        # SQLite database schema (`dev.db`)
+├── automation-engine/           # Turbo Monorepo (Next.js 15, Inngest Queue & Engine)
+│   ├── apps/web/                # Ingest App, Form Builder & API Services
+│   │   ├── app/api/forms/       # Form CRUD & POST /api/forms/[id]/submit
+│   │   ├── app/api/executions/  # Real-Time Monitoring GET /api/executions/[id]/logs
+│   │   ├── app/api/inngest/     # Inngest Background Worker Queue Handlers
+│   │   └── components/nodes/    # React Flow UI Nodes (ExcelNode, McpConnectorNode)
+│   └── packages/                # Core Monorepo Packages
+│       ├── engine/              # Graph Engine (Topological BFS Traversal)
+│       ├── nodes/               # Node Definitions (excel, mcp-connector, openai, etc.)
+│       ├── sdk/                 # Node Execution SDK & Template Resolvers
+│       └── db/                  # Shared Prisma ORM Database Models
 │
-├── pages/                       # Root Next.js Pages
+├── automation-workflow/         # Visual Workflow Canvas Subproject
+│   ├── backend/                 # Node.js + Express backend orchestrator
+│   │   ├── db.js                # Centralized Prisma Client (SQLite WAL mode enabled)
+│   │   ├── engine.js            # Asynchronous BFS Queue Processor
+│   │   ├── scheduler.js         # Delayed job daemon & recurring 10s timer scheduler
+│   │   ├── rabbitmq.js          # RabbitMQ event queue integration & fallback
+│   │   └── server.js            # Express API & SMTP Email Sender
+│   ├── frontend/                # React + Vite visual canvas UI
+│   │   ├── src/App.tsx          # Workflow editor layout, canvas state & sidebars
+│   │   ├── src/CustomNode.tsx   # Visual Cards (ScheduleTrigger, MarketingNode, etc.)
+│   │   └── src/CustomEdge.tsx   # Animated edges & connection deletion handles
+│   └── prisma/schema.prisma     # SQLite database schema (`dev.db`)
+│
+├── pages/                       # Root Next.js Pages (Clerk Auth & Dashboard)
 │   ├── index.js                 # NEURON_FLOW Landing Page
-│   └── excel.js                 # Excel AI Generator interface
+│   ├── excel.js                 # Excel AI Generator interface
+│   ├── sign-in/[[...index]].js  # Clerk Sign-In
+│   └── sign-up/[[...index]].js  # Clerk Sign-Up
 ├── server/                      # Root Companion Express Server (Port 4001)
-├── next.config.js               # Next.js & Turbopack workspace configuration
-└── package.json                 # Root monorepo script runner
+├── .env                         # Environment Credentials
+├── .env.example                 # Environment Template
+├── next.config.js               # Next.js & Turbopack configuration
+└── package.json                 # Monorepo script orchestrator
 ```
 
 ---
 
 ## 🧩 Key Architecture Components
 
-### 1. Root Workspace App (Next.js Dashboard + Express API)
-- **Frontend Port:** `3000` | **Backend Port:** `4001`
-- **Purpose:** Serves as the primary landing page and dashboard gateway.
+### 1. Root Workspace App (Next.js Dashboard & Clerk Auth)
+- **Frontend Port:** `3000` | **Companion API Port:** `4001`
+- **Purpose:** Serves as the primary landing dashboard, user authentication gateway, and file sharing vault.
 - **Run Command:** `npm run dev:full`
 
-### 2. Automation Workflow Designer (React Flow Canvas + Express Engine)
+### 2. Automation Engine Monorepo (Next.js 15 + Turbo + Inngest)
+- **Port:** `3001`
+- **Purpose:** Ingest event pipeline, Form submission processing (`POST /api/forms/[id]/submit`), background worker queueing (`Inngest`), and real-time execution log streaming (`GET /api/executions/[id]/logs`).
+
+### 3. Automation Workflow Designer (React Flow Canvas + Express Engine)
 - **Frontend Port:** `5173` | **Backend Port:** `4000`
 - **Purpose:** Visual drag-and-drop workflow designer supporting:
-  - **Visual Start Triggers:** Play SVG emblems on circular start containers (`StartNode`, `TriggerNode`, `ScheduleTriggerNode`, `GoogleFormTriggerNode`).
-  - **Left Sidebar Sliders:** Adjust Palette Width (180px–360px) and Node Density Scale (75%–125%).
-  - **Right Sidebar Sliders:** Interactive range sliders for Delay duration, Schedule interval, CRM score increment, If/Else threshold score, Google Sheets max row limit, and OpenAI temperature/tokens.
-  - **Execution Engine:** Asynchronous BFS queue processor with SQLite WAL mode to eliminate database lock timeouts (`P1008`).
+  - **Node Types**: Schedule Trigger, Marketing Email, CRM Action, If/Else Filter, Wait Delay, Run JS Script, OpenAI, Slack, Discord, Google Sheets, Excel Processor, MCP Connector.
+  - **Pre-Configured Template**: 10s Interval Health Check & Email Dispatcher.
+  - **Execution Engine**: Asynchronous BFS queue processor with SQLite WAL mode to eliminate database lock timeouts (`P1008`).
 
 ---
 
-## 🗄️ Database Models (SQLite + Prisma)
+## 🗄️ Database Models & Storage
 
-- **`User`**: Account details and owner relation.
-- **`Workflow`**: Workflow definitions (JSON string of node graph structures & connection edges).
-- **`ExecutionLog`**: Step-by-step execution history, run status (`running`, `success`, `failed`), and output payloads.
-- **`CRMContact`**: Simulated CRM leads table (`id`, `name`, `email`, `status`, `score`).
+### SQLite Schema (`automation-workflow/prisma/schema.prisma`)
+- **`User`**: Account details and workflow owner relation.
+- **`Workflow`**: Graph definitions (`nodes`, `edges` JSON payload).
+- **`ExecutionLog`**: Execution logs, run status (`pending`, `running`, `success`, `failed`), and output data.
+- **`CRMContact`**: Lead contacts table (`id`, `name`, `email`, `status`, `score`).
 - **`SimulatedEmail`**: Sent emails log (`to`, `subject`, `body`, `sentAt`).
 - **`DelayedExecution`**: Suspended execution state records waiting for timer resumption.
+- **`SharedFile`**: S3 & local file sharing records.
+
+### Monorepo Schema (`automation-engine/packages/db/prisma/schema.prisma`)
+- **`Form`**: Form definitions linked to workflows (`workflowId`, `triggerNodeName`).
+- **`Execution` & `ExecutionData`**: Ingestion run states and step logs.
+- **`McpConnection`**: MCP server registrations and tool schemas.
 
 ---
 
-## 🚀 Running the Services
+## 🚀 Environment & Deployment Setup
 
-### Single Command (All Services):
+### Environment Variables
+Setup [.env](file:///d:/.vscode/workspace/.env) using [.env.example](file:///d:/.vscode/workspace/.env.example):
 ```bash
-npm run dev:all
+cp .env.example .env
 ```
 
-### Manual Individual Commands:
+### Production Build Command
+Run production builds across the full monorepo stack:
 ```bash
-# 1. Backend Engine
-cd automation-workflow/backend
-npm run dev
+# 1. Build Root Dashboard
+npm run build
 
-# 2. Frontend Designer
-cd automation-workflow/frontend
-npm run dev
+# 2. Build Automation Engine Monorepo
+npm run build:prod
+
+# 3. Build Workflow Canvas Frontend
+cd automation-workflow/frontend && npm run build
 ```
 
 Happy orchestrating! 🚀

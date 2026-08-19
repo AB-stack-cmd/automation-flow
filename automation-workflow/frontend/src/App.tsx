@@ -1942,13 +1942,13 @@ return {
             <div className="text-[10px] font-mono text-[#939084] uppercase tracking-wider mb-2">Switch Apps</div>
             <div className="flex flex-col gap-1 text-xs">
               <a href="http://localhost:3000" className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[#c5c0b1] hover:text-[#fffefb] hover:bg-[#2f2a26] transition">
-                <span className="w-2 h-2 rounded-full bg-[#ff4f00]"></span> Dashboard (:3000)
+                <span className="w-2 h-2 rounded-full bg-[#ff4f00]"></span> Dashboard
               </a>
               <a href="http://localhost:4000" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[#c5c0b1] hover:text-[#fffefb] hover:bg-[#2f2a26] transition">
-                <span className="w-2 h-2 rounded-full bg-emerald-400"></span> Engine API (:4000)
+                <span className="w-2 h-2 rounded-full bg-emerald-400"></span> Engine API
               </a>
               <a href="http://localhost:3000/excel" className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[#c5c0b1] hover:text-[#fffefb] hover:bg-[#2f2a26] transition">
-                <span className="w-2 h-2 rounded-full bg-sky-400"></span> Excel AI (:3000)
+                <span className="w-2 h-2 rounded-full bg-sky-400"></span> Excel AI
               </a>
               <a href="http://localhost:3000/files" className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[#c5c0b1] hover:text-[#fffefb] hover:bg-[#2f2a26] transition">
                 <span className="w-2 h-2 rounded-full bg-purple-400"></span> File Vault 📂
