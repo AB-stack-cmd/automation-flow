@@ -22,6 +22,7 @@ export default function DocumentationPage() {
     { id: 'excel-mcp', title: '5. Excel & MCP Connector', icon: '🔌' },
     { id: 'api-reference', title: '6. API Reference', icon: '💻' },
     { id: 'deployment', title: '7. Production Deployment', icon: '☁️' },
+    { id: 'env-keys', title: '8. Environment & API Keys', icon: '🔑' },
   ];
 
   return (
@@ -259,6 +260,55 @@ export default function DocumentationPage() {
                 <li><strong className="text-white">Build Command:</strong> npm run build</li>
                 <li><strong className="text-white">Output Directory:</strong> .next (or dist for Vite SPA)</li>
               </ul>
+            </section>
+
+            {/* Section 8: Environment & API Keys */}
+            <section id="env-keys" className="p-6 bg-[#141417] border border-[#27272a] rounded-xl space-y-4">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🔑</span>
+                <h2 className="text-xl font-bold text-white">8. Environment & API Keys Guide</h2>
+              </div>
+              <p className="text-sm text-[#a1a1aa]">
+                Configure your root <code className="text-amber-400 font-mono">.env</code> file with required credentials and third-party API keys:
+              </p>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs font-mono border-collapse border border-[#27272a]">
+                  <thead>
+                    <tr className="bg-[#18181b] text-white border-b border-[#27272a]">
+                      <th className="p-2.5 border-r border-[#27272a]">Variable Name</th>
+                      <th className="p-2.5 border-r border-[#27272a]">Description</th>
+                      <th className="p-2.5">Portal Link</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#27272a] text-[#a1a1aa]">
+                    <tr>
+                      <td className="p-2.5 text-amber-400 font-bold border-r border-[#27272a]">OPENAI_API_KEY</td>
+                      <td className="p-2.5 border-r border-[#27272a]">OpenAI GPT completions key</td>
+                      <td className="p-2.5"><a href="https://platform.openai.com/api-keys" target="_blank" rel="noreferrer" className="text-[#ff4f00] hover:underline">platform.openai.com</a></td>
+                    </tr>
+                    <tr>
+                      <td className="p-2.5 text-amber-400 font-bold border-r border-[#27272a]">NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY</td>
+                      <td className="p-2.5 border-r border-[#27272a]">Clerk authentication key</td>
+                      <td className="p-2.5"><a href="https://dashboard.clerk.com" target="_blank" rel="noreferrer" className="text-[#ff4f00] hover:underline">dashboard.clerk.com</a></td>
+                    </tr>
+                    <tr>
+                      <td className="p-2.5 text-amber-400 font-bold border-r border-[#27272a]">WHATSAPP_TOKEN</td>
+                      <td className="p-2.5 border-r border-[#27272a]">Meta WhatsApp Cloud API token</td>
+                      <td className="p-2.5"><a href="https://developers.facebook.com/apps" target="_blank" rel="noreferrer" className="text-[#ff4f00] hover:underline">developers.facebook.com</a></td>
+                    </tr>
+                    <tr>
+                      <td className="p-2.5 text-amber-400 font-bold border-r border-[#27272a]">AWS_ACCESS_KEY_ID</td>
+                      <td className="p-2.5 border-r border-[#27272a]">AWS S3 Storage IAM Access Key</td>
+                      <td className="p-2.5"><a href="https://console.aws.amazon.com/iam" target="_blank" rel="noreferrer" className="text-[#ff4f00] hover:underline">console.aws.amazon.com</a></td>
+                    </tr>
+                    <tr>
+                      <td className="p-2.5 text-amber-400 font-bold border-r border-[#27272a]">DATABASE_URL</td>
+                      <td className="p-2.5 border-r border-[#27272a]">PostgreSQL connection URL</td>
+                      <td className="p-2.5"><a href="https://prisma.io" target="_blank" rel="noreferrer" className="text-[#ff4f00] hover:underline">prisma.io</a></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </section>
           </main>
         </div>
