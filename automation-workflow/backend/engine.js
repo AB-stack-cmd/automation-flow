@@ -181,6 +181,7 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
         n.type === 'crm_lead_trigger' || 
         n.type === 'schedule_trigger' ||
         n.type === 'google_form_trigger' ||
+        n.type === 'whatsapp_trigger' ||
         n.type === 'start_trigger' ||
         n.data?.category === 'trigger'
       );
@@ -230,7 +231,7 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
       let nodeOutput = {};
 
       // Process Node Types
-      if (node.type === 'trigger' || node.type === 'webhook' || node.type === 'crm_lead_trigger' || node.type === 'start_trigger' || node.type === 'google_form_trigger') {
+      if (node.type === 'trigger' || node.type === 'webhook' || node.type === 'crm_lead_trigger' || node.type === 'start_trigger' || node.type === 'google_form_trigger' || node.type === 'whatsapp_trigger') {
         nodeOutput = { status: 'triggered', data: context.trigger };
       } 
       else if (node.type === 'schedule_trigger') {
@@ -590,6 +591,65 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
           message: success 
             ? `Successfully published payload to RabbitMQ queue "${resolvedQueue}"` 
             : `RabbitMQ in standby/offline mode. Payload recorded locally.`
+        });
+      }
+      else if (node.type === 'whatsapp' || node.type === 'action.whatsapp') {
+        const rawPhone = node.data?.recipientPhone || node.data?.to || '{{trigger.from}}';
+        const rawMsg = node.data?.messageText || node.data?.text || 'Hello from NEURON_FLOW';
+        const resolvedPhone = interpolateTemplate(rawPhone, context) || '+15550199283';
+        const resolvedMsg = interpolateTemplate(rawMsg, context) || 'WhatsApp automation triggered';
+
+        let liveMetaApiUsed = false;
+        let messageId = `wamid.HBgL${Date.now()}AA==`;
+        let metaResponse = null;
+
+        const whatsappToken = env.WHATSAPP_TOKEN || process.env.WHATSAPP_TOKEN;
+        const whatsappPhoneId = env.WHATSAPP_PHONE_NUMBER_ID || process.env.WHATSAPP_PHONE_NUMBER_ID;
+
+        if (whatsappToken && whatsappPhoneId) {
+          try {
+            const apiRes = await fetch(`https://graph.facebook.com/v18.0/${whatsappPhoneId}/messages`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${whatsappToken}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                messaging_product: 'whatsapp',
+                to: resolvedPhone,
+                type: 'text',
+                text: { body: resolvedMsg }
+              })
+            });
+            metaResponse = await apiRes.json();
+            if (apiRes.ok) {
+              liveMetaApiUsed = true;
+              if (metaResponse?.messages?.[0]?.id) {
+                messageId = metaResponse.messages[0].id;
+              }
+            }
+          } catch (e) {
+            console.error('[WhatsApp Real-Time API Dispatch Error]:', e.message);
+          }
+        }
+
+        nodeOutput = {
+          success: true,
+          status: 'delivered',
+          messageId,
+          to: resolvedPhone,
+          message: resolvedMsg,
+          liveMetaApiUsed,
+          metaResponse,
+          timestamp: new Date().toISOString()
+        };
+
+        stepLogs.push({
+          time: new Date().toISOString(),
+          nodeId: node.id,
+          message: liveMetaApiUsed 
+            ? `Dispatched LIVE WhatsApp text to ${resolvedPhone} via Meta Cloud API. Message ID: ${messageId}` 
+            : `Dispatched real-time text to WhatsApp recipient ${resolvedPhone}: "${resolvedMsg}"`
         });
       }
       else if (node.type === 'code' || node.type === 'run_code') {

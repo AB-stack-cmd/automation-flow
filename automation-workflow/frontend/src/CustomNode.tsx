@@ -517,3 +517,61 @@ export const McpConnectorNode = memo(({ data, selected }: any) => {
   );
 });
 
+// WhatsApp Trigger Node Component (Starts workflow when incoming WhatsApp message is received)
+export const WhatsAppTriggerNode = memo(({ data, selected }: any) => {
+  return (
+    <div className="relative group flex flex-col items-center cursor-grab active:cursor-grabbing">
+      <div className={`w-14 h-14 rounded-full bg-[#25D366]/10 dark:bg-[#25D366]/20 border-2 flex items-center justify-center relative transition-all duration-200 ${
+        selected ? 'border-[#25D366] shadow-[0_0_14px_rgba(37,211,102,0.4)] scale-105' : 'border-[#25D366]/60 hover:border-[#25D366] shadow-sm'
+      }`}>
+        <span className="text-2xl">💬</span>
+        <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#25D366] border-2 border-[#fffefb] flex items-center justify-center shadow-sm">
+          <svg className="w-2.5 h-2.5 text-[#fffefb] ml-0.5" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+        </div>
+      </div>
+      <div className="mt-2 whitespace-nowrap text-[11px] uppercase tracking-wider font-semibold text-[#25D366] dark:text-[#25D366] bg-[#fffefb] dark:bg-[#141417] px-2.5 py-0.5 rounded-full border border-[#25D366]/40 shadow-xs">
+        {data.label || 'WhatsApp Trigger'}
+      </div>
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="output"
+        className="!w-3 !h-3 !bg-[#25D366] !border-2 !border-[#fffefb] !rounded-full !right-[-6px] hover:scale-125 transition-transform"
+      />
+    </div>
+  );
+});
+
+// WhatsApp Action Node Component (Sends outbound WhatsApp message)
+export const WhatsAppNode = memo(({ data, selected }: any) => {
+  const recipient = data?.recipientPhone || data?.to || '{{trigger.from}}';
+  const message = data?.messageText || data?.text || 'WhatsApp message';
+  return (
+    <div className={nodeCardClass(selected)}>
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="input"
+        className="!w-3 !h-3 !bg-[#201515] dark:!bg-[#f4f4f5] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#25D366]"
+      />
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-lg">💬</span>
+        <span className="text-sm font-bold text-[#201515] dark:text-[#f4f4f5]">{data.label || 'Send WhatsApp Msg'}</span>
+      </div>
+      <div className="text-xs text-[#605d52] dark:text-[#a1a1aa] flex flex-col gap-0.5">
+        <div className="truncate text-[10px]">To: <span className="font-mono text-[#25D366]">{recipient}</span></div>
+        <div className="truncate text-[10px]">Msg: <span>{message}</span></div>
+      </div>
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="output"
+        className="!w-3 !h-3 !bg-[#25D366] !border-2 !border-[#fffefb] !rounded-full !right-[-6px]"
+      />
+    </div>
+  );
+});
+
+

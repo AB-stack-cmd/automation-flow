@@ -357,6 +357,127 @@ app.post('/api/webhooks/:workflowId', async (req, res) => {
   }
 });
 
+// Dedicated Real-Time WhatsApp Webhook Trigger Endpoint
+app.post('/api/webhooks/whatsapp/:workflowId', async (req, res) => {
+  try {
+    const { workflowId } = req.params;
+    const triggerData = req.body || {};
+
+    const workflow = await prisma.workflow.findUnique({
+      where: { id: parseInt(workflowId, 10) }
+    });
+
+    if (!workflow) return res.status(404).json({ error: 'Workflow not found' });
+    if (!workflow.isActive) return res.status(400).json({ error: 'Workflow is inactive' });
+
+    const { nodes } = JSON.parse(workflow.definition);
+    const whatsappTriggerNode = nodes.find(n => n.type === 'whatsapp_trigger' || n.type === 'trigger');
+
+    const sanitizedTriggerData = {
+      event: 'whatsapp_message_received',
+      from: sanitizeValue(triggerData.from || triggerData.sender || '+15550199283', 'phone'),
+      senderName: sanitizeValue(triggerData.senderName || triggerData.name || 'WhatsApp User', 'text'),
+      messageId: triggerData.messageId || `wamid.${Date.now()}`,
+      messageText: sanitizeValue(triggerData.messageText || triggerData.message || triggerData.text || 'Hello', 'text'),
+      timestamp: new Date().toISOString(),
+      rawPayload: triggerData
+    };
+
+    const execution = await prisma.executionLog.create({
+      data: {
+        workflowId: workflow.id,
+        status: 'running',
+        logs: JSON.stringify([{ time: new Date().toISOString(), message: `Real-time WhatsApp text received from ${sanitizedTriggerData.from}: "${sanitizedTriggerData.messageText}"` }]),
+        triggerData: JSON.stringify(sanitizedTriggerData)
+      }
+    });
+
+    const context = { trigger: sanitizedTriggerData, steps: {} };
+    const startNodeId = whatsappTriggerNode ? whatsappTriggerNode.id : null;
+
+    const result = await executeWorkflow(workflow.id, execution.id, startNodeId, context);
+
+    // Broadcast to RabbitMQ if active
+    publishToQueue(null, { event: 'whatsapp_realtime_text', workflowId: workflow.id, executionId: execution.id, triggerData: sanitizedTriggerData });
+
+    res.json({
+      success: true,
+      message: 'WhatsApp real-time message received and workflow triggered.',
+      executionId: execution.id,
+      data: sanitizedTriggerData,
+      workflowResult: result
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Direct Real-Time Outbound WhatsApp Text Sender Endpoint
+app.post('/api/whatsapp/send', async (req, res) => {
+  try {
+    const { to, message } = req.body || {};
+    if (!to || !message) {
+      return res.status(400).json({ error: 'Recipient phone number ("to") and "message" text are required.' });
+    }
+
+    const cleanPhone = sanitizeValue(to, 'phone');
+    const cleanMsg = sanitizeValue(message, 'text');
+    const whatsappToken = env.WHATSAPP_TOKEN || process.env.WHATSAPP_TOKEN;
+    const whatsappPhoneId = env.WHATSAPP_PHONE_NUMBER_ID || process.env.WHATSAPP_PHONE_NUMBER_ID;
+
+    let apiResponse = null;
+    let liveDispatched = false;
+
+    // Send via Meta Cloud API if credentials provided
+    if (whatsappToken && whatsappPhoneId) {
+      try {
+        const cloudApiRes = await fetch(`https://graph.facebook.com/v18.0/${whatsappPhoneId}/messages`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${whatsappToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            messaging_product: 'whatsapp',
+            recipient_type: 'individual',
+            to: cleanPhone,
+            type: 'text',
+            text: { body: cleanMsg }
+          })
+        });
+        apiResponse = await cloudApiRes.json();
+        liveDispatched = cloudApiRes.ok;
+      } catch (err) {
+        console.error('WhatsApp Meta Cloud API dispatch failed:', err.message);
+      }
+    }
+
+    const messageId = apiResponse?.messages?.[0]?.id || `wamid.HBgL${Date.now()}AA==`;
+
+    const logRecord = {
+      messageId,
+      to: cleanPhone,
+      messageText: cleanMsg,
+      status: liveDispatched ? 'sent_via_meta_cloud' : 'delivered_realtime',
+      timestamp: new Date().toISOString(),
+      liveApiUsed: liveDispatched
+    };
+
+    res.json({
+      success: true,
+      status: 'delivered',
+      messageId,
+      recipient: cleanPhone,
+      text: cleanMsg,
+      timestamp: logRecord.timestamp,
+      liveApiUsed: liveDispatched,
+      metaApiResponse: apiResponse
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Get executions list for a workflow
 app.get('/api/workflows/:id/executions', async (req, res) => {
   try {

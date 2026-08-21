@@ -25,7 +25,9 @@ import {
   DiscordNode,
   RespondToWebhookNode,
   ExcelNode,
-  McpConnectorNode
+  McpConnectorNode,
+  WhatsAppTriggerNode,
+  WhatsAppNode
 } from './CustomNode';
 import CustomButtonEdge from './CustomEdge';
 
@@ -59,7 +61,10 @@ const nodeTypes = {
   excel: ExcelNode,
   'action.excel': ExcelNode,
   mcp_connector: McpConnectorNode,
-  'action.mcpConnector': McpConnectorNode
+  'action.mcpConnector': McpConnectorNode,
+  whatsapp_trigger: WhatsAppTriggerNode,
+  whatsapp: WhatsAppNode,
+  'action.whatsapp': WhatsAppNode
 };
 
 const BACKEND_URL = 'http://localhost:4000';
@@ -80,6 +85,21 @@ const getNodeInterfaceDetails = (node: any) => {
       borderClass: 'border-emerald-500/40',
       btnClass: 'bg-emerald-600 hover:bg-emerald-500 text-white',
       testBtnLabel: '⚡ Send Test Webhook Payload',
+    };
+  }
+
+  if (type === 'whatsapp_trigger' || type === 'whatsapp' || type === 'action.whatsapp') {
+    return {
+      category: 'whatsapp',
+      title: 'WhatsApp Automation & Messaging Interface',
+      subtitle: 'Configure inbound WhatsApp trigger payload, target recipient number, message templates, and test dispatch.',
+      icon: 'chat',
+      themeColor: 'emerald',
+      badgeClass: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+      headerGradient: 'from-[#141f17] via-[#1a261c] to-[#141614]',
+      borderClass: 'border-emerald-500/40',
+      btnClass: 'bg-emerald-600 hover:bg-emerald-500 text-white',
+      testBtnLabel: '💬 Dispatch WhatsApp Test Event',
     };
   }
 
@@ -593,6 +613,87 @@ return {
     alert("Code successfully applied to the selected Run Script node!");
   };
 
+  // Real-Time WhatsApp Messenger States
+  const [isWhatsAppRealtimeModalOpen, setIsWhatsAppRealtimeModalOpen] = useState(false);
+  const [realtimeWhatsAppPhone, setRealtimeWhatsAppPhone] = useState('+1 555-0199');
+  const [realtimeWhatsAppText, setRealtimeWhatsAppText] = useState('Hello! Real-time WhatsApp text message.');
+  const [realtimeWhatsAppLogs, setRealtimeWhatsAppLogs] = useState<any[]>([
+    {
+      id: 'init_1',
+      sender: 'system',
+      text: '💬 Real-Time WhatsApp Gateway active. Instant text dispatch ready.',
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    }
+  ]);
+  const [isSendingRealtimeWhatsApp, setIsSendingRealtimeWhatsApp] = useState(false);
+
+  const handleSendRealtimeWhatsApp = async () => {
+    if (!realtimeWhatsAppText.trim()) return;
+    setIsSendingRealtimeWhatsApp(true);
+
+    const userMsgId = `msg_${Date.now()}`;
+    const userMsg = {
+      id: userMsgId,
+      sender: 'user',
+      to: realtimeWhatsAppPhone,
+      text: realtimeWhatsAppText,
+      status: 'sending',
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    setRealtimeWhatsAppLogs(prev => [...prev, userMsg]);
+    const textPayload = realtimeWhatsAppText;
+    setRealtimeWhatsAppText('');
+
+    try {
+      // 1. Direct Real-Time Send API
+      const sendRes = await fetch(`${BACKEND_URL}/api/whatsapp/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: realtimeWhatsAppPhone,
+          message: textPayload
+        })
+      });
+      const sendData = await sendRes.json();
+
+      // 2. Trigger Workflow Webhook if current workflow active
+      let workflowExecResult: any = null;
+      if (currentWorkflow?.id) {
+        const webhookRes = await fetch(`${BACKEND_URL}/api/webhooks/whatsapp/${currentWorkflow.id}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            from: realtimeWhatsAppPhone,
+            messageText: textPayload,
+            senderName: 'Realtime User'
+          })
+        });
+        if (webhookRes.ok) {
+          workflowExecResult = await webhookRes.json();
+          fetchMockData();
+        }
+      }
+
+      setRealtimeWhatsAppLogs(prev => prev.map(m => m.id === userMsgId ? {
+        ...m,
+        status: 'delivered',
+        messageId: sendData.messageId || `wamid.${Date.now()}`,
+        liveApiUsed: sendData.liveApiUsed,
+        executionId: workflowExecResult?.executionId
+      } : m));
+
+    } catch (err: any) {
+      setRealtimeWhatsAppLogs(prev => prev.map(m => m.id === userMsgId ? {
+        ...m,
+        status: 'failed',
+        error: err.message
+      } : m));
+    } finally {
+      setIsSendingRealtimeWhatsApp(false);
+    }
+  };
+
   // Execution Stream Popup States
   const [isExecModalOpen, setIsExecModalOpen] = useState(false);
   const [execEmail, setExecEmail] = useState('jane.doe@example.com');
@@ -890,6 +991,7 @@ return {
       n.type === 'crm_lead_trigger' || 
       n.type === 'schedule_trigger' || 
       n.type === 'google_form_trigger' ||
+      n.type === 'whatsapp_trigger' ||
       n.type === 'webhook' ||
       n.type === 'start_trigger'
     );
@@ -943,6 +1045,10 @@ return {
       let msg = `Processing node: ${node.data?.label || node.id}`;
       if (node.type === 'trigger' || node.type === 'crm_lead_trigger') {
         msg = `🤖 [TRIGGER] Agent: Trigger event parsed. Contact = ${email}, Score = ${score}. Checking paths.`;
+      } else if (node.type === 'whatsapp_trigger') {
+        msg = `💬 [WHATSAPP TRIGGER] Agent: Incoming WhatsApp message captured from ${email}. Parsing trigger variables.`;
+      } else if (node.type === 'whatsapp' || node.type === 'action.whatsapp') {
+        msg = `💬 [WHATSAPP ACTION] Agent: Dispatched WhatsApp message to ${node.data?.recipientPhone || email} successfully.`;
       } else if (node.type === 'schedule_trigger') {
         msg = `⏰ [TRIGGER] Agent: Schedule timer interval elapsed. Checking path.`;
       } else if (node.type === 'google_form_trigger') {
@@ -1112,6 +1218,8 @@ return {
       defaultPayloadStr = '{\n  "event": "delay_timer_wait",\n  "delaySeconds": ' + (node?.data?.seconds || 10) + '\n}';
     } else if (type === 'code') {
       defaultPayloadStr = '{\n  "event": "javascript_script_execution",\n  "code": ' + JSON.stringify(node?.data?.code || '// Custom Script\nreturn { success: true };') + '\n}';
+    } else if (type === 'whatsapp_trigger' || type === 'whatsapp' || type === 'action.whatsapp') {
+      defaultPayloadStr = '{\n  "event": "whatsapp_message_received",\n  "from": "+15550199283",\n  "senderName": "Sarah Jenkins",\n  "messageId": "wamid.HBgLMTU1NTAxOTkyODMVAgARGBI1RkJEOUY5QzRENEExN0E5AA==",\n  "messageText": "Hello! I would like to inquire about your enterprise pricing.",\n  "timestamp": "' + new Date().toISOString() + '"\n}';
     } else if (type === 'rabbitmq_publish') {
       defaultPayloadStr = '{\n  "event": "rabbitmq_publish_queue",\n  "queue": "' + (node?.data?.queue || 'neuron_flow_queue') + '",\n  "payload": ' + JSON.stringify(node?.data?.payload || '{"event":"triggered"}') + '\n}';
     } else {
@@ -1356,6 +1464,7 @@ return {
           targetNode.type === 'crm_lead_trigger' ||
           targetNode.type === 'schedule_trigger' ||
           targetNode.type === 'google_form_trigger' ||
+          targetNode.type === 'whatsapp_trigger' ||
           targetNode.type === 'start_trigger';
         if (isTrigger) return false;
       }
@@ -1596,6 +1705,22 @@ return {
           headers: '{\n  "Content-Type": "application/json"\n}',
           responseBody: '{\n  "success": true,\n  "message": "Processed successfully"\n}',
           redirectUrl: ''
+        };
+        break;
+      case 'whatsapp_trigger':
+        label = 'WhatsApp Trigger';
+        extraData = {
+          triggerType: 'whatsapp',
+          phoneNumber: '+1 555-0199',
+          webhookUrl: `${BACKEND_URL}/api/webhooks/whatsapp/${currentWorkflow?.id || '1'}`
+        };
+        break;
+      case 'whatsapp':
+      case 'action.whatsapp':
+        label = 'Send WhatsApp Msg';
+        extraData = {
+          recipientPhone: '{{trigger.from}}',
+          messageText: 'Hello {{trigger.senderName}}, thank you for contacting us!'
         };
         break;
     }
@@ -2288,6 +2413,15 @@ return {
                   Delete Flow
                 </button>
 
+                <button
+                  onClick={() => setIsWhatsAppRealtimeModalOpen(true)}
+                  className="px-3 py-1 bg-[#25D366]/10 hover:bg-[#25D366]/20 border border-[#25D366]/40 text-[#25D366] font-bold text-xs rounded-lg flex items-center gap-1.5 transition cursor-pointer shrink-0 shadow-sm"
+                  title="Open Real-Time WhatsApp Live Text Messenger"
+                >
+                  <span className="material-symbols-outlined text-sm">chat</span>
+                  <span>Realtime WhatsApp</span>
+                </button>
+
                 <div className="flex items-center rounded-lg overflow-hidden border border-outline-variant/30 text-[11px] shrink-0">
                   <button
                     onClick={() => alert(`Webhook endpoint: ${BACKEND_URL}/api/webhooks/${currentWorkflow?.id}`)}
@@ -2434,6 +2568,22 @@ return {
                           >
                             <span>📋</span>
                             <span>Google Form</span>
+                          </button>
+
+                          <button
+                            onClick={() => addNode('whatsapp_trigger')}
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-md border border-[#25D366]/50 bg-[#fffefb] hover:border-[#25D366] text-[#201515] text-xs font-bold text-left transition-all"
+                          >
+                            <span>💬</span>
+                            <span>WhatsApp Trigger</span>
+                          </button>
+
+                          <button
+                            onClick={() => addNode('whatsapp')}
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-md border border-[#25D366]/50 bg-[#fffefb] hover:border-[#25D366] text-[#201515] text-xs font-bold text-left transition-all"
+                          >
+                            <span>📲</span>
+                            <span>Send WhatsApp Msg</span>
                           </button>
 
                           <button
@@ -5155,6 +5305,8 @@ return {
                 ]},
                 { name: 'Triggers (On Event)', items: [
                   { type: 'start_trigger', label: 'Start Trigger', icon: 'play_circle', color: 'border-amber-800/40 bg-amber-950/10 text-amber-400', desc: 'Initial entry point trigger', defaultData: { label: 'Start Trigger' } },
+                  { type: 'whatsapp_trigger', label: 'WhatsApp Trigger', icon: 'chat', color: 'border-emerald-800/40 bg-emerald-950/10 text-emerald-400', desc: 'Incoming WhatsApp message webhook trigger', defaultData: { label: 'WhatsApp Trigger', triggerType: 'whatsapp' } },
+                  { type: 'whatsapp', label: 'Send WhatsApp Msg', icon: 'chat', color: 'border-emerald-800/40 bg-emerald-950/10 text-emerald-400', desc: 'Dispatch WhatsApp message to recipient phone number', defaultData: { label: 'Send WhatsApp Msg', recipientPhone: '{{trigger.from}}', messageText: 'Hello!' } },
                   { type: 'schedule_trigger', label: 'Schedule Trigger', icon: 'alarm', color: 'border-amber-800/40 bg-amber-950/10 text-amber-400', desc: 'Periodic timer or cron interval schedule', defaultData: { label: 'Schedule Trigger', scheduleType: 'interval', intervalValue: 10, intervalUnit: 'seconds' } },
                   { type: 'google_form_trigger', label: 'Google Form Trigger', icon: 'description', color: 'border-green-800/40 bg-green-950/10 text-green-400', desc: 'Google Form submission event trigger', defaultData: { label: 'Google Form Trigger' } },
                   { type: 'trigger', label: 'Webhook Trigger', icon: 'bolt', color: 'border-emerald-800/40 bg-emerald-950/10 text-emerald-400', desc: 'Incoming HTTP POST webhook request listener', defaultData: { label: 'Webhook Trigger', triggerType: 'webhook' } },
@@ -5344,6 +5496,111 @@ return {
                 Proceed to Checkout
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Real-Time WhatsApp Live Text Messenger Modal */}
+      {isWhatsAppRealtimeModalOpen && (
+        <div className="fixed inset-0 z-[140] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200 text-left">
+          <div className="w-[580px] max-w-[95vw] bg-[#111b21] border border-[#25D366]/40 rounded-2xl shadow-2xl overflow-hidden flex flex-col h-[600px] max-h-[90vh]">
+            
+            {/* Header */}
+            <div className="p-4 bg-[#202c33] border-b border-[#222d34] flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#25D366] flex items-center justify-center text-white shadow-md font-bold text-xl">
+                  💬
+                </div>
+                <div>
+                  <span className="font-bold text-sm text-[#e9edef] block leading-tight flex items-center gap-2">
+                    WhatsApp Real-Time Text Gateway
+                    <span className="w-2 h-2 rounded-full bg-[#25D366] animate-pulse"></span>
+                  </span>
+                  <span className="text-[11px] text-[#8696a0] block mt-0.5">
+                    Send instant real-time text messages & trigger canvas workflow executions
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsWhatsAppRealtimeModalOpen(false)}
+                className="text-[#8696a0] hover:text-[#e9edef] bg-white/5 p-2 rounded-xl transition"
+              >
+                <span className="material-symbols-outlined text-base">close</span>
+              </button>
+            </div>
+
+            {/* Recipient Input Bar */}
+            <div className="p-3 bg-[#111b21] border-b border-[#222d34] flex items-center gap-2">
+              <span className="text-xs text-[#8696a0] font-bold shrink-0">Recipient Phone:</span>
+              <input
+                type="text"
+                value={realtimeWhatsAppPhone}
+                onChange={(e) => setRealtimeWhatsAppPhone(e.target.value)}
+                placeholder="+1 555-0199"
+                className="flex-1 bg-[#202c33] border border-[#222d34] rounded-lg px-3 py-1.5 text-xs text-[#e9edef] outline-none font-mono focus:border-[#25D366]"
+              />
+            </div>
+
+            {/* Live Message Thread Stream */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#0b141a] bg-opacity-95">
+              {realtimeWhatsAppLogs.map((log) => (
+                <div key={log.id} className={`flex flex-col ${log.sender === 'user' ? 'items-end' : 'items-start'}`}>
+                  <div className={`max-w-[85%] p-3 rounded-2xl text-xs relative shadow-sm ${
+                    log.sender === 'user'
+                      ? 'bg-[#005c4b] text-[#e9edef] rounded-tr-none'
+                      : 'bg-[#202c33] text-[#d1d7db] rounded-tl-none border border-[#222d34]'
+                  }`}>
+                    <div className="leading-relaxed whitespace-pre-wrap">{log.text}</div>
+                    
+                    {/* Timestamp & Status Metadata */}
+                    <div className="flex items-center justify-end gap-1.5 mt-1 text-[9px] text-[#8696a0]">
+                      <span>{log.time}</span>
+                      {log.sender === 'user' && (
+                        <span>
+                          {log.status === 'sending' && <span className="animate-spin">⏳</span>}
+                          {log.status === 'delivered' && <span className="text-[#53bdeb] font-bold">✓✓</span>}
+                          {log.status === 'failed' && <span className="text-rose-400 font-bold">❌</span>}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {log.messageId && (
+                    <div className="mt-1 text-[9px] font-mono text-[#8696a0] px-1">
+                      ID: {log.messageId} {log.executionId && `• Workflow Run #${log.executionId}`}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Input Bar */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSendRealtimeWhatsApp();
+              }}
+              className="p-3 bg-[#202c33] border-t border-[#222d34] flex items-center gap-2"
+            >
+              <input
+                type="text"
+                value={realtimeWhatsAppText}
+                onChange={(e) => setRealtimeWhatsAppText(e.target.value)}
+                placeholder="Type real-time WhatsApp text message..."
+                disabled={isSendingRealtimeWhatsApp}
+                className="flex-1 bg-[#111b21] border border-[#222d34] rounded-xl px-4 py-2.5 text-xs text-[#e9edef] outline-none focus:border-[#25D366] transition disabled:opacity-50"
+              />
+              <button
+                type="submit"
+                disabled={isSendingRealtimeWhatsApp || !realtimeWhatsAppText.trim()}
+                className="bg-[#25D366] hover:bg-[#20bd5a] disabled:opacity-50 text-white font-bold px-4 py-2.5 rounded-xl text-xs flex items-center gap-1.5 transition cursor-pointer shadow-md shrink-0"
+              >
+                <span className="material-symbols-outlined text-sm">send</span>
+                {isSendingRealtimeWhatsApp ? 'Sending...' : 'Dispatch Text'}
+              </button>
+            </form>
+
           </div>
         </div>
       )}

@@ -98,11 +98,10 @@ export default function DocumentationPage() {
                   key={s.id}
                   href={`#${s.id}`}
                   onClick={() => setActiveSection(s.id)}
-                  className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition ${
-                    activeSection === s.id
+                  className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition ${activeSection === s.id
                       ? 'bg-[#18181b] text-[#ff4f00] border border-[#ff4f00]/30 font-semibold'
                       : 'text-[#a1a1aa] hover:bg-[#141417] hover:text-white'
-                  }`}
+                    }`}
                 >
                   <span>{s.icon}</span>
                   <span>{s.title}</span>
