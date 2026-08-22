@@ -31,11 +31,13 @@ export default function PrivacyPage() {
               <span className="font-display text-xl font-bold tracking-tight text-white">NEURON_FLOW</span>
             </a>
 
-            <nav className="hidden md:flex items-center gap-8 text-base font-medium">
+            <nav className="hidden md:flex items-center gap-6 text-base font-medium">
               <a href="/" className="text-[#a1a1aa] hover:text-[#ff4f00] transition">Dashboard</a>
               <a href={flowCanvasUrl} className="text-[#a1a1aa] hover:text-[#ff4f00] transition">Visual Flow Designer</a>
               <a href="/excel" className="text-[#a1a1aa] hover:text-[#ff4f00] transition">Excel AI</a>
-              <a href="/files" className="text-[#a1a1aa] hover:text-[#ff4f00] transition">File Vault 📂</a>
+              <a href="/workflows" className="text-[#a1a1aa] hover:text-[#ff4f00] transition flex items-center gap-1.5">
+                Workflows <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#ff4f00]/10 text-[#ff4f00] border border-[#ff4f00]/20">SOON</span>
+              </a>
               <a href="/docs" className="text-[#a1a1aa] hover:text-[#ff4f00] transition">Docs</a>
               <a href="/support" className="text-[#a1a1aa] hover:text-[#ff4f00] transition">Support</a>
               <a href="/privacy" className="text-[#ff4f00] border-b-2 border-[#ff4f00] pb-1 font-semibold">Privacy</a>
