@@ -561,11 +561,11 @@ export default function ExcelAutomation() {
                 <span className="px-2 py-0.5 text-[9px] uppercase tracking-wider bg-primary-container/10 border border-primary-container/20 text-[#facc15] rounded">EXCEL_AI</span>
               </div>
             </div>
-            <nav className="hidden md:flex items-center gap-6 text-xs">
-              <a className="text-neutral-400 hover:text-white transition-colors" href="http://localhost:3000">Dashboard</a>
-              <a className="text-neutral-400 hover:text-white transition-colors" href="http://localhost:5173">Visual Designer</a>
-              <a className="text-[#facc15] font-bold border-b border-[#facc15] pb-0.5" href="/excel">Excel AI</a>
-              <a className="text-neutral-400 hover:text-white transition-colors" href="/files">File Vault 📂</a>
+            <nav className="hidden md:flex items-center gap-1 text-sm font-medium bg-[#121215]/80 p-1.5 rounded-xl border border-[#27272a]/80 backdrop-blur-md">
+              <a className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#27272a]/60 border border-transparent transition-all duration-200" href="/">Dashboard</a>
+              <a className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#27272a]/60 border border-transparent transition-all duration-200" href="/workflows">Visual Flow Designer</a>
+              <a className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-[#facc15] bg-[#facc15]/15 border border-[#facc15]/30 shadow-sm transition-all duration-200" href="/excel">Excel AI</a>
+              <a className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#27272a]/60 border border-transparent transition-all duration-200" href="/files">File Vault 📂</a>
             </nav>
             <div className="flex items-center gap-3 text-xs text-neutral-400 font-mono">
               <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">

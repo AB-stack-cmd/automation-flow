@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "server": "node server/index.js",
-    "dev:full": "concurrently \"npm run dev\" \"npm run server\"",
+    "dev:full": "npm run db:push:workflow && concurrently \"npm run dev\" \"npm run server\" \"npm run dev --prefix automation-workflow/backend\" \"npm run dev --prefix automation-workflow/frontend\"",
     "start:full": "concurrently \"npm run start\" \"npm run server\"",
     "db:push:workflow": "prisma db push --schema=automation-workflow/prisma/schema.prisma",
     "dev:all": "npm run db:push:workflow && concurrently \"npm run dev\" \"npm run server\" \"npm run dev --prefix automation-workflow/backend\" \"npm run dev --prefix automation-workflow/frontend\"",

@@ -273,11 +273,11 @@ export default function FileVault() {
               </span>
             </div>
 
-            <nav className="hidden md:flex items-center gap-8 text-sm font-semibold">
-              <Link href="/" className="text-gray-400 hover:text-white transition">Dashboard</Link>
-              <a href="http://localhost:5173" className="text-gray-400 hover:text-white transition">Visual Flow Designer</a>
-              <Link href="/excel" className="text-gray-400 hover:text-white transition">Excel AI</Link>
-              <Link href="/files" className="text-[#ff4f00] border-b-2 border-[#ff4f00] pb-1">File Vault</Link>
+            <nav className="hidden md:flex items-center gap-1 text-sm font-medium bg-[#121215]/80 p-1.5 rounded-xl border border-[#27272a]/80 backdrop-blur-md">
+              <Link href="/" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#27272a]/60 border border-transparent transition-all duration-200">Dashboard</Link>
+              <Link href="/workflows" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#27272a]/60 border border-transparent transition-all duration-200">Visual Flow Designer</Link>
+              <Link href="/excel" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#27272a]/60 border border-transparent transition-all duration-200">Excel AI</Link>
+              <Link href="/files" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-[#ff4f00] bg-[#ff4f00]/15 border border-[#ff4f00]/30 shadow-sm transition-all duration-200">File Vault 📂</Link>
             </nav>
 
             <div className="flex items-center gap-4">

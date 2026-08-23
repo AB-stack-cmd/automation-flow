@@ -7,6 +7,7 @@ const API_URL = 'http://localhost:4001';
 
 const routesToCrawl = [
   '/',
+  '/workflows',
   '/excel',
   '/docs',
   '/privacy',

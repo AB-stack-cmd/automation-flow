@@ -115,14 +115,14 @@ export default function Custom404ComingSoon() {
               </span>
             </a>
 
-            <nav className="hidden md:flex items-center gap-8 text-base font-medium">
-              <a href="/" className="text-[#a1a1aa] hover:text-[#ff4f00] transition">Dashboard</a>
-              <a href={flowCanvasUrl} className="text-[#a1a1aa] hover:text-[#ff4f00] transition">Visual Flow Designer</a>
-              <a href="/excel" className="text-[#a1a1aa] hover:text-[#ff4f00] transition">Excel AI</a>
-              <a href="/files" className="text-[#a1a1aa] hover:text-[#ff4f00] transition">File Vault 📂</a>
-              <a href="/docs" className="text-[#a1a1aa] hover:text-[#ff4f00] transition">Docs</a>
-              <a href="/support" className="text-[#a1a1aa] hover:text-[#ff4f00] transition">Support</a>
-              <a href="/privacy" className="text-[#a1a1aa] hover:text-[#ff4f00] transition">Privacy</a>
+            <nav className="hidden md:flex items-center gap-1 text-sm font-medium bg-[#121215]/80 p-1.5 rounded-xl border border-[#27272a]/80 backdrop-blur-md">
+              <a href="/" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#27272a]/60 border border-transparent transition-all duration-200">Dashboard</a>
+              <a href={flowCanvasUrl} className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#27272a]/60 border border-transparent transition-all duration-200">Visual Flow Designer</a>
+              <a href="/excel" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#27272a]/60 border border-transparent transition-all duration-200">Excel AI</a>
+              <a href="/files" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#27272a]/60 border border-transparent transition-all duration-200">File Vault 📂</a>
+              <a href="/docs" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#27272a]/60 border border-transparent transition-all duration-200">Docs</a>
+              <a href="/support" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#27272a]/60 border border-transparent transition-all duration-200">Support</a>
+              <a href="/privacy" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#27272a]/60 border border-transparent transition-all duration-200">Privacy</a>
             </nav>
 
             <div className="flex items-center gap-3">
