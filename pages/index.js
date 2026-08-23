@@ -93,7 +93,7 @@ export default function Home() {
                 </div>
               ) : (
                 <SignInButton mode="modal">
-                  <button className="px-4 py-2 bg-[#18181b] border border-[#27272a] hover:border-[#ff4f00] text-sm font-medium text-white rounded-md transition">
+                  <button className="btn-md bg-[#18181b] border border-[#27272a] hover:border-[#ff4f00] text-white">
                     Sign In
                   </button>
                 </SignInButton>
@@ -101,7 +101,7 @@ export default function Home() {
 
               <a
                 href={flowCanvasUrl}
-                className="px-5 py-2.5 bg-[#ff4f00] text-white font-medium text-base rounded-md hover:bg-[#e04500] transition shadow-sm"
+                className="btn-md bg-[#ff4f00] text-white hover:bg-[#e04500] shadow-sm"
               >
                 Launch Visual Editor
               </a>
@@ -128,19 +128,19 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <a
               href={flowCanvasUrl}
-              className="px-8 py-3.5 bg-[#ff4f00] text-white text-base font-medium rounded-md shadow-md hover:bg-[#e04500] transition active:scale-98"
+              className="btn-lg bg-[#ff4f00] text-white shadow-md hover:bg-[#e04500] active:scale-98"
             >
               Start Automating Free
             </a>
             <a
               href="/docs"
-              className="px-8 py-3.5 bg-[#18181b] border border-[#27272a] text-[#f4f4f5] text-base font-medium rounded-md hover:bg-[#27272a] hover:border-[#ff4f00] transition"
+              className="btn-lg bg-[#18181b] border border-[#27272a] text-[#f4f4f5] hover:bg-[#27272a] hover:border-[#ff4f00]"
             >
               📚 Platform Documentation
             </a>
             <a
               href="/excel"
-              className="px-8 py-3.5 bg-[#18181b] border border-[#27272a] text-[#a1a1aa] text-base font-medium rounded-md hover:bg-[#27272a] hover:text-white transition"
+              className="btn-lg bg-[#18181b] border border-[#27272a] text-[#a1a1aa] hover:bg-[#27272a] hover:text-white"
             >
               Excel AI
             </a>
@@ -169,7 +169,7 @@ export default function Home() {
                 </div>
                 <a
                   href={flowCanvasUrl}
-                  className="w-full py-3 bg-[#ff4f00] text-white text-sm font-medium rounded-md text-center hover:bg-[#e04500] transition"
+                  className="btn-md w-full bg-[#ff4f00] text-white hover:bg-[#e04500]"
                 >
                   Open Canvas Editor →
                 </a>
@@ -190,7 +190,7 @@ export default function Home() {
                   href="http://localhost:4000/health"
                   target="_blank"
                   rel="noreferrer"
-                  className="w-full py-3 bg-[#ff4f00] text-white text-sm font-semibold rounded-md text-center hover:bg-[#e04500] transition"
+                  className="btn-md w-full bg-[#ff4f00] text-white hover:bg-[#e04500]"
                 >
                   Check Engine Health →
                 </a>
@@ -209,7 +209,7 @@ export default function Home() {
                 </div>
                 <a
                   href="/excel"
-                  className="w-full py-3 bg-[#ff4f00] text-white text-sm font-medium rounded-md text-center hover:bg-[#e04500] transition"
+                  className="btn-md w-full bg-[#ff4f00] text-white hover:bg-[#e04500]"
                 >
                   Launch Excel AI →
                 </a>

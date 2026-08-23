@@ -552,7 +552,7 @@ export default function ExcelAutomation() {
         <header className="fixed top-0 w-full z-40 bg-surface/80 backdrop-blur-xl border-b border-white/5">
           <div className="flex justify-between items-center h-16 px-6 max-w-7xl mx-auto">
             <div className="flex items-center gap-4">
-              <Link href="/" className="px-3 py-1.5 rounded bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-white text-xs font-semibold flex items-center gap-1.5 border border-white/5 transition-all">
+              <Link href="/" className="btn-sm bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-white border border-white/5">
                 ← Dashboard
               </Link>
               <div className="h-4 w-[1px] bg-white/10"></div>
@@ -576,7 +576,7 @@ export default function ExcelAutomation() {
                 <UserButton afterSignOutUrl="/" />
               ) : (
                 <SignInButton mode="modal">
-                  <button className="px-3 py-1 bg-neutral-900 hover:bg-neutral-800 border border-white/10 text-white rounded text-xs">
+                  <button className="btn-md bg-neutral-900 hover:bg-neutral-800 border border-white/10 text-white">
                     Sign In
                   </button>
                 </SignInButton>

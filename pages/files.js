@@ -313,9 +313,9 @@ export default function FileVault() {
 
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="bg-[#ff4f00] hover:bg-[#e04500] text-white px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 shadow-lg shadow-[#ff4f00]/25 transition-all duration-200 hover:scale-[1.02] cursor-pointer"
+              className="btn-md bg-[#ff4f00] hover:bg-[#e04500] text-white font-semibold flex items-center gap-2 shadow-lg shadow-[#ff4f00]/25 transition-all duration-200 cursor-pointer"
             >
-              <span className="text-lg">📤</span> Upload File
+              <span>📤</span> Upload File
             </button>
             <input
               type="file"

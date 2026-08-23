@@ -48,14 +48,14 @@ export default function PrivacyPage() {
                 <UserButton afterSignOutUrl="/" />
               ) : (
                 <SignInButton mode="modal">
-                  <button className="px-4 py-2 bg-[#18181b] border border-[#27272a] hover:border-[#ff4f00] text-sm font-medium text-white rounded-md transition">
+                  <button className="btn-md bg-[#18181b] border border-[#27272a] hover:border-[#ff4f00] text-white">
                     Sign In
                   </button>
                 </SignInButton>
               )}
               <a
                 href={flowCanvasUrl}
-                className="px-5 py-2.5 bg-[#ff4f00] text-white font-medium text-base rounded-md hover:bg-[#e04500] transition shadow-sm"
+                className="btn-md bg-[#ff4f00] text-white hover:bg-[#e04500] shadow-sm"
               >
                 Launch Visual Editor
               </a>

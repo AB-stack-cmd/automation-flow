@@ -130,14 +130,14 @@ export default function Custom404ComingSoon() {
                 <UserButton afterSignOutUrl="/" />
               ) : (
                 <SignInButton mode="modal">
-                  <button className="px-4 py-2 bg-[#18181b] border border-[#27272a] hover:border-[#ff4f00] text-sm font-medium text-white rounded-md transition">
+                  <button className="btn-md bg-[#18181b] border border-[#27272a] hover:border-[#ff4f00] text-white">
                     Sign In
                   </button>
                 </SignInButton>
               )}
               <a
                 href={flowCanvasUrl}
-                className="px-5 py-2.5 bg-[#ff4f00] text-white font-medium text-base rounded-md hover:bg-[#e04500] transition shadow-sm"
+                className="btn-md bg-[#ff4f00] text-white hover:bg-[#e04500] shadow-sm"
               >
                 Launch Editor
               </a>
@@ -182,7 +182,7 @@ export default function Custom404ComingSoon() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="px-5 py-3 bg-[#ff4f00] text-white text-sm font-medium rounded-lg hover:bg-[#e04500] transition disabled:opacity-50 whitespace-nowrap"
+                    className="btn-md bg-[#ff4f00] text-white font-medium hover:bg-[#e04500] disabled:opacity-50 whitespace-nowrap"
                   >
                     {loading ? 'Sending...' : 'Notify Me 🚀'}
                   </button>
@@ -194,19 +194,19 @@ export default function Custom404ComingSoon() {
             <div className="flex flex-wrap items-center justify-center gap-4 text-sm font-medium">
               <a
                 href="/"
-                className="px-6 py-3 bg-[#18181b] border border-[#27272a] hover:border-[#ff4f00] text-white rounded-lg transition flex items-center gap-2"
+                className="btn-lg bg-[#18181b] border border-[#27272a] hover:border-[#ff4f00] text-white flex items-center gap-2"
               >
                 ← Back to Dashboard
               </a>
               <a
                 href={flowCanvasUrl}
-                className="px-6 py-3 bg-[#ff4f00] text-white rounded-lg hover:bg-[#e04500] transition flex items-center gap-2 shadow-sm"
+                className="btn-lg bg-[#ff4f00] text-white hover:bg-[#e04500] flex items-center gap-2 shadow-sm"
               >
                 ⚡ Open Visual Flow Designer
               </a>
               <a
                 href="/excel"
-                className="px-6 py-3 bg-[#18181b] border border-[#27272a] hover:border-[#ff4f00] text-white rounded-lg transition flex items-center gap-2"
+                className="btn-lg bg-[#18181b] border border-[#27272a] hover:border-[#ff4f00] text-white flex items-center gap-2"
               >
                 📊 Launch Excel AI
               </a>
