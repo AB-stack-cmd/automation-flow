@@ -755,23 +755,32 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
           throw new Error(`[Slack Error] Invalid or missing Webhook URL: "${webhookUrl}"`);
         }
 
-        const res = await fetch(webhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text })
-        });
+        if (webhookUrl.includes('mock-webhook-url') || webhookUrl.includes('example.com')) {
+          nodeOutput = { success: true, text, mock: true };
+          stepLogs.push({
+            time: new Date().toISOString(),
+            nodeId: node.id,
+            message: `[Simulated] Real-time Slack message published to mock webhook: ${webhookUrl}`
+          });
+        } else {
+          const res = await fetch(webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text })
+          });
 
-        if (!res.ok) {
-          const errBody = await res.text();
-          throw new Error(`[Slack Error] Delivery failed HTTP ${res.status}: ${errBody}`);
+          if (!res.ok) {
+            const errBody = await res.text();
+            throw new Error(`[Slack Error] Delivery failed HTTP ${res.status}: ${errBody}`);
+          }
+
+          nodeOutput = { success: true, text };
+          stepLogs.push({
+            time: new Date().toISOString(),
+            nodeId: node.id,
+            message: `Slack message published to webhook: ${webhookUrl}`
+          });
         }
-
-        nodeOutput = { success: true, text };
-        stepLogs.push({
-          time: new Date().toISOString(),
-          nodeId: node.id,
-          message: `Slack message published to webhook: ${webhookUrl}`
-        });
       }
       else if (node.type === 'discord' || node.type === 'action.discord') {
         const webhookUrl = interpolateTemplate(node.data?.webhookUrl || '', context);
@@ -780,23 +789,32 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
           throw new Error(`[Discord Error] Invalid or missing Webhook URL: "${webhookUrl}"`);
         }
 
-        const res = await fetch(webhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content })
-        });
+        if (webhookUrl.includes('mock-webhook-url') || webhookUrl.includes('example.com')) {
+          nodeOutput = { success: true, content, mock: true };
+          stepLogs.push({
+            time: new Date().toISOString(),
+            nodeId: node.id,
+            message: `[Simulated] Real-time Discord message published to mock webhook: ${webhookUrl}`
+          });
+        } else {
+          const res = await fetch(webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content })
+          });
 
-        if (!res.ok) {
-          const errBody = await res.text();
-          throw new Error(`[Discord Error] Delivery failed HTTP ${res.status}: ${errBody}`);
+          if (!res.ok) {
+            const errBody = await res.text();
+            throw new Error(`[Discord Error] Delivery failed HTTP ${res.status}: ${errBody}`);
+          }
+
+          nodeOutput = { success: true, content };
+          stepLogs.push({
+            time: new Date().toISOString(),
+            nodeId: node.id,
+            message: `Discord message published to webhook: ${webhookUrl}`
+          });
         }
-
-        nodeOutput = { success: true, content };
-        stepLogs.push({
-          time: new Date().toISOString(),
-          nodeId: node.id,
-          message: `Discord message published to webhook: ${webhookUrl}`
-        });
       }
 
       // Record output in context

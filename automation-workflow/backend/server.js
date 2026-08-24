@@ -2,8 +2,8 @@ import express from 'express';
 import { env } from '../../env.js';
 import { prisma } from './db.js';
 import { executeWorkflow } from './engine.js';
-import { startScheduler } from './scheduler.js';
-import { connectRabbitMQ, publishToQueue, getRabbitMQStatus } from './rabbitmq.js';
+import { startScheduler, stopScheduler } from './scheduler.js';
+import { connectRabbitMQ, publishToQueue, consumeQueue, getRabbitMQStatus } from './rabbitmq.js';
 
 const app = express();
 app.use(express.json());
@@ -697,7 +697,26 @@ const PORT = env.PORT || 4000;
 app.listen(PORT, async () => {
   console.log(`Backend listening on port ${PORT}`);
   // Connect to RabbitMQ broker (standby mode if RABBITMQ_URL not set)
-  await connectRabbitMQ();
+  const isRabbitConnected = await connectRabbitMQ();
+  if (isRabbitConnected) {
+    await consumeQueue(null, async (msgData) => {
+      console.log('📥 [RabbitMQ] Consumed background workflow job:', msgData);
+      if (msgData?.workflowId) {
+        const context = { trigger: msgData.triggerData || {}, steps: {} };
+        await executeWorkflow(msgData.workflowId, msgData.executionId, null, context);
+      }
+    });
+  }
   // Start the background delay scheduler check loop
   startScheduler(2000);
 });
+
+// Graceful shutdown handling
+const gracefulShutdown = () => {
+  console.log('🛑 Server shutting down. Stopping scheduler...');
+  stopScheduler();
+  process.exit(0);
+};
+
+process.on('SIGINT', gracefulShutdown);
+process.on('SIGTERM', gracefulShutdown);
