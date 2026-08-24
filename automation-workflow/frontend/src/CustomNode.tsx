@@ -574,4 +574,35 @@ export const WhatsAppNode = memo(({ data, selected }: any) => {
   );
 });
 
+// Gemini Summarizer AI Node Component
+export const GeminiSummarizerNode = memo(({ data, selected }: any) => {
+  const model = data?.model || 'gemini-1.5-flash';
+  const prompt = data?.prompt || data?.summaryPrompt || 'Summarize input content...';
+  return (
+    <div className={nodeCardClass(selected)}>
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="input"
+        className="!w-3 !h-3 !bg-[#201515] dark:!bg-[#f4f4f5] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#4285F4]"
+      />
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-lg">✨</span>
+        <span className="text-sm font-bold text-[#201515] dark:text-[#f4f4f5]">{data.label || 'Gemini Summarizer'}</span>
+      </div>
+      <div className="text-xs text-[#605d52] dark:text-[#a1a1aa] flex flex-col gap-0.5">
+        <div>Model: <span className="text-blue-600 dark:text-blue-400 font-bold uppercase text-[10px]">{model}</span></div>
+        <div className="truncate text-[10px]">Prompt: {prompt}</div>
+      </div>
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="output"
+        className="!w-3 !h-3 !bg-[#4285F4] !border-2 !border-[#fffefb] !rounded-full !right-[-6px]"
+      />
+    </div>
+  );
+});
+
+
 

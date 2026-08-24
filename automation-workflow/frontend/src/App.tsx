@@ -27,7 +27,8 @@ import {
   ExcelNode,
   McpConnectorNode,
   WhatsAppTriggerNode,
-  WhatsAppNode
+  WhatsAppNode,
+  GeminiSummarizerNode
 } from './CustomNode';
 import CustomButtonEdge from './CustomEdge';
 
@@ -52,6 +53,11 @@ const nodeTypes = {
   google_sheets: GoogleSheetsNode,
   openai: OpenAINode,
   'action.openai': OpenAINode,
+  gemini_summarizer: GeminiSummarizerNode,
+  gemini: GeminiSummarizerNode,
+  'action.geminiSummarizer': GeminiSummarizerNode,
+  'action.gemini': GeminiSummarizerNode,
+  summarizer: GeminiSummarizerNode,
   slack: SlackNode,
   'action.slack': SlackNode,
   discord: DiscordNode,
@@ -190,6 +196,21 @@ const getNodeInterfaceDetails = (node: any) => {
       borderClass: 'border-purple-500/40',
       btnClass: 'bg-purple-600 hover:bg-purple-500 text-white',
       testBtnLabel: '🧠 Run Test AI Completion',
+    };
+  }
+
+  if (type === 'gemini_summarizer' || type === 'gemini' || type === 'action.gemini' || type === 'action.geminiSummarizer' || type === 'summarizer') {
+    return {
+      category: 'gemini',
+      title: 'Gemini AI Summarizer Interface',
+      subtitle: 'Configure Gemini LLM model (gemini-1.5-flash), prompt template, bullet point summarization, and test AI generation.',
+      icon: 'auto_awesome',
+      themeColor: 'blue',
+      badgeClass: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+      headerGradient: 'from-[#141b29] via-[#1a2336] to-[#14161a]',
+      borderClass: 'border-blue-500/40',
+      btnClass: 'bg-blue-600 hover:bg-blue-500 text-white',
+      testBtnLabel: '✨ Run Gemini AI Summarization Test',
     };
   }
 
@@ -390,9 +411,70 @@ const TEMPLATES = [
         }
       ],
       edges: [
-        { id: 'e1-2', source: 'schedule_node', target: 'sheets_node', animated: true, style: { stroke: '#facc15' } },
-        { id: 'e2-3', source: 'sheets_node', target: 'openai_node', animated: true, style: { stroke: '#facc15' } },
-        { id: 'e3-4', source: 'openai_node', target: 'slack_node', animated: true, style: { stroke: '#facc15' } }
+        { id: 'e_sch_sheets', source: 'schedule_node', target: 'sheets_node', animated: true, style: { stroke: '#ff4f00', strokeWidth: 2.5 } },
+        { id: 'e_sheets_ai', source: 'sheets_node', target: 'openai_node', animated: true, style: { stroke: '#a855f7', strokeWidth: 2.5 } },
+        { id: 'e_ai_slack', source: 'openai_node', target: 'slack_node', animated: true, style: { stroke: '#e879f9', strokeWidth: 2.5 } }
+      ]
+    }
+  },
+  {
+    id: 'scheduled-gemini-ai-summarizer',
+    name: 'Scheduled Gemini 1.5 Flash AI Summarizer',
+    category: 'AI Agents',
+    description: 'Periodically fetches article content from Google Sheets, processes key points using Gemini 1.5 Flash AI Summarizer, and posts bulleted summaries to Slack.',
+    icons: ['auto_awesome', 'table_chart', 'forum'],
+    popular: true,
+    featured: true,
+    definition: {
+      nodes: [
+        {
+          id: 'schedule_gemini_node',
+          type: 'schedule_trigger',
+          position: { x: 100, y: 200 },
+          data: {
+            label: 'Schedule 10s Timer',
+            scheduleType: 'interval',
+            intervalValue: 10,
+            intervalUnit: 'seconds'
+          }
+        },
+        {
+          id: 'sheets_gemini_node',
+          type: 'google_sheets',
+          position: { x: 320, y: 200 },
+          data: {
+            label: 'Read Sheet Rows',
+            action: 'read',
+            sheetName: 'Sheet1',
+            mockDataType: 'blog_news',
+            triggerForEachRow: true
+          }
+        },
+        {
+          id: 'gemini_summarizer_node',
+          type: 'gemini_summarizer',
+          position: { x: 570, y: 200 },
+          data: {
+            label: 'Gemini AI Summarizer',
+            model: 'gemini-1.5-flash',
+            prompt: 'Summarize title: {{trigger.title}} with content: {{trigger.content}}'
+          }
+        },
+        {
+          id: 'slack_gemini_node',
+          type: 'slack',
+          position: { x: 830, y: 200 },
+          data: {
+            label: 'Post Gemini Summary',
+            webhookUrl: 'https://hooks.slack.com/services/mock-webhook-url',
+            text: '✨ *Gemini AI Summary Digest:*\n\n*Article:* {{trigger.title}}\n\n{{steps.gemini_summarizer_node.result}}'
+          }
+        }
+      ],
+      edges: [
+        { id: 'eg_1', source: 'schedule_gemini_node', target: 'sheets_gemini_node', animated: true, style: { stroke: '#ff4f00', strokeWidth: 2.5 } },
+        { id: 'eg_2', source: 'sheets_gemini_node', target: 'gemini_summarizer_node', animated: true, style: { stroke: '#3b82f6', strokeWidth: 2.5 } },
+        { id: 'eg_3', source: 'gemini_summarizer_node', target: 'slack_gemini_node', animated: true, style: { stroke: '#60a5fa', strokeWidth: 2.5 } }
       ]
     }
   },
