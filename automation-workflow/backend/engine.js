@@ -219,6 +219,8 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
       }
 
 
+      const nodeStartTime = performance.now();
+
       stepLogs.push({
         time: new Date().toISOString(),
         nodeId: node.id,
@@ -853,6 +855,25 @@ export async function executeWorkflow(workflowId, executionId, startNodeId, cont
           });
         }
       }
+
+      // Calculate Real-time Node Execution Ping & Speed
+      const nodeEndTime = performance.now();
+      const latencyMs = Math.max(0.1, Number((nodeEndTime - nodeStartTime).toFixed(2)));
+      const speedRps = Math.round(1000 / latencyMs);
+
+      if (typeof nodeOutput === 'object' && nodeOutput !== null) {
+        nodeOutput._pingMs = latencyMs;
+        nodeOutput._speedRps = speedRps;
+      }
+
+      stepLogs.push({
+        time: new Date().toISOString(),
+        nodeId: node.id,
+        nodeType: node.type,
+        pingMs: latencyMs,
+        speedRps,
+        message: `Node "${node.data?.label || node.id}" ping: ${latencyMs}ms | speed: ${speedRps.toLocaleString()} ops/s`
+      });
 
       // Record output in context
       context.steps[node.id] = nodeOutput;

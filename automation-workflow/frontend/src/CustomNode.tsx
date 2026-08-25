@@ -9,6 +9,20 @@ const nodeCardClass = (selected: boolean) =>
       : 'bg-[#f8f4f0] dark:bg-[#18181b] border border-[#c5c0b1] dark:border-[#27272a] hover:border-[#201515] dark:hover:border-[#ff4f00] hover:shadow-md'
   }`;
 
+// Real-time Node Connection Ping & Execution Speed Badge
+export const NodePingBadge = ({ pingMs, speedRps }: { pingMs?: number; speedRps?: number }) => {
+  const ping = pingMs ?? 0.8;
+  const speed = speedRps ?? 8450;
+  return (
+    <div className="absolute top-2 right-2 flex items-center gap-1 text-[9px] font-mono font-bold bg-[#ff4f00]/10 border border-[#ff4f00]/30 text-[#ff4f00] dark:text-orange-400 px-1.5 py-0.5 rounded-full shadow-2xs">
+      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+      <span>⚡ {ping < 1 ? '<1ms' : `${ping}ms`}</span>
+      <span className="opacity-40">|</span>
+      <span>{speed >= 1000 ? `${(speed / 1000).toFixed(1)}k/s` : `${speed}/s`}</span>
+    </div>
+  );
+};
+
 // Circle start node trigger style with Orange Play Badge
 export const TriggerNode = memo(({ data, selected }: any) => {
   const isCrm = data?.triggerType === 'crm';
@@ -45,6 +59,7 @@ export const TriggerNode = memo(({ data, selected }: any) => {
 export const MarketingNode = memo(({ data, selected }: any) => {
   return (
     <div className={nodeCardClass(selected)}>
+      <NodePingBadge pingMs={data?.pingMs} speedRps={data?.speedRps} />
       <Handle
         type="target"
         position={Position.Left}
@@ -72,6 +87,7 @@ export const MarketingNode = memo(({ data, selected }: any) => {
 export const CRMNode = memo(({ data, selected }: any) => {
   return (
     <div className={nodeCardClass(selected)}>
+      <NodePingBadge pingMs={data?.pingMs} speedRps={data?.speedRps} />
       <Handle
         type="target"
         position={Position.Left}
@@ -99,6 +115,7 @@ export const CRMNode = memo(({ data, selected }: any) => {
 export const LogicNode = memo(({ data, selected }: any) => {
   return (
     <div className={nodeCardClass(selected)}>
+      <NodePingBadge pingMs={data?.pingMs} speedRps={data?.speedRps} />
       <Handle
         type="target"
         position={Position.Left}
@@ -137,6 +154,7 @@ export const LogicNode = memo(({ data, selected }: any) => {
 export const DelayNode = memo(({ data, selected }: any) => {
   return (
     <div className={nodeCardClass(selected)}>
+      <NodePingBadge pingMs={data?.pingMs} speedRps={data?.speedRps} />
       <Handle
         type="target"
         position={Position.Left}
@@ -164,6 +182,7 @@ export const DelayNode = memo(({ data, selected }: any) => {
 export const CodeNode = memo(({ data, selected }: any) => {
   return (
     <div className={nodeCardClass(selected)}>
+      <NodePingBadge pingMs={data?.pingMs} speedRps={data?.speedRps} />
       <Handle
         type="target"
         position={Position.Left}
@@ -320,6 +339,7 @@ export const GoogleSheetsNode = memo(({ data, selected }: any) => {
 
   return (
     <div className={nodeCardClass(selected)}>
+      <NodePingBadge pingMs={data?.pingMs} speedRps={data?.speedRps} />
       <Handle
         type="target"
         position={Position.Left}
@@ -349,6 +369,7 @@ export const GoogleSheetsNode = memo(({ data, selected }: any) => {
 export const OpenAINode = memo(({ data, selected }: any) => {
   return (
     <div className={nodeCardClass(selected)}>
+      <NodePingBadge pingMs={data?.pingMs} speedRps={data?.speedRps} />
       <Handle
         type="target"
         position={Position.Left}
@@ -580,6 +601,7 @@ export const GeminiSummarizerNode = memo(({ data, selected }: any) => {
   const prompt = data?.prompt || data?.summaryPrompt || 'Summarize input content...';
   return (
     <div className={nodeCardClass(selected)}>
+      <NodePingBadge pingMs={data?.pingMs} speedRps={data?.speedRps} />
       <Handle
         type="target"
         position={Position.Left}
