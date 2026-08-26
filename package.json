@@ -8,17 +8,40 @@
     "build": "next build",
     "start": "next start",
     "server": "node server/index.js",
-    "dev:full": "concurrently \"npm run dev\" \"npm run server\""
+    "dev:full": "npm run db:push:workflow && concurrently \"npm run dev\" \"npm run server\" \"npm run dev --prefix automation-workflow/backend\" \"npm run dev --prefix automation-workflow/frontend\"",
+    "start:full": "concurrently \"npm run start\" \"npm run server\"",
+    "db:push:workflow": "prisma db push --schema=automation-workflow/prisma/schema.prisma",
+    "dev:all": "npm run db:push:workflow && concurrently \"npm run dev\" \"npm run server\" \"npm run dev --prefix automation-workflow/backend\" \"npm run dev --prefix automation-workflow/frontend\"",
+    "docker:up": "docker compose up --build -d",
+    "docker:down": "docker compose down",
+    "docker:status": "docker compose ps",
+    "seed": "prisma db seed",
+    "verify:prisma": "tsx scripts/verify-prisma.ts",
+    "crawl": "node scripts/crawl-app.js",
+    "benchmark": "node scripts/test-throughput.js"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1108.0",
+    "@aws-sdk/s3-request-presigner": "^3.1108.0",
+    "@clerk/nextjs": "^7.7.1",
+    "@prisma/adapter-pg": "^5.22.0",
     "@prisma/client": "^5.22.0",
+    "dotenv": "^16.6.1",
     "express": "^5.2.1",
     "next": "^16.2.10",
+    "pg": "^8.23.0",
     "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "react-dom": "^19.2.7",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@types/node": "^26.2.0",
+    "@types/pg": "^8.21.0",
     "concurrently": "^10.0.3",
-    "prisma": "^5.22.0"
+    "prisma": "^5.22.0",
+    "tsx": "^4.23.12"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }

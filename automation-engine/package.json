@@ -1,0 +1,26 @@
+{
+  "name": "automation-engine",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Production-grade workflow automation engine",
+  "scripts": {
+    "dev:all": "turbo run dev",
+    "build:prod": "turbo run build",
+    "test:prod": "turbo run test",
+    "db:generate": "npm --workspace=db run generate",
+    "db:migrate": "npm --workspace=db run migrate",
+    "db:push": "npm --workspace=db run db:push",
+    "db:seed": "npm --workspace=db run seed"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "turbo": "^1.10.15",
+    "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
+  }
+}

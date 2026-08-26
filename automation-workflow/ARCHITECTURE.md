@@ -1,47 +1,51 @@
-# Automation Workflow System - Architecture Guide
+# ⚙️ Automation Workflow System - Architecture Guide
 
-This document outlines the architecture, design choices, and flow of the drag-and-drop workflow execution engine.
+This document provides a clear guide to the architecture, database models, execution engine, and custom nodes of the **Automation Workflow Subproject**.
 
 ---
 
 ## 🏗️ High-Level System Architecture
 
-The automation workflow platform consists of three core layers working together:
-
 ```mermaid
 graph TD
-    A[Frontend React Flow UI] -->|HTTP REST/Webhook| B[Express Server]
-    B -->|Prisma ORM| C[SQLite Database]
-    B -->|Job Dispatch| D[Execution Engine]
-    D -->|Schedule Delay| E[Timer Scheduler]
-    E -->|Poll & Resume| D
-    D -->|Log Result| C
+    A[Frontend React Flow UI] -->|HTTP REST / Webhook| B[Express Server API]
+    B -->|Centralized Prisma Client| C[SQLite Database - dev.db]
+    B -->|Dispatch Job| D[BFS Execution Engine]
+    D -->|Pause Execution| E[DelayedExecution Table]
+    F[Timer Scheduler] -->|Poll & Resume| D
+    D -->|Log Execution Trace| C
 ```
-
-1. **Frontend (Visual Canvas):**
-   * Built on **React Flow** and styled using a premium Glassmorphism theme with **Material UI**.
-   * Allows visual composition of trigger nodes, logic gates, actions, and delays.
-   * Serialises the nodes and edges as JSON and stores them in the database via the backend API.
-
-2. **Backend (API & Orchestrator):**
-   * Built on **Express.js**.
-   * Standard REST endpoints to CRUD workflows and read execution logs.
-   * Dynamic **Webhook listener** (e.g. `/api/webhooks/:workflowId`) to handle external triggers.
-
-3. **Workflow Engine & Delay Scheduler:**
-   * Reads the active workflow graph and traverses the nodes using a topological/graph sorting evaluator.
-   * Maintains state and executes actions sequentially.
-   * Uses a database-backed **DelayedExecution** table to pause execution at "Delay" nodes, using a low-overhead scheduler loop to wake up and resume.
 
 ---
 
-## 📈 Database Schema Models (Prisma + SQLite)
+## 🌟 Visual Custom Nodes & Interactive Sliders
+
+### 1. Start Trigger Nodes with Play SVG Emblems
+All trigger nodes feature a distinct **Play SVG Icon Overlay Badge** matching the node's theme color:
+- **▶️ Manual Start Trigger** (`StartNode`): Includes a Play SVG emblem on the circular container.
+- **⚡ Webhook & CRM Trigger** (`TriggerNode`): Lightning/CRM icon + Play SVG badge.
+- **⏰ Schedule Timer Trigger** (`ScheduleTriggerNode`): Clock icon + Play SVG badge.
+- **📝 Google Form Trigger** (`GoogleFormTriggerNode`): Form icon + Play SVG indicator.
+
+### 2. Dual Sidebar Customization Sliders
+- **Left Palette Sidebar**: Range sliders for **Sidebar Width** (`180px` to `360px`) and **Node Canvas Scale** (`75%` to `125%`).
+- **Right Inspector Sidebar**: Parameter sliders for:
+  - Delay Duration (Seconds)
+  - Schedule Interval (Seconds/Minutes)
+  - CRM Score Increment
+  - If/Else Condition Score Threshold
+  - Google Sheets Maximum Row Limit
+  - OpenAI Temperature (`0.0` to `1.0`) & Token Output Length
+
+---
+
+## 🗄️ Database Schema Summary (`schema.prisma`)
 
 ```prisma
 model Workflow {
   id          Int            @id @default(autoincrement())
   name        String
-  definition  String         // JSON string containing nodes & edges
+  definition  String         // JSON representation of React Flow nodes & edges
   isActive    Boolean        @default(true)
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
@@ -52,10 +56,10 @@ model ExecutionLog {
   id          Int            @id @default(autoincrement())
   workflowId  Int
   workflow    Workflow       @relation(fields: [workflowId], references: [id])
-  status      String         // pending, running, success, failed
+  status      String         // running, success, failed
   startedAt   DateTime       @default(now())
   finishedAt  DateTime?
-  logs        String         // Step-by-step trace formatted in JSON/Text
+  logs        String         // JSON step logs trace
 }
 
 model CRMContact {
@@ -79,55 +83,37 @@ model DelayedExecution {
   id          Int            @id @default(autoincrement())
   workflowId  Int
   executionId Int
-  nodeId      String         // The delay node ID
-  resumeTime  DateTime       // Timestamp when this delay expires
-  contextData String         // JSON payload containing execution variable state
+  nodeId      String         // Delay node ID
+  resumeTime  DateTime       // Expiration timestamp
+  contextData String         // JSON context variables
 }
 ```
 
 ---
 
-## 🔀 Step-by-Step Execution Sequence
+## 🔒 Concurrency & Performance Safeguards
 
-Below is a detailed sequence of how a CRM event triggers marketing and sales workflows with delays and conditionals:
+1. **SQLite WAL Mode Singleton (`db.js`)**:
+   Enables `PRAGMA journal_mode=WAL;` and `PRAGMA busy_timeout=10000;` with `connection_limit=1` to serialize queries and prevent SQLite database lock errors (`P1008`).
 
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User or API
-    participant CRM as CRM DB
-    participant Server as Webhook Server
-    participant Engine as Workflow Engine
-    participant Scheduler as Delay Scheduler
-    participant Mail as Email Simulator
-
-    User or API->>CRM: Add New Contact / Lead
-    CRM->>Server: HTTP POST Webhook (trigger)
-    Server->>Engine: Run Workflow Graph
-    Engine->>Engine: Check Condition: Is Lead Score > 50?
-    alt Lead Score <= 50 (False)
-        Engine->>CRM: Update status to "Nurturing"
-    else Lead Score > 50 (True)
-        Engine->>Engine: Create DelayedExecution (Wait 5s)
-        Note over Engine, Scheduler: Execution suspended
-        Scheduler->>Scheduler: Poll database, check expired delays
-        Scheduler->>Engine: Delay Expired -> Resume execution
-        Engine->>Mail: Send "High Priority Intro" Email
-        Engine->>CRM: Upgrade status to "Sales Qualified Lead (SQL)"
-        Engine->>Server: Log success to ExecutionLog
-    end
-```
+2. **Scheduler Runaway Protection (`scheduler.js`)**:
+   Persists `nextRun` timestamps in the database prior to triggering executions, eliminating infinite repeating loop bugs.
 
 ---
 
-## 🚀 Key Supported Nodes
+## 🚀 Supported Node Types
 
-| Node Type | Category | Configurable Options | Action Behavior |
+| Node Name | Type | Icon | Interactive Control |
 | :--- | :--- | :--- | :--- |
-| **Webhook Trigger** | Trigger | Method, JSON schema | Listens on `/api/webhooks/:id` to start a flow. |
-| **CRM Lead Created** | Trigger | Trigger options | Starts a flow when a simulated CRM lead is inserted. |
-| **Delay / Timer** | Timer | Duration (seconds/minutes) | Pauses execution and logs context to resume later. |
-| **If / Else** | Logic | Conditional expression | Branch outputs to `True` or `False` handles. |
-| **Send Email** | Marketing | Subject, body, recipient | Appends a record to the `SimulatedEmail` table. |
-| **Update CRM Lead** | CRM | Status, lead score increment | Updates values in the SQLite `CRMContact` table. |
-| **Run Code** | Logic | Custom JS string | Safely evaluates JavaScript code using inputs. |
+| **Start Trigger** | Trigger | Play SVG | Trigger Entry |
+| **Schedule Trigger** | Trigger | Clock + Play SVG | Interval Slider |
+| **Google Form** | Trigger | Form + Play SVG | Webhook Endpoint |
+| **Delay / Timer** | Timer | Hourglass | Duration Slider |
+| **If / Else** | Logic | Call Split | Score Threshold Slider |
+| **Google Sheets** | Action | Table Chart | Max Rows Slider |
+| **OpenAI GPT** | AI Core | Psychology | Temperature & Tokens Sliders |
+| **Send Email / Slack / CRM** | Action | Email / Forum / Person | Recipient & Body inputs |
+
+---
+
+Happy Orchestrating! 🚀
