@@ -57,27 +57,25 @@ export default function Home() {
               <div className="w-8 h-8 rounded-md bg-[#ff4f00] flex items-center justify-center text-[#ffffff] font-bold text-lg shadow-sm">
                 ⚡
               </div>
-              <span className="font-display text-xl font-bold tracking-tight text-white">NEURON_FLOW</span>
+              <span className="font-display  text-xl font-bold tracking-tight text-white">NEURON_FLOW</span>
             </div>
 
-            <nav className="hidden md:flex items-center gap-1.5 text-sm font-medium bg-[#121215]/90 p-1.5 rounded-xl border border-[#ff4f00]/30 shadow-[0_0_20px_rgba(255,79,0,0.08)] backdrop-blur-md transition-all duration-300">
-              <a href={dashboardUrl} className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-[#ff4f00] bg-[#ff4f00]/15 border border-[#ff4f00]/40 shadow-sm shadow-[#ff4f00]/20 transition-all duration-200">Dashboard</a>
-              <a href={flowCanvasUrl} className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#ff4f00]/10 hover:border-[#ff4f00]/30 border border-transparent transition-all duration-200">Visual Flow Designer</a>
-              <a href="/excel" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#ff4f00]/10 hover:border-[#ff4f00]/30 border border-transparent transition-all duration-200">Excel AI</a>
-              <a href="/files" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#ff4f00]/10 hover:border-[#ff4f00]/30 border border-transparent transition-all duration-200">File Vault 📂</a>
-              <a href="/workflows" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#ff4f00]/10 hover:border-[#ff4f00]/30 border border-transparent transition-all duration-200">
-                Workflows
-              </a>
-              <a href="/analytics" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#ff4f00]/10 hover:border-[#ff4f00]/30 border border-transparent transition-all duration-200 flex items-center gap-1.5">
+            <nav className="hidden md:flex items-center gap-1.5 text-sm font-medium transition-all duration-300">
+              <a href={dashboardUrl} className="bg-[#ff4f00]/15 border border-[#ff4f00] text-[#ff4f00] shadow-sm shadow-[#ff4f00]/20 rounded-lg px-3 py-1.5 text-xs md:text-sm font-semibold flex items-center gap-2 cursor-pointer transition-all duration-200">Dashboard</a>
+              <a href={flowCanvasUrl} className="bg-[#18181b] hover:bg-[#27272a] border border-[#27272a] hover:border-[#ff4f00] text-white hover:text-white transition-all duration-200 shadow-sm hover:shadow-[#ff4f00]/20 rounded-lg px-3 py-1.5 text-xs md:text-sm font-medium flex items-center gap-2 cursor-pointer">Visual Flow Designer</a>
+              <a href="/excel" className="bg-[#18181b] hover:bg-[#27272a] border border-[#27272a] hover:border-[#ff4f00] text-white hover:text-white transition-all duration-200 shadow-sm hover:shadow-[#ff4f00]/20 rounded-lg px-3 py-1.5 text-xs md:text-sm font-medium flex items-center gap-2 cursor-pointer">Excel AI</a>
+              <a href="/files" className="bg-[#18181b] hover:bg-[#27272a] border border-[#27272a] hover:border-[#ff4f00] text-white hover:text-white transition-all duration-200 shadow-sm hover:shadow-[#ff4f00]/20 rounded-lg px-3 py-1.5 text-xs md:text-sm font-medium flex items-center gap-2 cursor-pointer">File Vault 📂</a>
+              <a href="/workflows" className="bg-[#18181b] hover:bg-[#27272a] border border-[#27272a] hover:border-[#ff4f00] text-white hover:text-white transition-all duration-200 shadow-sm hover:shadow-[#ff4f00]/20 rounded-lg px-3 py-1.5 text-xs md:text-sm font-medium flex items-center gap-2 cursor-pointer">Workflows</a>
+              <a href="/analytics" className="bg-[#18181b] hover:bg-[#27272a] border border-[#27272a] hover:border-[#ff4f00] text-white hover:text-white transition-all duration-200 shadow-sm hover:shadow-[#ff4f00]/20 rounded-lg px-3 py-1.5 text-xs md:text-sm font-medium flex items-center gap-1.5 cursor-pointer">
                 Analytics <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-[#ff4f00]/20 text-[#ff4f00] border border-[#ff4f00]/30 uppercase">SOON</span>
               </a>
-              <a href="/docs" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#ff4f00]/10 hover:border-[#ff4f00]/30 border border-transparent transition-all duration-200">Docs</a>
-              <a href="/support" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#ff4f00]/10 hover:border-[#ff4f00]/30 border border-transparent transition-all duration-200">Support</a>
-              <a href="/privacy" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#ff4f00]/10 hover:border-[#ff4f00]/30 border border-transparent transition-all duration-200">Privacy</a>
+              <a href="/docs" className="bg-[#18181b] hover:bg-[#27272a] border border-[#27272a] hover:border-[#ff4f00] text-white hover:text-white transition-all duration-200 shadow-sm hover:shadow-[#ff4f00]/20 rounded-lg px-3 py-1.5 text-xs md:text-sm font-medium flex items-center gap-2 cursor-pointer">Docs</a>
+              <a href="/support" className="bg-[#18181b] hover:bg-[#27272a] border border-[#27272a] hover:border-[#ff4f00] text-white hover:text-white transition-all duration-200 shadow-sm hover:shadow-[#ff4f00]/20 rounded-lg px-3 py-1.5 text-xs md:text-sm font-medium flex items-center gap-2 cursor-pointer">Support</a>
+              <a href="/privacy" className="bg-[#18181b] hover:bg-[#27272a] border border-[#27272a] hover:border-[#ff4f00] text-white hover:text-white transition-all duration-200 shadow-sm hover:shadow-[#ff4f00]/20 rounded-lg px-3 py-1.5 text-xs md:text-sm font-medium flex items-center gap-2 cursor-pointer">Privacy</a>
             </nav>
 
             <div className="flex items-center gap-3">
-              <div className="hidden sm:inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-sm font-medium bg-[#1f1f23] border border-[#27272a] text-[#e4e4e7]">
+              <div className="hidden sm:inline-flex items-center gap-2 bg-[#18181b] hover:bg-[#27272a] border border-[#27272a] hover:border-[#ff4f00] text-white transition-all duration-200 shadow-sm hover:shadow-[#ff4f00]/20 rounded-lg px-3.5 py-2 text-xs md:text-sm font-medium cursor-pointer">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#ff4f00] animate-pulse"></span>
                 Dark Theme Active 🌙
               </div>
