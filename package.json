@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "vercel-build": "prisma generate && next build",
     "start": "next start",
     "server": "node server/index.js",
     "dev:full": "npm run db:push:workflow && concurrently \"npm run dev\" \"npm run server\" \"npm run dev --prefix automation-workflow/backend\" \"npm run dev --prefix automation-workflow/frontend\"",
@@ -39,7 +40,8 @@
     "@types/pg": "^8.21.0",
     "concurrently": "^10.0.3",
     "prisma": "^5.22.0",
-    "tsx": "^4.23.12"
+    "tsx": "^4.23.12",
+    "typescript": "^5.7.2"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
