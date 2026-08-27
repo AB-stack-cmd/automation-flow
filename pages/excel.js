@@ -736,15 +736,33 @@ export default function ExcelAutomation() {
                   <div className="flex flex-col gap-2">
                     <div className="flex justify-between items-center">
                       <label className="text-xs font-semibold text-neutral-400">{apiType.toUpperCase()} API Key</label>
-                      <span className="text-[9px] text-neutral-600 font-mono">Saved locally</span>
+                      <span className="text-[9px] text-emerald-400 font-mono">
+                        {apiKey ? 'Active ✓' : 'Local Storage'}
+                      </span>
                     </div>
-                    <input
-                      type="password"
-                      value={apiKey}
-                      onChange={(e) => saveApiKey(e.target.value)}
-                      placeholder={`Paste your ${apiType.toUpperCase()} API key...`}
-                      className="w-full bg-neutral-900 border border-white/5 focus:border-[#facc15] focus:ring-0 rounded-lg px-3 py-2 text-xs text-neutral-200 placeholder-neutral-600 transition-colors"
-                    />
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="password"
+                        value={apiKey}
+                        onChange={(e) => saveApiKey(e.target.value)}
+                        placeholder={`Paste your ${apiType.toUpperCase()} API key...`}
+                        className="flex-1 bg-neutral-900 border border-white/5 focus:border-[#facc15] focus:ring-0 rounded-lg px-3 py-2 text-xs text-neutral-200 placeholder-neutral-600 transition-colors"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (apiKey.trim()) {
+                            saveApiKey(apiKey.trim());
+                            showToast(`${apiType.toUpperCase()} API key saved successfully! ✓`);
+                          } else {
+                            showToast(`Please enter an API key first`, 'error');
+                          }
+                        }}
+                        className="bg-[#facc15] hover:opacity-90 text-black font-bold text-xs px-3 py-2 rounded-lg shrink-0 transition-all cursor-pointer"
+                      >
+                        + Add Key
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

@@ -3396,8 +3396,43 @@ return {
                         </>
                       )}
 
-                      {(selectedNode.type === 'openai' || selectedNode.type === 'action.openai') && (
+                      {(selectedNode.type === 'openai' || selectedNode.type === 'action.openai' || selectedNode.type === 'gemini' || selectedNode.type === 'anthropic' || selectedNode.type === 'mcp_connector') && (
                         <>
+                          <div className="mb-3">
+                            <div className="flex justify-between items-center mb-1">
+                              <label className="block text-neutral-400 font-bold">AI API Key</label>
+                              <span className="text-[10px] text-emerald-400 font-mono">
+                                {selectedNode.data?.apiKey ? 'Key Set ✓' : 'Default / Local'}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <input
+                                type="password"
+                                value={selectedNode.data?.apiKey || ''}
+                                onChange={(e) => updateNodeData('apiKey', e.target.value)}
+                                className="w-full bg-[#0e0e0e] border border-neutral-800 focus:border-[#ff4f00] rounded-lg px-2.5 py-1.5 text-white text-xs outline-none font-mono"
+                                placeholder="sk-... / AIza..."
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const key = selectedNode.data?.apiKey || '';
+                                  if (key.trim()) {
+                                    localStorage.setItem('neuron_flow_ai_api_key', key.trim());
+                                    localStorage.setItem('neuron_flow_api_key_openai', key.trim());
+                                    updateNodeData('apiKey', key.trim());
+                                    alert('AI API Key added & saved successfully! ✓');
+                                  } else {
+                                    alert('Please type or paste an AI API Key first.');
+                                  }
+                                }}
+                                className="bg-[#ff4f00] hover:bg-[#e04500] text-white text-xs font-bold px-2.5 py-1.5 rounded-lg shrink-0 transition-all cursor-pointer"
+                              >
+                                + Add Key
+                              </button>
+                            </div>
+                          </div>
+
                           <div>
                             <label className="block text-neutral-400 font-bold mb-1">AI Model</label>
                             <select

@@ -8,6 +8,9 @@ export default function Home() {
   const [syncedUser, setSyncedUser] = useState(null);
   const [flowCanvasUrl, setFlowCanvasUrl] = useState('http://localhost:5173');
   const [dashboardUrl, setDashboardUrl] = useState('/');
+  const [aiKeyProvider, setAiKeyProvider] = useState('openai');
+  const [aiApiKeyInput, setAiApiKeyInput] = useState('');
+  const [aiKeySavedMsg, setAiKeySavedMsg] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -15,6 +18,20 @@ export default function Home() {
     setFlowCanvasUrl(getFlowCanvasUrl());
     setDashboardUrl(getDashboardUrl());
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const existing = localStorage.getItem(`neuron_flow_api_key_${aiKeyProvider}`) || localStorage.getItem('neuron_flow_ai_api_key') || '';
+    setAiApiKeyInput(existing);
+  }, [aiKeyProvider]);
+
+  const handleAddAiKey = () => {
+    if (!aiApiKeyInput.trim()) return;
+    localStorage.setItem(`neuron_flow_api_key_${aiKeyProvider}`, aiApiKeyInput.trim());
+    localStorage.setItem('neuron_flow_ai_api_key', aiApiKeyInput.trim());
+    setAiKeySavedMsg(true);
+    setTimeout(() => setAiKeySavedMsg(false), 3000);
+  };
 
   // Automatic Prisma Sync when user signs in via Clerk
   useEffect(() => {
@@ -170,6 +187,52 @@ export default function Home() {
                 </div>
                 <span className="text-xl text-[#a1a1aa] font-bold transition-transform group-hover:translate-x-1 group-hover:text-white">→</span>
               </a>
+            </div>
+
+            {/* AI API Connection Key Section */}
+            <div className="mt-4 pt-4 border-t border-[#27272a] flex flex-col gap-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">🔑</span>
+                  <span className="text-xs font-bold text-white">AI API Connection Key</span>
+                </div>
+                {aiKeySavedMsg ? (
+                  <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-500/30 animate-pulse">
+                    Key Saved & Connected ✓
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-[#a1a1aa] font-mono">OpenAI / Gemini / Anthropic</span>
+                )}
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <select
+                  value={aiKeyProvider}
+                  onChange={(e) => setAiKeyProvider(e.target.value)}
+                  className="bg-[#09090b] border border-[#27272a] focus:border-[#ff4f00] text-white text-xs rounded-lg px-2.5 py-2 outline-none cursor-pointer"
+                >
+                  <option value="openai">OpenAI (sk-...)</option>
+                  <option value="gemini">Gemini (AIza...)</option>
+                  <option value="anthropic">Anthropic (sk-ant...)</option>
+                  <option value="deepseek">DeepSeek (sk-...)</option>
+                </select>
+
+                <input
+                  type="password"
+                  value={aiApiKeyInput}
+                  onChange={(e) => setAiApiKeyInput(e.target.value)}
+                  placeholder={`Enter ${aiKeyProvider.toUpperCase()} API key...`}
+                  className="flex-1 bg-[#09090b] border border-[#27272a] focus:border-[#ff4f00] text-white text-xs rounded-lg px-3 py-2 outline-none font-mono"
+                />
+
+                <button
+                  type="button"
+                  onClick={handleAddAiKey}
+                  className="bg-[#ff4f00] hover:bg-[#e04500] active:scale-95 text-white text-xs font-bold px-4 py-2 rounded-lg transition-all shrink-0 cursor-pointer flex items-center justify-center gap-1 shadow-sm"
+                >
+                  <span>+</span> Add Key
+                </button>
+              </div>
             </div>
           </div>
 
