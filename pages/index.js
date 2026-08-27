@@ -51,96 +51,146 @@ export default function Home() {
 
       <div className="bg-[#09090b] text-[#f4f4f5] font-body min-h-screen flex flex-col transition-colors duration-200">
         {/* Navigation Bar (nav-bar) */}
-        <header className="sticky top-0 z-50 bg-[#09090b]/95 backdrop-blur-md border-b border-[#27272a] px-6 py-4 transition-colors">
-          <div className="max-w-6xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-3 cursor-pointer">
-              <div className="w-8 h-8 rounded-md bg-[#ff4f00] flex items-center justify-center text-[#ffffff] font-bold text-lg shadow-sm">
+        <header className="sticky top-0 z-50 bg-[#09090b]/95 backdrop-blur-md border-b border-[#27272a] px-3 sm:px-6 lg:px-8 py-3.5 transition-colors w-full">
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4 w-full">
+            {/* Brand / Logo */}
+            <a href="/" className="flex items-center gap-2.5 cursor-pointer shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-[#ff4f00] flex items-center justify-center text-white font-bold text-lg shadow-md shadow-[#ff4f00]/30">
                 ⚡
               </div>
-              <span className="font-display  text-xl font-bold tracking-tight text-white">NEURON_FLOW</span>
-            </div>
+              <span className="font-display text-lg sm:text-xl font-bold tracking-tight text-white">NEURON_FLOW</span>
+            </a>
 
-            <nav className="hidden md:flex items-center gap-1.5 text-sm font-medium transition-all duration-300">
-              <a href={dashboardUrl} className="bg-[#ff4f00]/15 border border-[#ff4f00] text-[#ff4f00] shadow-sm shadow-[#ff4f00]/20 rounded-lg px-3 py-1.5 text-xs md:text-sm font-semibold flex items-center gap-2 cursor-pointer transition-all duration-200">Dashboard</a>
-              <a href={flowCanvasUrl} className="bg-[#18181b] hover:bg-[#27272a] border border-[#27272a] hover:border-[#ff4f00] text-white hover:text-white transition-all duration-200 shadow-sm hover:shadow-[#ff4f00]/20 rounded-lg px-3 py-1.5 text-xs md:text-sm font-medium flex items-center gap-2 cursor-pointer">Visual Flow Designer</a>
-              <a href="/excel" className="bg-[#18181b] hover:bg-[#27272a] border border-[#27272a] hover:border-[#ff4f00] text-white hover:text-white transition-all duration-200 shadow-sm hover:shadow-[#ff4f00]/20 rounded-lg px-3 py-1.5 text-xs md:text-sm font-medium flex items-center gap-2 cursor-pointer">Excel AI</a>
-              <a href="/files" className="bg-[#18181b] hover:bg-[#27272a] border border-[#27272a] hover:border-[#ff4f00] text-white hover:text-white transition-all duration-200 shadow-sm hover:shadow-[#ff4f00]/20 rounded-lg px-3 py-1.5 text-xs md:text-sm font-medium flex items-center gap-2 cursor-pointer">File Vault 📂</a>
-              <a href="/workflows" className="bg-[#18181b] hover:bg-[#27272a] border border-[#27272a] hover:border-[#ff4f00] text-white hover:text-white transition-all duration-200 shadow-sm hover:shadow-[#ff4f00]/20 rounded-lg px-3 py-1.5 text-xs md:text-sm font-medium flex items-center gap-2 cursor-pointer">Workflows</a>
-              <a href="/analytics" className="bg-[#18181b] hover:bg-[#27272a] border border-[#27272a] hover:border-[#ff4f00] text-white hover:text-white transition-all duration-200 shadow-sm hover:shadow-[#ff4f00]/20 rounded-lg px-3 py-1.5 text-xs md:text-sm font-medium flex items-center gap-1.5 cursor-pointer">
-                Analytics <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-[#ff4f00]/20 text-[#ff4f00] border border-[#ff4f00]/30 uppercase">SOON</span>
+            {/* Navigation Links (Responsive Flex Container) */}
+            <nav className="hidden lg:flex items-center justify-center gap-1 xl:gap-2 text-xs xl:text-sm font-medium">
+              <a href={dashboardUrl} className="bg-[#ff4f00]/15 border border-[#ff4f00]/60 text-[#ff4f00] rounded-lg px-2.5 py-1.5 font-semibold transition-all shadow-sm shadow-[#ff4f00]/20">Dashboard</a>
+              <a href={flowCanvasUrl} className="text-[#a1a1aa] hover:text-white hover:bg-[#18181b] border border-transparent hover:border-[#27272a] rounded-lg px-2.5 py-1.5 transition-all">Visual Designer</a>
+              <a href="/excel" className="text-[#a1a1aa] hover:text-white hover:bg-[#18181b] border border-transparent hover:border-[#27272a] rounded-lg px-2.5 py-1.5 transition-all">Excel AI</a>
+              <a href="/files" className="text-[#a1a1aa] hover:text-white hover:bg-[#18181b] border border-transparent hover:border-[#27272a] rounded-lg px-2.5 py-1.5 transition-all">File Vault 📂</a>
+              <a href="/workflows" className="text-[#a1a1aa] hover:text-white hover:bg-[#18181b] border border-transparent hover:border-[#27272a] rounded-lg px-2.5 py-1.5 transition-all">Workflows</a>
+              <a href="/analytics" className="text-[#a1a1aa] hover:text-white hover:bg-[#18181b] border border-transparent hover:border-[#27272a] rounded-lg px-2.5 py-1.5 transition-all flex items-center gap-1">
+                Analytics <span className="text-[8px] font-black px-1.5 py-0.5 rounded bg-[#ff4f00]/20 text-[#ff4f00] uppercase">SOON</span>
               </a>
-              <a href="/docs" className="bg-[#18181b] hover:bg-[#27272a] border border-[#27272a] hover:border-[#ff4f00] text-white hover:text-white transition-all duration-200 shadow-sm hover:shadow-[#ff4f00]/20 rounded-lg px-3 py-1.5 text-xs md:text-sm font-medium flex items-center gap-2 cursor-pointer">Docs</a>
-              <a href="/support" className="bg-[#18181b] hover:bg-[#27272a] border border-[#27272a] hover:border-[#ff4f00] text-white hover:text-white transition-all duration-200 shadow-sm hover:shadow-[#ff4f00]/20 rounded-lg px-3 py-1.5 text-xs md:text-sm font-medium flex items-center gap-2 cursor-pointer">Support</a>
-              <a href="/privacy" className="bg-[#18181b] hover:bg-[#27272a] border border-[#27272a] hover:border-[#ff4f00] text-white hover:text-white transition-all duration-200 shadow-sm hover:shadow-[#ff4f00]/20 rounded-lg px-3 py-1.5 text-xs md:text-sm font-medium flex items-center gap-2 cursor-pointer">Privacy</a>
+              <a href="/docs" className="text-[#a1a1aa] hover:text-white hover:bg-[#18181b] border border-transparent hover:border-[#27272a] rounded-lg px-2.5 py-1.5 transition-all">Docs</a>
+              <a href="/support" className="text-[#a1a1aa] hover:text-white hover:bg-[#18181b] border border-transparent hover:border-[#27272a] rounded-lg px-2.5 py-1.5 transition-all">Support</a>
+              <a href="/privacy" className="text-[#a1a1aa] hover:text-white hover:bg-[#18181b] border border-transparent hover:border-[#27272a] rounded-lg px-2.5 py-1.5 transition-all">Privacy</a>
             </nav>
 
-            <div className="flex items-center gap-3">
-              <div className="hidden sm:inline-flex items-center gap-2 bg-[#18181b] hover:bg-[#27272a] border border-[#27272a] hover:border-[#ff4f00] text-white transition-all duration-200 shadow-sm hover:shadow-[#ff4f00]/20 rounded-lg px-3.5 py-2 text-xs md:text-sm font-medium cursor-pointer">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#ff4f00] animate-pulse"></span>
-                Dark Theme Active 🌙
+            {/* Right Action Group - Always Visible and Perfectly Aligned */}
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              <div className="hidden 2xl:inline-flex items-center gap-1.5 bg-[#18181b] border border-[#27272a] text-white rounded-lg px-3 py-1.5 text-xs font-medium">
+                <span className="w-2 h-2 rounded-full bg-[#ff4f00] animate-pulse"></span>
+                Dark Theme 🌙
               </div>
 
               {isLoaded && isSignedIn ? (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                   {syncedUser && (
-                    <span className="text-sm font-medium text-emerald-400 bg-emerald-950/60 px-3 py-1 rounded border border-emerald-500/20 hidden lg:inline">
-                      Prisma Synced ✓
+                    <span className="text-xs font-medium text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/20 hidden xl:inline">
+                      Synced ✓
                     </span>
                   )}
                   <UserButton afterSignOutUrl="/" />
                 </div>
               ) : (
                 <SignInButton mode="modal">
-                  <button className="btn-md bg-[#18181b] hover:bg-[#27272a] border border-[#27272a] hover:border-[#ff4f00] text-white hover:text-white transition-all duration-200 shadow-sm hover:shadow-[#ff4f00]/20 rounded-lg px-4 py-2 text-xs md:text-sm font-medium flex items-center gap-2 cursor-pointer">
+                  <button className="bg-[#18181b] hover:bg-[#27272a] border border-[#27272a] hover:border-[#ff4f00] text-white transition-all rounded-lg px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium cursor-pointer shrink-0">
                     Sign In
                   </button>
                 </SignInButton>
               )}
 
+              {/* Primary Header Launch Button */}
               <a
                 href={flowCanvasUrl}
-                className="btn-md bg-[#ff4f00] text-white hover:bg-[#e04500] shadow-sm"
+                className="bg-[#ff4f00] hover:bg-[#e04500] text-white font-bold shadow-md shadow-[#ff4f00]/25 rounded-lg px-3.5 sm:px-4 py-2 text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all duration-200 shrink-0 border border-[#ff4f00] active:scale-95 cursor-pointer"
+                id="header-launch-visual-editor-btn"
               >
-                Launch Visual Editor
+                <span>⚡</span>
+                <span className="hidden xs:inline sm:inline">Launch Visual Editor</span>
+                <span className="inline xs:hidden sm:hidden">Launch ⚡</span>
               </a>
             </div>
           </div>
         </header>
 
         {/* Hero Band */}
-        <section className="bg-[#09090b] px-6 py-20 lg:py-28 text-center max-w-5xl mx-auto flex flex-col items-center transition-colors">
-          <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[#18181b] border border-[#27272a] text-sm font-medium text-[#f4f4f5] mb-6">
+        <section className="bg-[#09090b] px-4 sm:px-6 py-12 sm:py-18 lg:py-24 text-center max-w-5xl mx-auto flex flex-col items-center justify-center transition-colors">
+          <div className="inline-flex items-center justify-center gap-2.5 px-4 py-1.5 rounded-full bg-[#18181b] border border-[#27272a] text-xs sm:text-sm font-medium text-[#f4f4f5] mb-6">
             <span className="w-2.5 h-2.5 rounded-full bg-[#ff4f00] animate-pulse"></span>
             NEURON_FLOW Workflow Engine 2.0
           </div>
 
-          <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-medium tracking-tight leading-none text-white mb-6">
-            Automation for everyone. <br />
+          <h1 className="font-display text-3xl sm:text-5xl lg:text-6xl font-medium tracking-tight leading-tight text-white mb-6 text-center">
+            Automation for everyone. <br className="hidden sm:inline" />
             <span className="text-[#ff4f00]">Orchestrated effortlessly.</span>
           </h1>
 
-          <p className="text-base sm:text-lg lg:text-xl text-[#a1a1aa] max-w-2xl mb-10 leading-relaxed font-normal">
+          <p className="text-sm sm:text-lg lg:text-xl text-[#a1a1aa] max-w-2xl mb-8 leading-relaxed font-normal text-center">
             Connect your apps and automate workflows using intuitive node graphs, real-time trigger execution, and custom script runtimes. Automatically synchronized with your system theme.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center gap-4">
+          {/* Quick Launch Control Card - Front Page Center */}
+          <div className="w-full max-w-2xl bg-[#141417] border border-[#27272a] hover:border-[#ff4f00]/50 rounded-2xl p-4 sm:p-6 mb-8 shadow-xl shadow-black/40 text-left transition-all">
+            <div className="flex items-center justify-between gap-4 mb-4 pb-3 border-b border-[#27272a]">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">All Systems Operational</span>
+              </div>
+              <span className="text-xs text-[#a1a1aa] font-mono">Front Page Launcher</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <a
+                href={flowCanvasUrl}
+                className="bg-[#ff4f00] hover:bg-[#e04500] text-white font-bold px-4 py-3.5 rounded-xl text-sm flex items-center justify-between gap-2 shadow-lg shadow-[#ff4f00]/30 transition-all hover:scale-[1.02] active:scale-[0.98] group cursor-pointer border border-[#ff4f00]"
+                id="hero-launch-visual-editor-btn"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">⚡</span>
+                  <div className="flex flex-col text-left">
+                    <span className="leading-tight font-extrabold text-white text-base">Launch Visual Editor</span>
+                    <span className="text-[11px] text-white/80 font-normal">React Flow Canvas</span>
+                  </div>
+                </div>
+                <span className="text-xl font-bold transition-transform group-hover:translate-x-1">→</span>
+              </a>
+
+              <a
+                href="/excel"
+                className="bg-[#18181b] hover:bg-[#27272a] border border-[#27272a] hover:border-[#ff4f00] text-white font-semibold px-4 py-3.5 rounded-xl text-sm flex items-center justify-between gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] group cursor-pointer"
+                id="hero-launch-excel-ai-btn"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">📊</span>
+                  <div className="flex flex-col text-left">
+                    <span className="leading-tight font-bold text-white text-base">Launch Excel AI</span>
+                    <span className="text-[11px] text-[#a1a1aa] font-normal">Spreadsheet Automation</span>
+                  </div>
+                </div>
+                <span className="text-xl text-[#a1a1aa] font-bold transition-transform group-hover:translate-x-1 group-hover:text-white">→</span>
+              </a>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center text-center gap-3 sm:gap-4 w-full">
             <a
               href={flowCanvasUrl}
-              className="btn-lg bg-[#ff4f00] text-white shadow-md hover:bg-[#e04500] active:scale-98"
+              className="bg-[#ff4f00] text-white font-bold shadow-md hover:bg-[#e04500] px-6 py-3 rounded-xl text-sm sm:text-base flex items-center justify-center gap-2 transition-all active:scale-98"
             >
-              Start Automating Free
+              🚀 Launch Visual Flow Editor
             </a>
             <a
               href="/docs"
-              className="btn-lg bg-[#18181b] border border-[#27272a] text-[#f4f4f5] hover:bg-[#27272a] hover:border-[#ff4f00]"
+              className="bg-[#18181b] border border-[#27272a] text-[#f4f4f5] hover:bg-[#27272a] hover:border-[#ff4f00] px-5 py-3 rounded-xl text-sm sm:text-base font-medium flex items-center justify-center gap-2 transition-all"
             >
-              📚 Platform Documentation
+              📚 Documentation
             </a>
             <a
-              href="/excel"
-              className="btn-lg bg-[#18181b] border border-[#27272a] text-[#a1a1aa] hover:bg-[#27272a] hover:text-white"
+              href="/files"
+              className="bg-[#18181b] border border-[#27272a] text-[#a1a1aa] hover:bg-[#27272a] hover:text-white px-5 py-3 rounded-xl text-sm sm:text-base font-medium flex items-center justify-center gap-2 transition-all"
             >
-              Excel AI
+              📂 File Vault
             </a>
           </div>
         </section>

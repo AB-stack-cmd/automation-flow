@@ -81,12 +81,12 @@ export default function WorkflowsPage() {
               <a href="/privacy" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#ff4f00]/10 hover:border-[#ff4f00]/30 border border-transparent transition-all duration-200">Privacy</a>
             </nav>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               {isLoaded && isSignedIn ? (
                 <UserButton afterSignOutUrl="/" />
               ) : (
                 <SignInButton mode="modal">
-                  <button className="btn-md bg-[#18181b] hover:bg-[#27272a] border border-[#27272a] hover:border-[#ff4f00] text-white hover:text-white transition-all duration-200 shadow-sm hover:shadow-[#ff4f00]/20 rounded-lg px-4 py-2 text-xs md:text-sm font-medium flex items-center gap-2 cursor-pointer">
+                  <button className="bg-[#18181b] hover:bg-[#27272a] border border-[#27272a] hover:border-[#ff4f00] text-white transition-all rounded-lg px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium cursor-pointer shrink-0">
                     Sign In
                   </button>
                 </SignInButton>
@@ -95,9 +95,11 @@ export default function WorkflowsPage() {
               <button
                 onClick={handleOpenDiagram}
                 id="open-visual-flow-btn-header"
-                className="btn-md bg-[#ff4f00] text-white hover:bg-[#e04500] shadow-sm flex items-center gap-2 font-medium"
+                className="bg-[#ff4f00] hover:bg-[#e04500] text-white font-bold shadow-md shadow-[#ff4f00]/25 rounded-lg px-3.5 sm:px-4 py-2 text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all duration-200 shrink-0 border border-[#ff4f00] active:scale-95 cursor-pointer"
               >
-                <span>⚡</span> Open Visual Flow Diagram
+                <span>⚡</span>
+                <span className="hidden xs:inline sm:inline">Open Visual Flow Diagram</span>
+                <span className="inline xs:hidden sm:hidden">Launch Flow ⚡</span>
               </button>
             </div>
           </div>

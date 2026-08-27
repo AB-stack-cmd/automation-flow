@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { UserButton, useUser } from '@clerk/nextjs';
+import { getFlowCanvasUrl } from '../lib/config';
 
 export default function FileVault() {
   const { isLoaded, isSignedIn, user } = useUser();
@@ -14,6 +15,7 @@ export default function FileVault() {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
+  const [flowCanvasUrl, setFlowCanvasUrl] = useState('http://localhost:5173');
   
   // Modals state
   const [shareModalFile, setShareModalFile] = useState(null);
@@ -27,6 +29,7 @@ export default function FileVault() {
 
   useEffect(() => {
     document.documentElement.classList.add('dark');
+    setFlowCanvasUrl(getFlowCanvasUrl());
     fetchFiles();
   }, [categoryFilter]);
 
@@ -280,8 +283,16 @@ export default function FileVault() {
               <Link href="/files" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-[#ff4f00] bg-[#ff4f00]/15 border border-[#ff4f00]/40 shadow-sm shadow-[#ff4f00]/20 transition-all duration-200">File Vault 📂</Link>
             </nav>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 shrink-0">
               <UserButton />
+              <a
+                href={flowCanvasUrl}
+                className="bg-[#ff4f00] hover:bg-[#e04500] text-white font-bold shadow-md shadow-[#ff4f00]/25 rounded-lg px-3.5 sm:px-4 py-2 text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all duration-200 shrink-0 border border-[#ff4f00] active:scale-95 cursor-pointer"
+              >
+                <span>⚡</span>
+                <span className="hidden xs:inline sm:inline">Launch Visual Editor</span>
+                <span className="inline xs:hidden sm:hidden">Launch ⚡</span>
+              </a>
             </div>
           </div>
         </header>
