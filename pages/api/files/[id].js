@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import db from '../../../lib/db';
 import { deleteFileFromStorage } from '../../../lib/storage.js';
-
-const prisma = new PrismaClient();
 
 export default async function handler(req, res) {
   const { id } = req.query;
@@ -11,7 +9,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const file = await prisma.sharedFile.findUnique({
+    const file = await db.sharedFile.findUnique({
       where: { id: String(id) },
     });
 
@@ -59,7 +57,7 @@ export default async function handler(req, res) {
         updateData.maxDownloads = null;
       }
 
-      const updatedFile = await prisma.sharedFile.update({
+      const updatedFile = await db.sharedFile.update({
         where: { id: String(id) },
         data: updateData,
       });
@@ -69,7 +67,7 @@ export default async function handler(req, res) {
 
     if (req.method === 'DELETE') {
       // Delete record from DB
-      await prisma.sharedFile.delete({
+      await db.sharedFile.delete({
         where: { id: String(id) },
       });
 

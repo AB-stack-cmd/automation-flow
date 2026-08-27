@@ -82,6 +82,7 @@ export default function Home() {
             <nav className="hidden lg:flex items-center justify-center gap-1 xl:gap-2 text-xs xl:text-sm font-medium">
               <a href={dashboardUrl} className="bg-[#ff4f00]/15 border border-[#ff4f00]/60 text-[#ff4f00] rounded-lg px-2.5 py-1.5 font-semibold transition-all shadow-sm shadow-[#ff4f00]/20">Dashboard</a>
               <a href={flowCanvasUrl} className="text-[#a1a1aa] hover:text-white hover:bg-[#18181b] border border-transparent hover:border-[#27272a] rounded-lg px-2.5 py-1.5 transition-all">Visual Designer</a>
+              <a href="/connections" className="text-[#a1a1aa] hover:text-white hover:bg-[#18181b] border border-transparent hover:border-[#27272a] rounded-lg px-2.5 py-1.5 transition-all">Node Connections</a>
               <a href="/excel" className="text-[#a1a1aa] hover:text-white hover:bg-[#18181b] border border-transparent hover:border-[#27272a] rounded-lg px-2.5 py-1.5 transition-all">Excel AI</a>
               <a href="/files" className="text-[#a1a1aa] hover:text-white hover:bg-[#18181b] border border-transparent hover:border-[#27272a] rounded-lg px-2.5 py-1.5 transition-all">File Vault 📂</a>
               <a href="/workflows" className="text-[#a1a1aa] hover:text-white hover:bg-[#18181b] border border-transparent hover:border-[#27272a] rounded-lg px-2.5 py-1.5 transition-all">Workflows</a>

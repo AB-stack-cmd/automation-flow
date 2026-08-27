@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import db from '../../../lib/db';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -22,13 +20,13 @@ export default async function handler(req, res) {
     const cleanClerkId = clerkId.trim();
 
     // Search existing user by clerkId first to prevent account takeover via email collision
-    const existingClerkUser = await prisma.user.findUnique({
+    const existingClerkUser = await db.user.findUnique({
       where: { clerkId: cleanClerkId }
     });
 
     let user;
     if (existingClerkUser) {
-      user = await prisma.user.update({
+      user = await db.user.update({
         where: { clerkId: cleanClerkId },
         data: {
           email: cleanEmail,
@@ -39,14 +37,14 @@ export default async function handler(req, res) {
       });
     } else {
       // Check if email is already registered to a different clerk ID
-      const existingEmailUser = await prisma.user.findUnique({
+      const existingEmailUser = await db.user.findUnique({
         where: { email: cleanEmail }
       });
       if (existingEmailUser && existingEmailUser.clerkId && existingEmailUser.clerkId !== cleanClerkId) {
         return res.status(409).json({ error: '[Security Error] Email is already linked to another Clerk account.' });
       }
 
-      user = await prisma.user.upsert({
+      user = await db.user.upsert({
         where: { email: cleanEmail },
         update: {
           clerkId: cleanClerkId,

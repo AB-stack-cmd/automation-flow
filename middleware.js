@@ -11,6 +11,7 @@ const isPublicRoute = createRouteMatcher([
   '/support',
   '/workflows',
   '/excel',
+  '/connections(.*)',
   '/files(.*)',
   '/share(.*)',
   '/api(.*)'

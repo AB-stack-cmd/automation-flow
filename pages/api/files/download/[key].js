@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import db from '../../../../lib/db';
 import { getFileFromStorage, getPresignedDownloadUrl } from '../../../../lib/storage.js';
-
-const prisma = new PrismaClient();
 
 export default async function handler(req, res) {
   const { key, presigned } = req.query;
@@ -11,7 +9,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const file = await prisma.sharedFile.findUnique({
+    const file = await db.sharedFile.findUnique({
       where: { accessKey: String(key) },
     });
 
@@ -30,7 +28,7 @@ export default async function handler(req, res) {
 
     // Atomic download limit check and increment (prevents TOCTOU race condition)
     if (file.maxDownloads !== null && file.maxDownloads !== undefined) {
-      const updateResult = await prisma.sharedFile.updateMany({
+      const updateResult = await db.sharedFile.updateMany({
         where: {
           id: file.id,
           downloads: { lt: file.maxDownloads }
@@ -44,7 +42,7 @@ export default async function handler(req, res) {
         return res.status(410).json({ error: 'Download limit reached for this file' });
       }
     } else {
-      await prisma.sharedFile.update({
+      await db.sharedFile.update({
         where: { id: file.id },
         data: { downloads: { increment: 1 } },
       });

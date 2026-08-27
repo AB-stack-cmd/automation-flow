@@ -1,10 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import { PrismaClient } from '@prisma/client';
+import db from '../../../lib/db';
 import { uploadFileToStorage } from '../../../lib/storage.js';
-
-const prisma = new PrismaClient();
 
 export const config = {
   api: {
@@ -105,7 +103,7 @@ export default async function handler(req, res) {
     });
 
     // Create DB record
-    const sharedFile = await prisma.sharedFile.create({
+    const sharedFile = await db.sharedFile.create({
       data: {
         originalName: fileData.originalName,
         storedName,
