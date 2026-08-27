@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import db from '../../../../lib/db';
 
 export default async function handler(req, res) {
   const { key } = req.query;
@@ -10,7 +8,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const file = await prisma.sharedFile.findUnique({
+    const file = await db.sharedFile.findUnique({
       where: { accessKey: String(key) },
     });
 

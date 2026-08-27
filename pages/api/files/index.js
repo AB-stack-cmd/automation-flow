@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import db from '../../../lib/db';
 import { getStorageConfig } from '../../../lib/storage.js';
-
-const prisma = new PrismaClient();
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -44,7 +42,7 @@ export default async function handler(req, res) {
       }
     }
 
-    const files = await prisma.sharedFile.findMany({
+    const files = await db.sharedFile.findMany({
       where: whereClause,
       orderBy: { createdAt: 'desc' },
     });
@@ -52,7 +50,7 @@ export default async function handler(req, res) {
     const storageConfig = getStorageConfig();
 
     // Compute stats
-    const allFiles = await prisma.sharedFile.findMany();
+    const allFiles = await db.sharedFile.findMany();
     const stats = {
       totalFiles: allFiles.length,
       totalBytes: allFiles.reduce((acc, f) => acc + (f.size || 0), 0),

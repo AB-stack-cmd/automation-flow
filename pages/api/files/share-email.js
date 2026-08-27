@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import db from '../../../lib/db';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -17,7 +15,7 @@ export default async function handler(req, res) {
     const emailSubject = `Shared File: ${fileName || 'File from Neuron Vault'}`;
     const emailBody = `Hello,\n\nYou have received a shared file: "${fileName || 'File'}" via NEURON_FLOW Vault.\n\nMessage: ${message || 'No additional note.'}\n\nAccess and download your file here:\n${shareUrl}\n\nThank you!`;
 
-    const emailRecord = await prisma.simulatedEmail.create({
+    const emailRecord = await db.simulatedEmail.create({
       data: {
         to: recipientEmail,
         subject: emailSubject,
