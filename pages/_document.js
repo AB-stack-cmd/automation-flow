@@ -51,12 +51,13 @@ export default function Document() {
             padding-right: 1rem !important;
             font-size: 0.875rem !important;
             font-weight: 500 !important;
-            border-radius: 0.375rem !important;
+            border-radius: 0.5rem !important;
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
             white-space: nowrap !important;
-            transition: all 0.2s ease !important;
+            cursor: pointer !important;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
           }
           .btn-lg {
             height: 3rem !important;

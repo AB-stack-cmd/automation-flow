@@ -561,11 +561,11 @@ export default function ExcelAutomation() {
                 <span className="px-2 py-0.5 text-[9px] uppercase tracking-wider bg-primary-container/10 border border-primary-container/20 text-[#facc15] rounded">EXCEL_AI</span>
               </div>
             </div>
-            <nav className="hidden md:flex items-center gap-1 text-sm font-medium bg-[#121215]/80 p-1.5 rounded-xl border border-[#27272a]/80 backdrop-blur-md">
-              <a className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#27272a]/60 border border-transparent transition-all duration-200" href="/">Dashboard</a>
-              <a className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#27272a]/60 border border-transparent transition-all duration-200" href="/workflows">Visual Flow Designer</a>
-              <a className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-[#facc15] bg-[#facc15]/15 border border-[#facc15]/30 shadow-sm transition-all duration-200" href="/excel">Excel AI</a>
-              <a className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#27272a]/60 border border-transparent transition-all duration-200" href="/files">File Vault 📂</a>
+            <nav className="hidden md:flex items-center gap-1.5 text-sm font-medium bg-[#121215]/90 p-1.5 rounded-xl border border-[#ff4f00]/30 shadow-[0_0_20px_rgba(255,79,0,0.08)] backdrop-blur-md transition-all duration-300">
+              <a className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#ff4f00]/10 hover:border-[#ff4f00]/30 border border-transparent transition-all duration-200" href="/">Dashboard</a>
+              <a className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#ff4f00]/10 hover:border-[#ff4f00]/30 border border-transparent transition-all duration-200" href="/workflows">Visual Flow Designer</a>
+              <a className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-[#facc15] bg-[#facc15]/15 border border-[#facc15]/40 shadow-sm shadow-[#facc15]/20 transition-all duration-200" href="/excel">Excel AI</a>
+              <a className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#ff4f00]/10 hover:border-[#ff4f00]/30 border border-transparent transition-all duration-200" href="/files">File Vault 📂</a>
             </nav>
             <div className="flex items-center gap-3 text-xs text-neutral-400 font-mono">
               <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
@@ -576,7 +576,7 @@ export default function ExcelAutomation() {
                 <UserButton afterSignOutUrl="/" />
               ) : (
                 <SignInButton mode="modal">
-                  <button className="btn-md bg-neutral-900 hover:bg-neutral-800 border border-white/10 text-white">
+                  <button className="btn-md bg-[#18181b] hover:bg-[#27272a] border border-[#27272a] hover:border-[#ff4f00] text-white hover:text-white transition-all duration-200 shadow-sm hover:shadow-[#ff4f00]/20 rounded-lg px-4 py-2 text-xs md:text-sm font-medium flex items-center gap-2 cursor-pointer">
                     Sign In
                   </button>
                 </SignInButton>
@@ -736,15 +736,33 @@ export default function ExcelAutomation() {
                   <div className="flex flex-col gap-2">
                     <div className="flex justify-between items-center">
                       <label className="text-xs font-semibold text-neutral-400">{apiType.toUpperCase()} API Key</label>
-                      <span className="text-[9px] text-neutral-600 font-mono">Saved locally</span>
+                      <span className="text-[9px] text-emerald-400 font-mono">
+                        {apiKey ? 'Active ✓' : 'Local Storage'}
+                      </span>
                     </div>
-                    <input
-                      type="password"
-                      value={apiKey}
-                      onChange={(e) => saveApiKey(e.target.value)}
-                      placeholder={`Paste your ${apiType.toUpperCase()} API key...`}
-                      className="w-full bg-neutral-900 border border-white/5 focus:border-[#facc15] focus:ring-0 rounded-lg px-3 py-2 text-xs text-neutral-200 placeholder-neutral-600 transition-colors"
-                    />
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="password"
+                        value={apiKey}
+                        onChange={(e) => saveApiKey(e.target.value)}
+                        placeholder={`Paste your ${apiType.toUpperCase()} API key...`}
+                        className="flex-1 bg-neutral-900 border border-white/5 focus:border-[#facc15] focus:ring-0 rounded-lg px-3 py-2 text-xs text-neutral-200 placeholder-neutral-600 transition-colors"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (apiKey.trim()) {
+                            saveApiKey(apiKey.trim());
+                            showToast(`${apiType.toUpperCase()} API key saved successfully! ✓`);
+                          } else {
+                            showToast(`Please enter an API key first`, 'error');
+                          }
+                        }}
+                        className="bg-[#facc15] hover:opacity-90 text-black font-bold text-xs px-3 py-2 rounded-lg shrink-0 transition-all cursor-pointer"
+                      >
+                        + Add Key
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

@@ -1,29 +1,54 @@
-import { clerkMiddleware } from '@clerk/nextjs/server';
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
-export default function middleware(req, event) {
-  const secretKey = process.env.CLERK_SECRET_KEY;
-  // If Clerk key is dummy/placeholder or missing, bypass Clerk authentication
-  if (!secretKey || secretKey.includes('neuronflow_clerk_secret_key') || secretKey.startsWith('sk_test_dummy')) {
-    return NextResponse.next();
-  }
+const isPublicRoute = createRouteMatcher([
+  '/sign-in(.*)',
+  '/sign-up(.*)',
+  '/',
+  '/coming-soon',
+  '/docs',
+  '/privacy',
+  '/support',
+  '/workflows',
+  '/excel',
+  '/files(.*)',
+  '/share(.*)',
+  '/api(.*)'
+]);
 
+export default clerkMiddleware(async (auth, req) => {
   try {
-    return clerkMiddleware()(req, event);
-  } catch (error) {
-    console.warn('Clerk middleware error, bypassing:', error.message);
+    const secretKey = process.env.CLERK_SECRET_KEY || '';
+    const pubKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || '';
+
+    // Graceful fallback: If keys are missing, invalid, or dummy placeholders in production environment, pass through safely
+    if (
+      !secretKey ||
+      !pubKey ||
+      secretKey.includes('neuronflow_clerk_secret_key') ||
+      secretKey.startsWith('sk_test_dummy') ||
+      pubKey.includes('neuronflow.live')
+    ) {
+      return NextResponse.next();
+    }
+
+    if (!isPublicRoute(req)) {
+      if (typeof auth.protect === 'function') {
+        await auth.protect();
+      }
+    }
+    return NextResponse.next();
+  } catch (err) {
+    // Prevent unhandled Edge Runtime exceptions from causing MIDDLEWARE_INVOCATION_FAILED (500)
+    console.error('Clerk Middleware Edge Error caught:', err);
     return NextResponse.next();
   }
-}
+});
 
 export const config = {
   matcher: [
-    // Skip Next.js internals and static files
     '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    // Always run for API & TRPC routes
     '/(api|trpc)(.*)',
-    // Clerk auto-proxy path
-    '/__clerk/:path*',
   ],
 };
 

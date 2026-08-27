@@ -31,33 +31,35 @@ export default function PrivacyPage() {
               <span className="font-display text-xl font-bold tracking-tight text-white">NEURON_FLOW</span>
             </a>
 
-            <nav className="hidden md:flex items-center gap-1 text-sm font-medium bg-[#121215]/80 p-1.5 rounded-xl border border-[#27272a]/80 backdrop-blur-md">
-              <a href="/" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#27272a]/60 border border-transparent transition-all duration-200">Dashboard</a>
-              <a href={flowCanvasUrl} className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#27272a]/60 border border-transparent transition-all duration-200">Visual Flow Designer</a>
-              <a href="/excel" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#27272a]/60 border border-transparent transition-all duration-200">Excel AI</a>
-              <a href="/workflows" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#27272a]/60 border border-transparent transition-all duration-200 flex items-center gap-1.5">
+            <nav className="hidden md:flex items-center gap-1.5 text-sm font-medium bg-[#121215]/90 p-1.5 rounded-xl border border-[#ff4f00]/30 shadow-[0_0_20px_rgba(255,79,0,0.08)] backdrop-blur-md transition-all duration-300">
+              <a href="/" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#ff4f00]/10 hover:border-[#ff4f00]/30 border border-transparent transition-all duration-200">Dashboard</a>
+              <a href={flowCanvasUrl} className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#ff4f00]/10 hover:border-[#ff4f00]/30 border border-transparent transition-all duration-200">Visual Flow Designer</a>
+              <a href="/excel" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#ff4f00]/10 hover:border-[#ff4f00]/30 border border-transparent transition-all duration-200">Excel AI</a>
+              <a href="/workflows" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#ff4f00]/10 hover:border-[#ff4f00]/30 border border-transparent transition-all duration-200 flex items-center gap-1.5">
                 Workflows <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-[#ff4f00]/20 text-[#ff4f00] border border-[#ff4f00]/30 uppercase">SOON</span>
               </a>
-              <a href="/docs" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#27272a]/60 border border-transparent transition-all duration-200">Docs</a>
-              <a href="/support" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#27272a]/60 border border-transparent transition-all duration-200">Support</a>
-              <a href="/privacy" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-[#ff4f00] bg-[#ff4f00]/15 border border-[#ff4f00]/30 shadow-sm transition-all duration-200">Privacy</a>
+              <a href="/docs" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#ff4f00]/10 hover:border-[#ff4f00]/30 border border-transparent transition-all duration-200">Docs</a>
+              <a href="/support" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#ff4f00]/10 hover:border-[#ff4f00]/30 border border-transparent transition-all duration-200">Support</a>
+              <a href="/privacy" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-[#ff4f00] bg-[#ff4f00]/15 border border-[#ff4f00]/40 shadow-sm shadow-[#ff4f00]/20 transition-all duration-200">Privacy</a>
             </nav>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               {isLoaded && isSignedIn ? (
                 <UserButton afterSignOutUrl="/" />
               ) : (
                 <SignInButton mode="modal">
-                  <button className="btn-md bg-[#18181b] border border-[#27272a] hover:border-[#ff4f00] text-white">
+                  <button className="bg-[#18181b] hover:bg-[#27272a] border border-[#27272a] hover:border-[#ff4f00] text-white transition-all rounded-lg px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium cursor-pointer shrink-0">
                     Sign In
                   </button>
                 </SignInButton>
               )}
               <a
                 href={flowCanvasUrl}
-                className="btn-md bg-[#ff4f00] text-white hover:bg-[#e04500] shadow-sm"
+                className="bg-[#ff4f00] hover:bg-[#e04500] text-white font-bold shadow-md shadow-[#ff4f00]/25 rounded-lg px-3.5 sm:px-4 py-2 text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all duration-200 shrink-0 border border-[#ff4f00] active:scale-95 cursor-pointer"
               >
-                Launch Visual Editor
+                <span>⚡</span>
+                <span className="hidden xs:inline sm:inline">Launch Visual Editor</span>
+                <span className="inline xs:hidden sm:hidden">Launch ⚡</span>
               </a>
             </div>
           </div>

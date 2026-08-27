@@ -9,6 +9,9 @@ export default function WorkflowsPage() {
   const [dashboardUrl, setDashboardUrl] = useState('/');
   const [isIframeLoaded, setIsIframeLoaded] = useState(false);
   const [canvasError, setCanvasError] = useState(false);
+  const [wfAiProvider, setWfAiProvider] = useState('openai');
+  const [wfAiKey, setWfAiKey] = useState('');
+  const [wfKeySaved, setWfKeySaved] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -17,11 +20,25 @@ export default function WorkflowsPage() {
     setFlowCanvasUrl(canvasUrl);
     setDashboardUrl(getDashboardUrl());
 
-    // Health check port 5173
+    // Health check
     fetch(canvasUrl, { mode: 'no-cors' })
       .then(() => setCanvasError(false))
       .catch(() => setCanvasError(true));
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const existing = localStorage.getItem(`neuron_flow_api_key_${wfAiProvider}`) || localStorage.getItem('neuron_flow_ai_api_key') || '';
+    setWfAiKey(existing);
+  }, [wfAiProvider]);
+
+  const handleSaveWfKey = () => {
+    if (!wfAiKey.trim()) return;
+    localStorage.setItem(`neuron_flow_api_key_${wfAiProvider}`, wfAiKey.trim());
+    localStorage.setItem('neuron_flow_ai_api_key', wfAiKey.trim());
+    setWfKeySaved(true);
+    setTimeout(() => setWfKeySaved(false), 3000);
+  };
 
   const handleOpenDiagram = (e) => {
     if (e) e.preventDefault();
@@ -71,22 +88,22 @@ export default function WorkflowsPage() {
               </span>
             </a>
 
-            <nav className="hidden md:flex items-center gap-1 text-sm font-medium bg-[#121215]/80 p-1.5 rounded-xl border border-[#27272a]/80 backdrop-blur-md">
-              <a href={dashboardUrl} className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#27272a]/60 border border-transparent transition-all duration-200">Dashboard</a>
-              <a href="/workflows" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-[#ff4f00] bg-[#ff4f00]/15 border border-[#ff4f00]/30 shadow-sm transition-all duration-200">Visual Flow Designer</a>
-              <a href="/excel" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#27272a]/60 border border-transparent transition-all duration-200">Excel AI</a>
-              <a href="/files" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#27272a]/60 border border-transparent transition-all duration-200">File Vault 📂</a>
-              <a href="/docs" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#27272a]/60 border border-transparent transition-all duration-200">Docs</a>
-              <a href="/support" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#27272a]/60 border border-transparent transition-all duration-200">Support</a>
-              <a href="/privacy" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#27272a]/60 border border-transparent transition-all duration-200">Privacy</a>
+            <nav className="hidden md:flex items-center gap-1.5 text-sm font-medium bg-[#121215]/90 p-1.5 rounded-xl border border-[#ff4f00]/30 shadow-[0_0_20px_rgba(255,79,0,0.08)] backdrop-blur-md transition-all duration-300">
+              <a href={dashboardUrl} className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#ff4f00]/10 hover:border-[#ff4f00]/30 border border-transparent transition-all duration-200">Dashboard</a>
+              <a href="/workflows" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-[#ff4f00] bg-[#ff4f00]/15 border border-[#ff4f00]/40 shadow-sm shadow-[#ff4f00]/20 transition-all duration-200">Visual Flow Designer</a>
+              <a href="/excel" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#ff4f00]/10 hover:border-[#ff4f00]/30 border border-transparent transition-all duration-200">Excel AI</a>
+              <a href="/files" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#ff4f00]/10 hover:border-[#ff4f00]/30 border border-transparent transition-all duration-200">File Vault 📂</a>
+              <a href="/docs" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#ff4f00]/10 hover:border-[#ff4f00]/30 border border-transparent transition-all duration-200">Docs</a>
+              <a href="/support" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#ff4f00]/10 hover:border-[#ff4f00]/30 border border-transparent transition-all duration-200">Support</a>
+              <a href="/privacy" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#ff4f00]/10 hover:border-[#ff4f00]/30 border border-transparent transition-all duration-200">Privacy</a>
             </nav>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               {isLoaded && isSignedIn ? (
                 <UserButton afterSignOutUrl="/" />
               ) : (
                 <SignInButton mode="modal">
-                  <button className="btn-md bg-[#18181b] border border-[#27272a] hover:border-[#ff4f00] text-white">
+                  <button className="bg-[#18181b] hover:bg-[#27272a] border border-[#27272a] hover:border-[#ff4f00] text-white transition-all rounded-lg px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium cursor-pointer shrink-0">
                     Sign In
                   </button>
                 </SignInButton>
@@ -95,9 +112,11 @@ export default function WorkflowsPage() {
               <button
                 onClick={handleOpenDiagram}
                 id="open-visual-flow-btn-header"
-                className="btn-md bg-[#ff4f00] text-white hover:bg-[#e04500] shadow-sm flex items-center gap-2 font-medium"
+                className="bg-[#ff4f00] hover:bg-[#e04500] text-white font-bold shadow-md shadow-[#ff4f00]/25 rounded-lg px-3.5 sm:px-4 py-2 text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all duration-200 shrink-0 border border-[#ff4f00] active:scale-95 cursor-pointer"
               >
-                <span>⚡</span> Open Visual Flow Diagram
+                <span>⚡</span>
+                <span className="hidden xs:inline sm:inline">Open Visual Flow Diagram</span>
+                <span className="inline xs:hidden sm:hidden">Launch Flow ⚡</span>
               </button>
             </div>
           </div>
@@ -135,6 +154,52 @@ export default function WorkflowsPage() {
               >
                 ↗️ Launch in New Window
               </a>
+            </div>
+          </div>
+
+          {/* AI Connection Key Toolbar */}
+          <div className="max-w-7xl mx-auto mt-6 pt-4 border-t border-[#27272a] bg-[#141417] p-4 rounded-xl border border-[#27272a] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-left">
+            <div className="flex items-center gap-2.5">
+              <span className="text-base">🔑</span>
+              <div>
+                <span className="text-xs font-bold text-white block">AI API Connection Key</span>
+                <span className="text-[10px] text-[#a1a1aa]">Configure keys for workflow node execution</span>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+              <select
+                value={wfAiProvider}
+                onChange={(e) => setWfAiProvider(e.target.value)}
+                className="bg-[#09090b] border border-[#27272a] focus:border-[#ff4f00] text-white text-xs rounded-lg px-2.5 py-1.5 outline-none cursor-pointer"
+              >
+                <option value="openai">OpenAI (sk-...)</option>
+                <option value="gemini">Gemini (AIza...)</option>
+                <option value="anthropic">Anthropic (sk-ant...)</option>
+                <option value="deepseek">DeepSeek (sk-...)</option>
+              </select>
+
+              <input
+                type="password"
+                value={wfAiKey}
+                onChange={(e) => setWfAiKey(e.target.value)}
+                placeholder={`Enter ${wfAiProvider.toUpperCase()} API key...`}
+                className="bg-[#09090b] border border-[#27272a] focus:border-[#ff4f00] text-white text-xs rounded-lg px-3 py-1.5 outline-none font-mono min-w-[200px]"
+              />
+
+              <button
+                type="button"
+                onClick={handleSaveWfKey}
+                className="bg-[#ff4f00] hover:bg-[#e04500] active:scale-95 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg transition-all cursor-pointer shadow-sm"
+              >
+                + Add Key
+              </button>
+
+              {wfKeySaved && (
+                <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950/60 px-2 py-1 rounded border border-emerald-500/20 animate-pulse">
+                  Key Saved ✓
+                </span>
+              )}
             </div>
           </div>
         </section>
