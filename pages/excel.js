@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Navbar from '../components/Navbar';
 import Head from 'next/head';
 import Link from 'next/link';
 import { SignInButton, UserButton, useUser } from '@clerk/nextjs';
@@ -549,24 +550,19 @@ export default function ExcelAutomation() {
         )}
 
         {/* Header */}
-        <header className="fixed top-0 w-full z-40 bg-surface/80 backdrop-blur-xl border-b border-white/5">
-          <div className="flex justify-between items-center h-16 px-6 max-w-7xl mx-auto">
-            <div className="flex items-center gap-4">
-              <Link href="/" className="btn-sm bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-white border border-white/5">
-                ← Dashboard
-              </Link>
-              <div className="h-4 w-[1px] bg-white/10"></div>
-              <div className="flex items-center gap-2">
-                <span className="text-[#facc15] font-bold tracking-widest text-lg font-mono">NEURON_FLOW</span>
-                <span className="px-2 py-0.5 text-[9px] uppercase tracking-wider bg-primary-container/10 border border-primary-container/20 text-[#facc15] rounded">EXCEL_AI</span>
+        <header className="sticky top-0 z-50 bg-[#09090b]/95 backdrop-blur-md border-b border-[#27272a] px-3 sm:px-6 lg:px-8 py-3.5 transition-colors w-full">
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4 w-full">
+            <Link href="/" className="flex items-center gap-2.5 cursor-pointer shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-[#ff4f00] flex items-center justify-center text-white font-bold text-lg shadow-md shadow-[#ff4f00]/30">
+                ⚡
               </div>
-            </div>
-            <nav className="hidden md:flex items-center gap-1.5 text-sm font-medium bg-[#121215]/90 p-1.5 rounded-xl border border-[#ff4f00]/30 shadow-[0_0_20px_rgba(255,79,0,0.08)] backdrop-blur-md transition-all duration-300">
-              <a className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#ff4f00]/10 hover:border-[#ff4f00]/30 border border-transparent transition-all duration-200" href="/">Dashboard</a>
-              <a className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#ff4f00]/10 hover:border-[#ff4f00]/30 border border-transparent transition-all duration-200" href="/workflows">Visual Flow Designer</a>
-              <a className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-[#facc15] bg-[#facc15]/15 border border-[#facc15]/40 shadow-sm shadow-[#facc15]/20 transition-all duration-200" href="/excel">Excel AI</a>
-              <a className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#ff4f00]/10 hover:border-[#ff4f00]/30 border border-transparent transition-all duration-200" href="/files">File Vault 📂</a>
-            </nav>
+              <span className="font-display text-lg sm:text-xl font-bold tracking-tight text-white">NEURON_FLOW</span>
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#ff4f00]/10 text-[#ff4f00] border border-[#ff4f00]/20 hidden sm:inline-block">
+                Excel AI
+              </span>
+            </Link>
+
+            <Navbar activePage="excel" />
             <div className="flex items-center gap-3 text-xs text-neutral-400 font-mono">
               <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
