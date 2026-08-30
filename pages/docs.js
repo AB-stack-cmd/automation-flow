@@ -6,7 +6,7 @@ import { getFlowCanvasUrl } from '../lib/config';
 export default function DocumentationPage() {
   const { isLoaded, isSignedIn } = useUser();
   const [activeSection, setActiveSection] = useState('getting-started');
-  const [flowCanvasUrl, setFlowCanvasUrl] = useState('http://localhost:5173');
+  const [flowCanvasUrl, setFlowCanvasUrl] = useState('/workflows');
 
   useEffect(() => {
     if (typeof window === 'undefined') return;

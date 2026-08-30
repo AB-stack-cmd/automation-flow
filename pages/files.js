@@ -15,7 +15,7 @@ export default function FileVault() {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
-  const [flowCanvasUrl, setFlowCanvasUrl] = useState('http://localhost:5173');
+  const [flowCanvasUrl, setFlowCanvasUrl] = useState('/workflows');
   
   // Modals state
   const [shareModalFile, setShareModalFile] = useState(null);

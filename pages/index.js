@@ -6,7 +6,7 @@ import { getFlowCanvasUrl, getDashboardUrl } from '../lib/config';
 export default function Home() {
   const { isLoaded, isSignedIn, user } = useUser();
   const [syncedUser, setSyncedUser] = useState(null);
-  const [flowCanvasUrl, setFlowCanvasUrl] = useState('http://localhost:5173');
+  const [flowCanvasUrl, setFlowCanvasUrl] = useState('/workflows');
   const [dashboardUrl, setDashboardUrl] = useState('/');
   const [aiKeyProvider, setAiKeyProvider] = useState('openai');
   const [aiApiKeyInput, setAiApiKeyInput] = useState('');

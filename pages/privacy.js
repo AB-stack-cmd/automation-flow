@@ -5,7 +5,7 @@ import { getFlowCanvasUrl } from '../lib/config';
 
 export default function PrivacyPage() {
   const { isLoaded, isSignedIn } = useUser();
-  const [flowCanvasUrl, setFlowCanvasUrl] = useState('http://localhost:5173');
+  const [flowCanvasUrl, setFlowCanvasUrl] = useState('/workflows');
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
