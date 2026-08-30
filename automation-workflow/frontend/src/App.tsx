@@ -1709,17 +1709,32 @@ return {
     setSelectedNode(null);
   }, []);
 
-  const updateNodeData = (field: string, val: any) => {
-    if (!selectedNode) return;
-    const updated = {
-      ...selectedNode,
-      data: {
-        ...selectedNode.data,
-        [field]: val
-      }
-    };
-    setSelectedNode(updated);
-    setNodes((nds) => nds.map((n) => (n.id === selectedNode.id ? updated : n)));
+  const updateNodeData = (fieldOrUpdates: string | Record<string, any>, val?: any) => {
+    const updates = typeof fieldOrUpdates === 'string' ? { [fieldOrUpdates]: val } : fieldOrUpdates;
+    setSelectedNode((prev: any) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        data: {
+          ...prev.data,
+          ...updates
+        }
+      };
+    });
+    setNodes((nds) =>
+      nds.map((n) => {
+        if (selectedNode && n.id === selectedNode.id) {
+          return {
+            ...n,
+            data: {
+              ...n.data,
+              ...updates
+            }
+          };
+        }
+        return n;
+      })
+    );
   };
 
   const addNode = (type: string) => {
@@ -3114,8 +3129,10 @@ return {
                               value={selectedNode.data?.thresholdScore ?? 50}
                               onChange={(e) => {
                                 const val = parseInt(e.target.value, 10);
-                                updateNodeData('thresholdScore', val);
-                                updateNodeData('condition', `context.trigger.score > ${val}`);
+                                updateNodeData({
+                                  thresholdScore: val,
+                                  condition: `context.trigger.score > ${val}`
+                                });
                               }}
                               className="w-full h-1.5 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-fuchsia-400 mb-2"
                             />

@@ -21,9 +21,13 @@ export default function WorkflowsPage() {
     setDashboardUrl(getDashboardUrl());
 
     // Health check
-    fetch(canvasUrl, { mode: 'no-cors' })
-      .then(() => setCanvasError(false))
-      .catch(() => setCanvasError(true));
+    if (canvasUrl.startsWith('http')) {
+      fetch(canvasUrl, { mode: 'no-cors' })
+        .then(() => setCanvasError(false))
+        .catch(() => setCanvasError(true));
+    } else {
+      setCanvasError(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -42,8 +46,12 @@ export default function WorkflowsPage() {
 
   const handleOpenDiagram = (e) => {
     if (e) e.preventDefault();
-    const url = flowCanvasUrl || 'http://localhost:5173';
-    window.open(url, '_blank', 'noopener,noreferrer');
+    const url = flowCanvasUrl || '/workflows';
+    if (url.startsWith('/')) {
+      window.location.href = url;
+    } else {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
   };
 
   const templates = [
