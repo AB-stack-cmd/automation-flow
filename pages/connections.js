@@ -5,7 +5,7 @@ import { getFlowCanvasUrl, getDashboardUrl } from '../lib/config';
 
 export default function NodeConnectionsPage() {
   const { isSignedIn, user, isLoaded } = useUser();
-  const [flowCanvasUrl, setFlowCanvasUrl] = useState('http://localhost:5173');
+  const [flowCanvasUrl, setFlowCanvasUrl] = useState('/workflows');
   const [dashboardUrl, setDashboardUrl] = useState('http://localhost:3000');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');

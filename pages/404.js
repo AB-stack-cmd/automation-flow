@@ -7,7 +7,7 @@ import { getFlowCanvasUrl } from '../lib/config';
 export default function Custom404ComingSoon() {
   const router = useRouter();
   const { isLoaded, isSignedIn } = useUser();
-  const [flowCanvasUrl, setFlowCanvasUrl] = useState('http://localhost:5173');
+  const [flowCanvasUrl, setFlowCanvasUrl] = useState('/workflows');
   const [attemptedPath, setAttemptedPath] = useState('');
 
   const [email, setEmail] = useState('');

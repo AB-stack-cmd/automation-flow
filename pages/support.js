@@ -9,7 +9,12 @@ export default function SupportPage() {
   const [activeFaq, setActiveFaq] = useState(null);
   const [formData, setFormData] = useState({ name: '', email: '', category: 'general', message: '' });
   const [submitted, setSubmitted] = useState(false);
-  const [flowCanvasUrl, setFlowCanvasUrl] = useState('http://localhost:5173');
+  const [flowCanvasUrl, setFlowCanvasUrl] = useState('/workflows');
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setFlowCanvasUrl(getFlowCanvasUrl());
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
