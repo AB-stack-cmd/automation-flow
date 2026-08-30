@@ -1,21 +1,20 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import Head from 'next/head';
-import Link from 'next/link';
 import { SignInButton, UserButton, useUser } from '@clerk/nextjs';
 import { getFlowCanvasUrl, getDashboardUrl } from '../lib/config';
 
-// Initial default workflow nodes & connections
+// Pre-configured workflow template definitions
 const DEFAULT_TEMPLATES = {
   healthCheck: {
     name: '10s Interval Health Check & Alert Pipeline',
     description: 'Polls system status periodically, evaluates uptime metrics via logic gates, and dispatches email alerts.',
     nodes: [
-      { id: 'node-1', type: 'schedule_trigger', label: '10s Heartbeat', x: 80, y: 180, data: { interval: 10, unit: 'seconds' } },
-      { id: 'node-2', type: 'code', label: 'Ping Health Check', x: 340, y: 180, data: { endpoint: 'https://api.system.local/health', timeout: 3000 } },
-      { id: 'node-3', type: 'ifelse', label: 'Check Status 200 OK', x: 600, y: 180, data: { condition: 'status === 200', threshold: 100 } },
-      { id: 'node-4', type: 'simulated_email', label: 'Alert On-Call Dev', x: 880, y: 80, data: { to: 'ops-team@neuronflow.ai', subject: '🚨 High Priority: Health check failed!' } },
-      { id: 'node-5', type: 'slack', label: 'Log Uptime Metric', x: 880, y: 280, data: { channel: '#uptime-logs', message: '✅ System healthy. 100% operational.' } },
-      { id: 'node-6', type: 'end', label: 'Execution End', x: 1140, y: 280, data: {} },
+      { id: 'node-1', type: 'schedule_trigger', label: '10s Heartbeat Trigger', x: 80, y: 180, data: { interval: 10, unit: 'seconds' } },
+      { id: 'node-2', type: 'code', label: 'Ping System Health API', x: 360, y: 180, data: { endpoint: 'https://api.system.local/health', timeout: 3000 } },
+      { id: 'node-3', type: 'ifelse', label: 'Check Status 200 OK', x: 640, y: 180, data: { condition: 'status === 200', threshold: 100 } },
+      { id: 'node-4', type: 'simulated_email', label: 'Alert On-Call Dev', x: 920, y: 80, data: { to: 'ops-team@neuronflow.ai', subject: '🚨 High Priority: Health check failed!' } },
+      { id: 'node-5', type: 'slack', label: 'Log Uptime Metric', x: 920, y: 280, data: { channel: '#uptime-logs', message: '✅ System healthy. 100% operational.' } },
+      { id: 'node-6', type: 'end', label: 'Execution Complete', x: 1200, y: 280, data: {} },
     ],
     edges: [
       { id: 'e1-2', source: 'node-1', target: 'node-2' },
@@ -30,11 +29,11 @@ const DEFAULT_TEMPLATES = {
     description: 'Captures incoming CRM leads, analyzes intent using GPT-4o, and sends automated WhatsApp confirmations.',
     nodes: [
       { id: 'node-1', type: 'crm_lead_trigger', label: 'New CRM Lead Ingest', x: 80, y: 180, data: { leadSource: 'Landing Page Form', defaultScore: 40 } },
-      { id: 'node-2', type: 'openai', label: 'GPT-4o Intent Analysis', x: 340, y: 180, data: { model: 'gpt-4o', systemPrompt: 'Score buyer intent from 1-100 and summarize key requirements.', temperature: 0.2 } },
-      { id: 'node-3', type: 'ifelse', label: 'Score >= 75 (High Priority)', x: 620, y: 180, data: { condition: 'intentScore >= 75', threshold: 75 } },
-      { id: 'node-4', type: 'whatsapp', label: 'Send WhatsApp VIP Invite', x: 900, y: 80, data: { phone: '+1 (555) 019-2834', message: 'Hello! Our Senior Architect is ready for your demo.' } },
-      { id: 'node-5', type: 'simulated_email', label: 'Nurture Campaign Email', x: 900, y: 280, data: { to: 'lead@prospect.com', subject: 'Welcome to NEURON_FLOW Automation System' } },
-      { id: 'node-6', type: 'end', label: 'Lead Processed', x: 1160, y: 180, data: {} },
+      { id: 'node-2', type: 'openai', label: 'GPT-4o Intent Analysis', x: 360, y: 180, data: { model: 'gpt-4o', systemPrompt: 'Score buyer intent from 1-100 and summarize key requirements.', temperature: 0.2 } },
+      { id: 'node-3', type: 'ifelse', label: 'Score >= 75 (High Priority)', x: 640, y: 180, data: { condition: 'intentScore >= 75', threshold: 75 } },
+      { id: 'node-4', type: 'whatsapp', label: 'Send WhatsApp VIP Invite', x: 920, y: 80, data: { phone: '+1 (555) 019-2834', message: 'Hello! Our Senior Architect is ready for your demo.' } },
+      { id: 'node-5', type: 'simulated_email', label: 'Nurture Campaign Email', x: 920, y: 280, data: { to: 'lead@prospect.com', subject: 'Welcome to NEURON_FLOW Automation System' } },
+      { id: 'node-6', type: 'end', label: 'Lead Processed', x: 1200, y: 180, data: {} },
     ],
     edges: [
       { id: 'e1-2', source: 'node-1', target: 'node-2' },
@@ -50,10 +49,10 @@ const DEFAULT_TEMPLATES = {
     description: 'Ingests spreadsheet rows, applies automated LLM calculations and broadcasts summary to Slack.',
     nodes: [
       { id: 'node-1', type: 'start_trigger', label: 'Trigger Batch Process', x: 80, y: 180, data: {} },
-      { id: 'node-2', type: 'excel', label: 'Excel AI Row Transformer', x: 320, y: 180, data: { maxRows: 50, formula: '=TRIM(CLEAN(A2:D50))' } },
-      { id: 'node-3', type: 'gemini', label: 'Gemini 2.0 Flash Synthesis', x: 600, y: 180, data: { model: 'gemini-2.0-flash', prompt: 'Generate executive summary and revenue variance table.' } },
-      { id: 'node-4', type: 'delay', label: 'Buffer Wait (3s)', x: 880, y: 180, data: { duration: 3 } },
-      { id: 'node-5', type: 'slack', label: 'Post to #financial-exec', x: 1140, y: 180, data: { channel: '#financial-exec', message: 'Monthly financial audit summary generated.' } },
+      { id: 'node-2', type: 'excel', label: 'Excel AI Row Transformer', x: 360, y: 180, data: { maxRows: 50, formula: '=TRIM(CLEAN(A2:D50))' } },
+      { id: 'node-3', type: 'gemini', label: 'Gemini 2.0 Flash Synthesis', x: 640, y: 180, data: { model: 'gemini-2.0-flash', prompt: 'Generate executive summary and revenue variance table.' } },
+      { id: 'node-4', type: 'delay', label: 'Buffer Wait (3s)', x: 920, y: 180, data: { duration: 3 } },
+      { id: 'node-5', type: 'slack', label: 'Post to #financial-exec', x: 1200, y: 180, data: { channel: '#financial-exec', message: 'Monthly financial audit summary generated.' } },
     ],
     edges: [
       { id: 'e1-2', source: 'node-1', target: 'node-2' },
@@ -69,67 +68,120 @@ const NODE_DEFINITIONS = {
   schedule_trigger: { label: 'Schedule Trigger', category: 'Trigger', icon: '⏰', color: '#06b6d4', bg: 'bg-cyan-500/10', border: 'border-cyan-500/40', text: 'text-cyan-400' },
   google_form_trigger: { label: 'Google Form Webhook', category: 'Trigger', icon: '📝', color: '#10b981', bg: 'bg-emerald-500/10', border: 'border-emerald-500/40', text: 'text-emerald-400' },
   crm_lead_trigger: { label: 'CRM Lead Ingest', category: 'Trigger', icon: '👥', color: '#a855f7', bg: 'bg-purple-500/10', border: 'border-purple-500/40', text: 'text-purple-400' },
-  ifelse: { label: 'If / Else Logic', category: 'Logic', icon: '🔀', color: '#f59e0b', bg: 'bg-amber-500/10', border: 'border-amber-500/40', text: 'text-amber-400' },
-  delay: { label: 'Delay / Timer', category: 'Logic', icon: '⏳', color: '#eab308', bg: 'bg-yellow-500/10', border: 'border-yellow-500/40', text: 'text-yellow-400' },
-  code: { label: 'Custom Code (JS)', category: 'Logic', icon: '💻', color: '#64748b', bg: 'bg-slate-500/10', border: 'border-slate-500/40', text: 'text-slate-300' },
-  openai: { label: 'OpenAI GPT-4o', category: 'AI Core', icon: '🧠', color: '#10b981', bg: 'bg-emerald-500/10', border: 'border-emerald-500/40', text: 'text-emerald-400' },
+  ifelse: { label: 'If / Else Logic Gate', category: 'Logic', icon: '🔀', color: '#f59e0b', bg: 'bg-amber-500/10', border: 'border-amber-500/40', text: 'text-amber-400' },
+  delay: { label: 'Delay / Timer Pause', category: 'Logic', icon: '⏳', color: '#eab308', bg: 'bg-yellow-500/10', border: 'border-yellow-500/40', text: 'text-yellow-400' },
+  code: { label: 'Custom JS Script', category: 'Logic', icon: '💻', color: '#64748b', bg: 'bg-slate-500/10', border: 'border-slate-500/40', text: 'text-slate-300' },
+  openai: { label: 'OpenAI GPT-4o Model', category: 'AI Core', icon: '🧠', color: '#10b981', bg: 'bg-emerald-500/10', border: 'border-emerald-500/40', text: 'text-emerald-400' },
   gemini: { label: 'Gemini 2.0 Flash', category: 'AI Core', icon: '✨', color: '#3b82f6', bg: 'bg-blue-500/10', border: 'border-blue-500/40', text: 'text-blue-400' },
   excel: { label: 'Excel AI Transformer', category: 'Data', icon: '📊', color: '#14b8a6', bg: 'bg-teal-500/10', border: 'border-teal-500/40', text: 'text-teal-400' },
-  whatsapp: { label: 'WhatsApp Messenger', category: 'Action', icon: '💬', color: '#22c55e', bg: 'bg-green-500/10', border: 'border-green-500/40', text: 'text-green-400' },
-  slack: { label: 'Slack Webhook', category: 'Action', icon: '📢', color: '#ec4899', bg: 'bg-pink-500/10', border: 'border-pink-500/40', text: 'text-pink-400' },
-  simulated_email: { label: 'SMTP Email Dispatcher', category: 'Action', icon: '📧', color: '#38bdf8', bg: 'bg-sky-500/10', border: 'border-sky-500/40', text: 'text-sky-400' },
-  end: { label: 'End / Complete', category: 'Output', icon: '🏁', color: '#71717a', bg: 'bg-zinc-500/10', border: 'border-zinc-500/40', text: 'text-zinc-400' },
+  whatsapp: { label: 'WhatsApp Dispatcher', category: 'Action', icon: '💬', color: '#22c55e', bg: 'bg-green-500/10', border: 'border-green-500/40', text: 'text-green-400' },
+  slack: { label: 'Slack Webhook Alert', category: 'Action', icon: '📢', color: '#ec4899', bg: 'bg-pink-500/10', border: 'border-pink-500/40', text: 'text-pink-400' },
+  simulated_email: { label: 'SMTP Email Sender', category: 'Action', icon: '📧', color: '#38bdf8', bg: 'bg-sky-500/10', border: 'border-sky-500/40', text: 'text-sky-400' },
+  end: { label: 'Execution Terminal', category: 'Output', icon: '🏁', color: '#71717a', bg: 'bg-zinc-500/10', border: 'border-zinc-500/40', text: 'text-zinc-400' },
 };
+
+const BACKEND_BASE_URL = typeof window !== 'undefined' && window.location.hostname !== 'localhost' ? '' : 'http://localhost:4000';
 
 export default function WorkflowsPage() {
   const { isLoaded, isSignedIn } = useUser();
+  
+  // Workflow Canvas State
+  const [workflowTitle, setWorkflowTitle] = useState('10s Interval Health Check & Alert Pipeline');
   const [selectedTemplateKey, setSelectedTemplateKey] = useState('healthCheck');
   const [nodes, setNodes] = useState(DEFAULT_TEMPLATES.healthCheck.nodes);
   const [edges, setEdges] = useState(DEFAULT_TEMPLATES.healthCheck.edges);
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const [connectingSourceId, setConnectingSourceId] = useState(null);
-  
-  // Execution & Simulation State
+  const [mouseCanvasPos, setMouseCanvasPos] = useState({ x: 0, y: 0 });
+
+  // Execution & Backend State
   const [isRunning, setIsRunning] = useState(false);
   const [activeNodeId, setActiveNodeId] = useState(null);
   const [executionLogs, setExecutionLogs] = useState([]);
-  const [executionStatus, setExecutionStatus] = useState('idle'); // idle, running, completed, error
+  const [executionStatus, setExecutionStatus] = useState('idle');
   const [simProgress, setSimProgress] = useState(0);
 
-  // Canvas Viewport Transforms
+  // Backend Engine Sync State
+  const [backendStatus, setBackendStatus] = useState('checking'); // 'online' | 'offline' | 'checking'
+  const [savedWorkflows, setSavedWorkflows] = useState([]);
+  const [activeWorkflowId, setActiveWorkflowId] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Canvas Viewport Transforms & Settings
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 40, y: 40 });
   const [isPanning, setIsPanning] = useState(false);
   const [startPanMouse, setStartPanMouse] = useState({ x: 0, y: 0 });
   const [draggingNodeId, setDraggingNodeId] = useState(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [bgPattern, setBgPattern] = useState('dots'); // 'dots' | 'grid' | 'lines' | 'minimal'
 
-  // AI & Server Configuration
+  // Palette Filter State
+  const [paletteSearch, setPaletteSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+
+  // AI & UI Configuration
   const [wfAiProvider, setWfAiProvider] = useState('openai');
   const [wfAiKey, setWfAiKey] = useState('');
   const [wfKeySaved, setWfKeySaved] = useState(false);
-  const [externalCanvasUrl, setExternalCanvasUrl] = useState('');
-  const [viewMode, setViewMode] = useState('studio'); // 'studio' | 'external'
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
 
   const canvasRef = useRef(null);
   const logContainerRef = useRef(null);
 
+  // Helper toast notification
+  const showToast = useCallback((msg) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
+  }, []);
+
+  // Check Backend Health & Fetch Workflows
+  const checkBackendAndFetchWorkflows = useCallback(async () => {
+    try {
+      const res = await fetch(`${BACKEND_BASE_URL}/health`, { signal: AbortSignal.timeout(3000) });
+      if (res.ok) {
+        setBackendStatus('online');
+        const listRes = await fetch(`${BACKEND_BASE_URL}/api/workflows`);
+        if (listRes.ok) {
+          const list = await listRes.json();
+          setSavedWorkflows(list || []);
+        }
+      } else {
+        setBackendStatus('offline');
+      }
+    } catch {
+      setBackendStatus('offline');
+    }
+  }, []);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     document.documentElement.classList.add('dark');
-    const extUrl = getFlowCanvasUrl();
-    setExternalCanvasUrl(extUrl);
-
     const savedKey = localStorage.getItem(`neuron_flow_api_key_${wfAiProvider}`) || localStorage.getItem('neuron_flow_ai_api_key') || '';
     setWfAiKey(savedKey);
-  }, [wfAiProvider]);
 
-  const showToast = (msg) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3500);
-  };
+    checkBackendAndFetchWorkflows();
+    const timer = setInterval(checkBackendAndFetchWorkflows, 12000);
+    return () => clearInterval(timer);
+  }, [wfAiProvider, checkBackendAndFetchWorkflows]);
+
+  // Keyboard Shortcuts (Delete node, Cancel connection with Esc)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (selectedNodeId) {
+          deleteNode(selectedNodeId);
+        }
+      } else if (e.key === 'Escape') {
+        setConnectingSourceId(null);
+        setSelectedNodeId(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedNodeId]);
 
   const handleSaveAiKey = () => {
     if (!wfAiKey.trim()) return;
@@ -144,18 +196,20 @@ export default function WorkflowsPage() {
     const tpl = DEFAULT_TEMPLATES[key];
     if (!tpl) return;
     setSelectedTemplateKey(key);
+    setWorkflowTitle(tpl.name);
     setNodes(JSON.parse(JSON.stringify(tpl.nodes)));
     setEdges(JSON.parse(JSON.stringify(tpl.edges)));
     setSelectedNodeId(null);
     setConnectingSourceId(null);
     setExecutionLogs([]);
     setExecutionStatus('idle');
+    setActiveWorkflowId(null);
     setPan({ x: 40, y: 40 });
     setZoom(1);
     showToast(`Loaded Template: ${tpl.name}`);
   };
 
-  // Node Dragging Handlers
+  // Node Dragging & Mouse Tracking
   const handleNodeMouseDown = (e, nodeId) => {
     e.stopPropagation();
     setSelectedNodeId(nodeId);
@@ -174,19 +228,26 @@ export default function WorkflowsPage() {
       setIsPanning(true);
       setStartPanMouse({ x: e.clientX - pan.x, y: e.clientY - pan.y });
       setSelectedNodeId(null);
-      setConnectingSourceId(null);
+      if (connectingSourceId) {
+        setConnectingSourceId(null);
+        showToast('Connection cancelled');
+      }
     }
   };
 
   const handleCanvasMouseMove = (e) => {
+    const canvasX = (e.clientX - pan.x) / zoom;
+    const canvasY = (e.clientY - pan.y) / zoom;
+    setMouseCanvasPos({ x: canvasX, y: canvasY });
+
     if (isPanning) {
       setPan({
         x: e.clientX - startPanMouse.x,
         y: e.clientY - startPanMouse.y,
       });
     } else if (draggingNodeId) {
-      const newX = Math.round(((e.clientX - pan.x) / zoom - dragOffset.x) / 10) * 10;
-      const newY = Math.round(((e.clientY - pan.y) / zoom - dragOffset.y) / 10) * 10;
+      const newX = Math.round((canvasX - dragOffset.x) / 10) * 10;
+      const newY = Math.round((canvasY - dragOffset.y) / 10) * 10;
       setNodes(prev => prev.map(n => n.id === draggingNodeId ? { ...n, x: newX, y: newY } : n));
     }
   };
@@ -196,24 +257,25 @@ export default function WorkflowsPage() {
     setDraggingNodeId(null);
   };
 
-  // Handle Edge Connecting
+  // Handle Edge Connecting Logic
   const handleHandleClick = (e, nodeId, handleType) => {
     e.stopPropagation();
     if (handleType === 'source') {
       setConnectingSourceId(nodeId);
-      showToast(`Source node selected. Click target handle to connect.`);
+      showToast(`Source node [${nodeId}] selected. Click any target handle to connect.`);
     } else if (handleType === 'target') {
       if (connectingSourceId && connectingSourceId !== nodeId) {
-        // Check if edge already exists
         const exists = edges.some(edge => edge.source === connectingSourceId && edge.target === nodeId);
         if (!exists) {
           const newEdge = {
-            id: `e-${connectingSourceId}-${nodeId}-${Date.now()}`,
+            id: `e-${connectingSourceId}-${nodeId}-${Date.now().toString().slice(-4)}`,
             source: connectingSourceId,
             target: nodeId,
           };
           setEdges(prev => [...prev, newEdge]);
           showToast(`Connected node ${connectingSourceId} ➔ ${nodeId}`);
+        } else {
+          showToast('Connection already exists between these nodes');
         }
         setConnectingSourceId(null);
       }
@@ -222,7 +284,7 @@ export default function WorkflowsPage() {
 
   const deleteEdge = (edgeId) => {
     setEdges(prev => prev.filter(e => e.id !== edgeId));
-    showToast('Removed connection line');
+    showToast('Removed connection edge');
   };
 
   const deleteNode = (nodeId) => {
@@ -232,6 +294,22 @@ export default function WorkflowsPage() {
     showToast('Deleted node');
   };
 
+  const duplicateNode = (nodeId) => {
+    const target = nodes.find(n => n.id === nodeId);
+    if (!target) return;
+    const newId = `node-${Date.now().toString().slice(-4)}`;
+    const clonedNode = {
+      ...JSON.parse(JSON.stringify(target)),
+      id: newId,
+      label: `${target.label} (Copy)`,
+      x: target.x + 40,
+      y: target.y + 40,
+    };
+    setNodes(prev => [...prev, clonedNode]);
+    setSelectedNodeId(newId);
+    showToast(`Duplicated node [${target.label}]`);
+  };
+
   const addNodeToCanvas = (type) => {
     const def = NODE_DEFINITIONS[type];
     const newId = `node-${Date.now().toString().slice(-4)}`;
@@ -239,8 +317,8 @@ export default function WorkflowsPage() {
       id: newId,
       type,
       label: def ? def.label : type,
-      x: Math.round((-pan.x + 300) / zoom / 10) * 10 + Math.floor(Math.random() * 40),
-      y: Math.round((-pan.y + 200) / zoom / 10) * 10 + Math.floor(Math.random() * 40),
+      x: Math.round((-pan.x + 320) / zoom / 10) * 10 + Math.floor(Math.random() * 30),
+      y: Math.round((-pan.y + 200) / zoom / 10) * 10 + Math.floor(Math.random() * 30),
       data: type === 'delay' ? { duration: 5 } : type === 'schedule_trigger' ? { interval: 30 } : type === 'openai' ? { model: 'gpt-4o', temperature: 0.7 } : {}
     };
     setNodes(prev => [...prev, newNode]);
@@ -248,7 +326,115 @@ export default function WorkflowsPage() {
     showToast(`Added ${def ? def.label : type} node`);
   };
 
-  // Run Workflow Simulation Engine
+  // Topological Auto-Layout Graph Organizer
+  const handleAutoLayout = () => {
+    if (nodes.length === 0) return;
+    const targetSet = new Set(edges.map(e => e.target));
+    const startNodes = nodes.filter(n => !targetSet.has(n.id) || n.type.includes('trigger'));
+
+    const levels = new Map();
+    const visited = new Set();
+    const queue = startNodes.map(n => ({ id: n.id, level: 0 }));
+
+    while (queue.length > 0) {
+      const { id, level } = queue.shift();
+      if (visited.has(id)) continue;
+      visited.add(id);
+      levels.set(id, Math.max(levels.get(id) || 0, level));
+
+      const outbound = edges.filter(e => e.source === id);
+      for (const e of outbound) {
+        queue.push({ id: e.target, level: level + 1 });
+      }
+    }
+
+    // Assign level 0 for any unvisited nodes
+    nodes.forEach(n => {
+      if (!levels.has(n.id)) levels.set(n.id, 0);
+    });
+
+    const levelGroups = new Map();
+    levels.forEach((lvl, id) => {
+      if (!levelGroups.has(lvl)) levelGroups.set(lvl, []);
+      levelGroups.get(lvl).push(id);
+    });
+
+    const newNodes = nodes.map(n => {
+      const lvl = levels.get(n.id) || 0;
+      const group = levelGroups.get(lvl) || [n.id];
+      const indexInGroup = group.indexOf(n.id);
+      return {
+        ...n,
+        x: 80 + lvl * 280,
+        y: 140 + indexInGroup * 150,
+      };
+    });
+
+    setNodes(newNodes);
+    setPan({ x: 40, y: 40 });
+    setZoom(1);
+    showToast('Auto-arranged graph layout');
+  };
+
+  // Backend Save & Sync Workflow
+  const handleSaveWorkflowToBackend = async () => {
+    setIsSaving(true);
+    try {
+      const payload = {
+        name: workflowTitle,
+        definition: { nodes, edges },
+        isActive: true,
+      };
+
+      let res;
+      if (activeWorkflowId) {
+        res = await fetch(`${BACKEND_BASE_URL}/api/workflows/${activeWorkflowId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      } else {
+        res = await fetch(`${BACKEND_BASE_URL}/api/workflows`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      }
+
+      if (res.ok) {
+        const saved = await res.json();
+        setActiveWorkflowId(saved.id);
+        showToast(`✓ Workflow saved to SQLite database (#${saved.id})`);
+        checkBackendAndFetchWorkflows();
+      } else {
+        showToast('⚠️ Could not save workflow to backend database');
+      }
+    } catch {
+      showToast('⚠️ Backend unavailable. Workflow preserved in client memory.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Load Workflow from Backend
+  const handleLoadBackendWorkflow = async (workflowId) => {
+    try {
+      const res = await fetch(`${BACKEND_BASE_URL}/api/workflows/${workflowId}`);
+      if (res.ok) {
+        const wf = await res.json();
+        setActiveWorkflowId(wf.id);
+        setWorkflowTitle(wf.name);
+        const def = typeof wf.definition === 'string' ? JSON.parse(wf.definition) : wf.definition;
+        setNodes(def.nodes || []);
+        setEdges(def.edges || []);
+        showToast(`Loaded backend workflow: ${wf.name}`);
+      }
+    } catch {
+      showToast('Failed to load workflow from server');
+    }
+  };
+
+  // Run Workflow Simulation & Real Engine Dispatch
   const runWorkflowSimulation = async () => {
     if (isRunning) return;
     setIsRunning(true);
@@ -268,14 +454,23 @@ export default function WorkflowsPage() {
       setExecutionLogs(prev => [...prev, item]);
     };
 
-    logEntry(null, `Initiating workflow execution graph (${nodes.length} nodes, ${edges.length} edges)...`, 'start');
+    logEntry(null, `Initiating execution graph traversal (${nodes.length} nodes, ${edges.length} connections)...`, 'start');
 
-    // Find root nodes (no incoming edges) or start triggers
+    // Also trigger backend execution if backend is online
+    if (backendStatus === 'online' && activeWorkflowId) {
+      try {
+        logEntry(null, `[Backend] Dispatching execution job to Express Engine (Port 4000)...`, 'info');
+        fetch(`${BACKEND_BASE_URL}/api/workflows/${activeWorkflowId}/execute`, { method: 'POST' }).catch(() => {});
+      } catch {
+        // Fallback silently to client execution
+      }
+    }
+
     const targetSet = new Set(edges.map(e => e.target));
     const startNodes = nodes.filter(n => !targetSet.has(n.id) || n.type.includes('trigger'));
 
     if (startNodes.length === 0) {
-      logEntry(null, 'Error: No entry trigger node found in workflow graph.', 'error');
+      logEntry(null, 'Error: No entry trigger node found in graph.', 'error');
       setIsRunning(false);
       setExecutionStatus('error');
       return;
@@ -296,7 +491,6 @@ export default function WorkflowsPage() {
 
       logEntry(currentNode, `Executing node [${currentNode.type.toUpperCase()}]...`, 'running');
 
-      // Simulate step execution delay
       let delayMs = 600;
       if (currentNode.type === 'delay') {
         delayMs = Math.min((currentNode.data?.duration || 2) * 400, 2000);
@@ -306,23 +500,23 @@ export default function WorkflowsPage() {
 
       await new Promise(res => setTimeout(res, delayMs));
 
-      // Generate output payload simulation
       let mockOutput = { status: 'success', timestamp: new Date().toISOString() };
       if (currentNode.type === 'crm_lead_trigger') {
         mockOutput = { leadId: 'lead_9042', name: 'Alex Rivera', company: 'Apex Global', email: 'alex@apex.io', score: 85 };
       } else if (currentNode.type === 'openai') {
-        mockOutput = { model: 'gpt-4o', intentScore: 92, summary: 'Enterprise automation buyer with urgent deployment timeline.', tokensUsed: 142 };
+        mockOutput = { model: currentNode.data?.model || 'gpt-4o', intentScore: 92, summary: 'Enterprise automation lead with active migration timeline.', tokensUsed: 142 };
+      } else if (currentNode.type === 'gemini') {
+        mockOutput = { model: 'gemini-2.0-flash', summary: 'Financial variance report generated. Margin increased by 14.2%.', tokensUsed: 98 };
       } else if (currentNode.type === 'ifelse') {
-        mockOutput = { branch: 'TRUE', evaluated: 'intentScore >= 75 (92 >= 75)', result: true };
+        mockOutput = { branch: 'TRUE', evaluated: `score >= ${currentNode.data?.threshold || 75}`, result: true };
       } else if (currentNode.type === 'whatsapp') {
-        mockOutput = { deliveryStatus: 'SENT', recipientPhone: currentNode.data?.phone || '+15550192834', messageId: 'wa_msg_8849' };
+        mockOutput = { deliveryStatus: 'SENT', recipientPhone: currentNode.data?.phone || '+1 555-019-2834', messageId: 'wa_msg_8849' };
       } else if (currentNode.type === 'simulated_email') {
-        mockOutput = { smtpStatus: 'DISPATCHED_250_OK', to: currentNode.data?.to || 'ops@neuronflow.ai', subject: currentNode.data?.subject };
+        mockOutput = { smtpStatus: 'DISPATCHED_250_OK', to: currentNode.data?.to || 'ops@neuronflow.ai', subject: currentNode.data?.subject || 'Workflow Alert' };
       }
 
-      logEntry(currentNode, `✓ Node completed successfully in ${delayMs}ms`, 'success', mockOutput);
+      logEntry(currentNode, `✓ Step finished successfully (${delayMs}ms)`, 'success', mockOutput);
 
-      // Find outbound connected nodes
       const outboundEdges = edges.filter(e => e.source === currentNode.id);
       for (const edge of outboundEdges) {
         const nextNode = nodes.find(n => n.id === edge.target);
@@ -336,7 +530,7 @@ export default function WorkflowsPage() {
     setIsRunning(false);
     setExecutionStatus('completed');
     setSimProgress(100);
-    logEntry(null, `🎉 Workflow pipeline finished cleanly. All ${totalExecuted} nodes executed.`, 'finish');
+    logEntry(null, `🎉 Execution pipeline completed. ${totalExecuted} nodes evaluated cleanly.`, 'finish');
   };
 
   const selectedNode = useMemo(() => {
@@ -365,7 +559,7 @@ export default function WorkflowsPage() {
 
   const exportWorkflowJson = () => {
     const data = {
-      name: DEFAULT_TEMPLATES[selectedTemplateKey]?.name || 'Custom Workflow',
+      name: workflowTitle,
       exportedAt: new Date().toISOString(),
       nodes,
       edges,
@@ -377,8 +571,17 @@ export default function WorkflowsPage() {
     a.download = `neuron-workflow-${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    showToast('Workflow configuration exported to JSON');
+    showToast('Exported workflow structure to JSON file');
   };
+
+  // Filtered palette definitions based on search & category
+  const filteredPaletteDefinitions = useMemo(() => {
+    return Object.entries(NODE_DEFINITIONS).filter(([type, def]) => {
+      const matchesCategory = selectedCategory === 'All' || def.category === selectedCategory;
+      const matchesSearch = !paletteSearch.trim() || def.label.toLowerCase().includes(paletteSearch.toLowerCase()) || type.toLowerCase().includes(paletteSearch.toLowerCase());
+      return matchesCategory && matchesSearch;
+    });
+  }, [paletteSearch, selectedCategory]);
 
   return (
     <>
@@ -414,6 +617,25 @@ export default function WorkflowsPage() {
 
               {/* Quick Actions & Auth */}
               <div className="flex items-center gap-2.5">
+                {/* Backend Engine Status Indicator */}
+                <div className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border ${
+                  backendStatus === 'online' 
+                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' 
+                    : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                }`}>
+                  <span className={`w-2 h-2 rounded-full ${backendStatus === 'online' ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`}></span>
+                  <span>{backendStatus === 'online' ? 'Engine Online' : 'Standalone'}</span>
+                </div>
+
+                <button
+                  onClick={handleSaveWorkflowToBackend}
+                  disabled={isSaving}
+                  className="bg-[#18181b] hover:bg-[#27272a] text-white border border-[#27272a] hover:border-[#ff4f00]/40 rounded-lg px-3 py-2 text-xs font-semibold transition cursor-pointer flex items-center gap-1.5"
+                >
+                  <span>{isSaving ? '⏳' : '💾'}</span>
+                  <span>{isSaving ? 'Saving...' : 'Save Flow'}</span>
+                </button>
+
                 <button
                   onClick={runWorkflowSimulation}
                   disabled={isRunning}
@@ -424,15 +646,7 @@ export default function WorkflowsPage() {
                   }`}
                 >
                   <span>{isRunning ? '⏳' : '▶️'}</span>
-                  <span>{isRunning ? 'Simulating...' : 'Run Flow'}</span>
-                </button>
-
-                <button
-                  onClick={exportWorkflowJson}
-                  className="hidden sm:flex items-center gap-1.5 bg-[#18181b] hover:bg-[#27272a] text-white border border-[#27272a] hover:border-[#ff4f00]/40 rounded-lg px-3 py-2 text-xs font-medium transition cursor-pointer"
-                >
-                  <span>💾</span>
-                  <span>Export JSON</span>
+                  <span>{isRunning ? 'Running...' : 'Run Flow'}</span>
                 </button>
 
                 {isLoaded && isSignedIn ? (
@@ -449,62 +663,103 @@ export default function WorkflowsPage() {
           </header>
         )}
 
-        {/* Studio Top Control Ribbon */}
+        {/* Studio Control Ribbon */}
         <div className="bg-[#121215] border-b border-[#27272a] px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs">
-          {/* Template Switcher */}
+          {/* Editable Workflow Title & Saved Selector */}
+          <div className="flex items-center gap-2.5">
+            <input
+              type="text"
+              value={workflowTitle}
+              onChange={(e) => setWorkflowTitle(e.target.value)}
+              className="bg-[#18181b] border border-[#27272a] focus:border-[#ff4f00] text-white text-xs font-bold rounded-lg px-3 py-1.5 w-60 sm:w-80 outline-none truncate"
+              placeholder="Workflow Title..."
+            />
+
+            {savedWorkflows.length > 0 && (
+              <select
+                onChange={(e) => e.target.value && handleLoadBackendWorkflow(e.target.value)}
+                defaultValue=""
+                className="bg-[#18181b] border border-[#27272a] text-white text-xs rounded-lg px-2.5 py-1.5 outline-none font-sans"
+              >
+                <option value="" disabled>📂 Saved Server Workflows ({savedWorkflows.length})</option>
+                {savedWorkflows.map(wf => (
+                  <option key={wf.id} value={wf.id}>#{wf.id}: {wf.name}</option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          {/* Template Switcher & Canvas Tools */}
           <div className="flex items-center gap-2">
-            <span className="text-[#a1a1aa] font-medium hidden sm:inline">Template:</span>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 bg-[#18181b] p-1 rounded-lg border border-[#27272a]">
               {Object.keys(DEFAULT_TEMPLATES).map((key) => (
                 <button
                   key={key}
                   onClick={() => loadTemplate(key)}
-                  className={`px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition cursor-pointer ${
                     selectedTemplateKey === key
-                      ? 'bg-[#ff4f00]/15 text-[#ff4f00] border border-[#ff4f00]/40 shadow-sm'
-                      : 'bg-[#18181b] text-[#a1a1aa] hover:text-white border border-[#27272a]'
+                      ? 'bg-[#ff4f00]/15 text-[#ff4f00] border border-[#ff4f00]/40'
+                      : 'text-[#a1a1aa] hover:text-white'
                   }`}
                 >
-                  {key === 'healthCheck' ? '⏱️ Health Alert' : key === 'aiLeadRouter' ? '👥 AI CRM Lead' : '📊 Excel AI'}
+                  {key === 'healthCheck' ? '⏱️ Health' : key === 'aiLeadRouter' ? '👥 CRM Lead' : '📊 Excel AI'}
                 </button>
               ))}
             </div>
-          </div>
 
-          {/* AI Key Bar */}
-          <div className="flex items-center gap-2 ml-auto">
-            <span className="text-xs text-[#a1a1aa] hidden md:inline">AI Key:</span>
-            <select
-              value={wfAiProvider}
-              onChange={(e) => setWfAiProvider(e.target.value)}
-              className="bg-[#18181b] border border-[#27272a] text-white text-[11px] rounded-md px-2 py-1 outline-none"
-            >
-              <option value="openai">OpenAI</option>
-              <option value="gemini">Gemini</option>
-              <option value="anthropic">Claude</option>
-            </select>
-            <input
-              type="password"
-              value={wfAiKey}
-              onChange={(e) => setWfAiKey(e.target.value)}
-              placeholder="API Key..."
-              className="bg-[#18181b] border border-[#27272a] text-white text-[11px] rounded-md px-2.5 py-1 w-28 sm:w-36 outline-none font-mono"
-            />
             <button
-              onClick={handleSaveAiKey}
-              className="bg-[#27272a] hover:bg-[#ff4f00] text-white text-[11px] font-bold px-2.5 py-1 rounded-md transition cursor-pointer"
+              onClick={handleAutoLayout}
+              className="px-2.5 py-1 rounded-lg bg-[#18181b] hover:bg-[#27272a] border border-[#27272a] text-xs text-[#a1a1aa] hover:text-white transition cursor-pointer"
+              title="Topological Graph Auto-Layout"
             >
-              Save
+              📐 Auto Layout
             </button>
-            {wfKeySaved && <span className="text-emerald-400 font-bold">✓</span>}
           </div>
 
-          {/* View Toggle */}
-          <div className="flex items-center gap-1.5 border-l border-[#27272a] pl-3">
+          {/* AI Key Config & View Mode */}
+          <div className="flex items-center gap-2 ml-auto">
+            <select
+              value={bgPattern}
+              onChange={(e) => setBgPattern(e.target.value)}
+              className="bg-[#18181b] border border-[#27272a] text-[#a1a1aa] text-[11px] rounded-md px-2 py-1 outline-none"
+              title="Canvas Grid Pattern"
+            >
+              <option value="dots">Pattern: Dots</option>
+              <option value="grid">Pattern: Grid</option>
+              <option value="minimal">Pattern: Dark Minimal</option>
+            </select>
+
+            <div className="hidden sm:flex items-center gap-1.5 bg-[#18181b] border border-[#27272a] rounded-lg px-2 py-0.5">
+              <span className="text-[10px] text-[#a1a1aa]">AI Key:</span>
+              <select
+                value={wfAiProvider}
+                onChange={(e) => setWfAiProvider(e.target.value)}
+                className="bg-transparent text-white text-[11px] outline-none"
+              >
+                <option value="openai">OpenAI</option>
+                <option value="gemini">Gemini</option>
+                <option value="anthropic">Claude</option>
+              </select>
+              <input
+                type="password"
+                value={wfAiKey}
+                onChange={(e) => setWfAiKey(e.target.value)}
+                placeholder="Key..."
+                className="bg-transparent text-white text-[11px] w-20 outline-none font-mono"
+              />
+              <button
+                onClick={handleSaveAiKey}
+                className="text-[#ff4f00] hover:text-white font-bold text-[10px]"
+              >
+                Save
+              </button>
+              {wfKeySaved && <span className="text-emerald-400 font-bold text-[10px]">✓</span>}
+            </div>
+
             <button
               onClick={() => setIsFullscreen(!isFullscreen)}
               className="p-1.5 bg-[#18181b] hover:bg-[#27272a] border border-[#27272a] rounded-md text-white transition cursor-pointer"
-              title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen Canvas'}
+              title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen Mode'}
             >
               {isFullscreen ? '🗗' : '⛶'}
             </button>
@@ -514,7 +769,7 @@ export default function WorkflowsPage() {
         {/* Main Workflow Studio Workspace */}
         <div className="flex-1 flex flex-col lg:flex-row relative overflow-hidden">
           {/* Left Node Palette Sidebar */}
-          <aside className="w-full lg:w-64 bg-[#121215] border-r border-[#27272a] p-4 flex flex-col gap-4 shrink-0 overflow-y-auto max-h-[220px] lg:max-h-none">
+          <aside className="w-full lg:w-72 bg-[#121215] border-r border-[#27272a] p-3.5 flex flex-col gap-3 shrink-0 overflow-y-auto max-h-[240px] lg:max-h-none">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-[#a1a1aa]">Node Palette</span>
               <span className="text-[10px] bg-[#18181b] text-[#ff4f00] px-2 py-0.5 rounded-full border border-[#27272a] font-mono">
@@ -522,12 +777,35 @@ export default function WorkflowsPage() {
               </span>
             </div>
 
-            <p className="text-[11px] text-[#71717a] leading-tight">
-              Click any node to spawn it onto the interactive diagram canvas.
-            </p>
+            {/* Search Input */}
+            <input
+              type="text"
+              value={paletteSearch}
+              onChange={(e) => setPaletteSearch(e.target.value)}
+              placeholder="Search palette nodes..."
+              className="w-full bg-[#18181b] border border-[#27272a] focus:border-[#ff4f00] text-white text-xs rounded-lg px-3 py-1.5 outline-none font-sans"
+            />
 
-            <div className="flex flex-col gap-2">
-              {Object.entries(NODE_DEFINITIONS).map(([type, def]) => (
+            {/* Category Filter Pills */}
+            <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-none">
+              {['All', 'Trigger', 'Logic', 'AI Core', 'Action', 'Data'].map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-2 py-0.5 rounded text-[10px] font-semibold shrink-0 cursor-pointer transition ${
+                    selectedCategory === cat
+                      ? 'bg-[#ff4f00] text-white'
+                      : 'bg-[#18181b] text-[#a1a1aa] hover:text-white'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+
+            {/* Nodes List */}
+            <div className="flex flex-col gap-2 overflow-y-auto">
+              {filteredPaletteDefinitions.map(([type, def]) => (
                 <button
                   key={type}
                   onClick={() => addNodeToCanvas(type)}
@@ -558,12 +836,16 @@ export default function WorkflowsPage() {
             onMouseUp={handleCanvasMouseUp}
             className="flex-1 relative bg-[#09090b] overflow-hidden select-none cursor-grab active:cursor-grabbing min-h-[480px] lg:min-h-[640px]"
             style={{
-              backgroundImage: `radial-gradient(circle, rgba(255, 79, 0, 0.08) 1.5px, transparent 1.5px)`,
-              backgroundSize: '24px 24px',
+              backgroundImage: bgPattern === 'dots'
+                ? `radial-gradient(circle, rgba(255, 79, 0, 0.08) 1.5px, transparent 1.5px)`
+                : bgPattern === 'grid'
+                ? `linear-gradient(to right, rgba(255, 79, 0, 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 79, 0, 0.05) 1px, transparent 1px)`
+                : 'none',
+              backgroundSize: bgPattern === 'dots' ? '24px 24px' : '30px 30px',
               backgroundPosition: `${pan.x}px ${pan.y}px`,
             }}
           >
-            {/* Canvas Action Bar */}
+            {/* Canvas Controls Overlay */}
             <div className="absolute top-4 left-4 z-20 flex items-center gap-2 bg-[#141417]/90 backdrop-blur-md p-1.5 rounded-xl border border-[#27272a] shadow-lg">
               <button
                 onClick={() => setZoom(z => Math.min(z + 0.15, 2.0))}
@@ -590,17 +872,17 @@ export default function WorkflowsPage() {
               </button>
             </div>
 
-            {/* Canvas State Indicator Badge */}
+            {/* Canvas Action Status Badge */}
             <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
               {connectingSourceId && (
-                <div className="px-3 py-1.5 rounded-full bg-[#ff4f00]/20 text-[#ff4f00] border border-[#ff4f00]/40 text-xs font-semibold animate-pulse flex items-center gap-1.5 shadow-lg">
-                  <span>⚡</span> Select target node input handle...
-                  <button onClick={() => setConnectingSourceId(null)} className="ml-1.5 hover:text-white">✕</button>
+                <div className="px-3.5 py-1.5 rounded-full bg-[#ff4f00]/20 text-[#ff4f00] border border-[#ff4f00]/40 text-xs font-semibold animate-pulse flex items-center gap-2 shadow-lg">
+                  <span>⚡</span> Click target input handle to draw connection...
+                  <button onClick={() => setConnectingSourceId(null)} className="ml-1 hover:text-white font-bold">✕</button>
                 </div>
               )}
 
               {isRunning && (
-                <div className="px-3 py-1.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-semibold animate-pulse flex items-center gap-2 shadow-lg">
+                <div className="px-3.5 py-1.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-semibold animate-pulse flex items-center gap-2 shadow-lg">
                   <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
                   Executing Workflow: {simProgress}%
                 </div>
@@ -620,12 +902,9 @@ export default function WorkflowsPage() {
                   <stop offset="0%" stopColor="#ff4f00" />
                   <stop offset="100%" stopColor="#ff7836" />
                 </linearGradient>
-                <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-                  <feGaussianBlur stdDeviation="3" result="glow" />
-                  <feComposite in="SourceGraphic" in2="glow" operator="over" />
-                </filter>
               </defs>
 
+              {/* Permanent Graph Edges */}
               {edges.map((edge) => {
                 const srcNode = nodes.find(n => n.id === edge.source);
                 const tgtNode = nodes.find(n => n.id === edge.target);
@@ -645,17 +924,16 @@ export default function WorkflowsPage() {
 
                 return (
                   <g key={edge.id} className="pointer-events-auto group">
-                    {/* Shadow / Glow path */}
                     <path
                       d={pathData}
                       fill="none"
-                      stroke={isActive ? '#ff4f00' : 'rgba(255, 79, 0, 0.25)'}
+                      stroke={isActive ? '#ff4f00' : 'rgba(255, 79, 0, 0.45)'}
                       strokeWidth={isActive ? 4 : 2}
                       strokeDasharray={isActive ? '6 4' : 'none'}
                       className={isActive ? 'animate-pulse' : ''}
                     />
 
-                    {/* Edge Label / Delete Trigger */}
+                    {/* Edge Hover Delete Button */}
                     <g
                       transform={`translate(${midX}, ${midY})`}
                       className="cursor-pointer"
@@ -699,9 +977,31 @@ export default function WorkflowsPage() {
                   </g>
                 );
               })}
+
+              {/* Dynamic Interactive Mouse Connection Line while drawing */}
+              {connectingSourceId && (() => {
+                const srcNode = nodes.find(n => n.id === connectingSourceId);
+                if (!srcNode) return null;
+                const sx = srcNode.x + 220;
+                const sy = srcNode.y + 40;
+                const tx = mouseCanvasPos.x;
+                const ty = mouseCanvasPos.y;
+                const dx = Math.abs(tx - sx) * 0.5;
+                const pathData = `M ${sx} ${sy} C ${sx + dx} ${sy}, ${tx - dx} ${ty}, ${tx} ${ty}`;
+                return (
+                  <path
+                    d={pathData}
+                    fill="none"
+                    stroke="#06b6d4"
+                    strokeWidth="2.5"
+                    strokeDasharray="5 5"
+                    className="animate-pulse"
+                  />
+                );
+              })()}
             </svg>
 
-            {/* Draggable Node Components Container */}
+            {/* Draggable Node Cards Container */}
             <div
               className="absolute inset-0"
               style={{
@@ -724,7 +1024,7 @@ export default function WorkflowsPage() {
                       top: `${node.y}px`,
                       width: '220px',
                     }}
-                    className={`absolute rounded-2xl bg-[#141417] border-2 transition-shadow duration-200 shadow-xl cursor-move z-20 ${
+                    className={`absolute rounded-2xl bg-[#141417] border-2 transition-all duration-150 shadow-xl cursor-move z-20 ${
                       isActive
                         ? 'border-[#ff4f00] shadow-[0_0_24px_rgba(255,79,0,0.5)] ring-2 ring-[#ff4f00]/50 scale-105'
                         : isSelected
@@ -738,7 +1038,7 @@ export default function WorkflowsPage() {
                     {node.type !== 'start_trigger' && (
                       <div
                         onClick={(e) => handleHandleClick(e, node.id, 'target')}
-                        className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-[#18181b] border-2 border-[#ff4f00] hover:bg-[#ff4f00] hover:scale-125 transition-all flex items-center justify-center cursor-pointer shadow-md z-30"
+                        className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-[#18181b] border-2 border-cyan-400 hover:bg-cyan-400 hover:scale-125 transition-all flex items-center justify-center cursor-pointer shadow-md z-30"
                         title="Input Handle (Click to connect target)"
                       >
                         <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
@@ -750,13 +1050,13 @@ export default function WorkflowsPage() {
                       <div
                         onClick={(e) => handleHandleClick(e, node.id, 'source')}
                         className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-[#ff4f00] border-2 border-[#fffefb] hover:scale-125 transition-all flex items-center justify-center cursor-pointer shadow-md z-30"
-                        title="Output Handle (Click to draw connection)"
+                        title="Output Handle (Click to draw connection line)"
                       >
                         <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
                       </div>
                     )}
 
-                    {/* Node Header */}
+                    {/* Node Card Header */}
                     <div className="p-3.5 flex items-center justify-between border-b border-[#27272a]/60">
                       <div className="flex items-center gap-2.5">
                         <div className={`w-8 h-8 rounded-lg ${def.bg} border ${def.border} flex items-center justify-center text-sm shadow-inner`}>
@@ -772,16 +1072,25 @@ export default function WorkflowsPage() {
                         </div>
                       </div>
 
-                      <button
-                        onClick={(e) => { e.stopPropagation(); deleteNode(node.id); }}
-                        className="text-[#71717a] hover:text-red-400 text-xs px-1.5 py-0.5 rounded hover:bg-[#18181b] transition"
-                        title="Delete node"
-                      >
-                        ✕
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); duplicateNode(node.id); }}
+                          className="text-[#71717a] hover:text-white text-xs px-1 py-0.5 rounded hover:bg-[#18181b] transition"
+                          title="Duplicate node"
+                        >
+                          📋
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); deleteNode(node.id); }}
+                          className="text-[#71717a] hover:text-red-400 text-xs px-1 py-0.5 rounded hover:bg-[#18181b] transition"
+                          title="Delete node"
+                        >
+                          ✕
+                        </button>
+                      </div>
                     </div>
 
-                    {/* Node Body Information Preview */}
+                    {/* Node Body Data Preview */}
                     <div className="p-3 text-[11px] text-[#a1a1aa] flex flex-col gap-1.5 bg-[#0d0d0f]/50 rounded-b-2xl">
                       {node.type === 'schedule_trigger' && (
                         <div className="flex justify-between items-center">
@@ -815,7 +1124,7 @@ export default function WorkflowsPage() {
                       )}
                       {node.type === 'whatsapp' && (
                         <div className="truncate">
-                          <span className="text-[10px] text-[#71717a] block">Target Phone:</span>
+                          <span className="text-[10px] text-[#71717a] block">Phone:</span>
                           <span className="font-mono text-green-400 text-[10px]">{node.data?.phone || '+1 555-019-2834'}</span>
                         </div>
                       )}
@@ -826,7 +1135,7 @@ export default function WorkflowsPage() {
                         </div>
                       )}
 
-                      {/* Node Status Indicator */}
+                      {/* Execution Status Footer */}
                       <div className="mt-1 pt-1.5 border-t border-[#27272a] flex items-center justify-between text-[10px]">
                         <span className="text-[#71717a]">Status:</span>
                         <span className={`font-semibold ${isActive ? 'text-[#ff4f00] animate-pulse' : 'text-[#a1a1aa]'}`}>
@@ -856,7 +1165,7 @@ export default function WorkflowsPage() {
                   </span>
                 </div>
 
-                {/* Node Label Editor */}
+                {/* Node Title Label Editor */}
                 <div>
                   <label className="text-[11px] text-[#a1a1aa] font-semibold block mb-1">Node Title Label</label>
                   <input
@@ -867,7 +1176,7 @@ export default function WorkflowsPage() {
                   />
                 </div>
 
-                {/* Type-Specific Property Controls */}
+                {/* Type-Specific Node Controls */}
                 {selectedNode.type === 'schedule_trigger' && (
                   <div>
                     <div className="flex justify-between text-[11px] mb-1">
@@ -922,7 +1231,7 @@ export default function WorkflowsPage() {
                 {selectedNode.type === 'openai' && (
                   <div className="flex flex-col gap-3">
                     <div>
-                      <label className="text-[11px] text-[#a1a1aa] font-semibold block mb-1">Model Selection</label>
+                      <label className="text-[11px] text-[#a1a1aa] font-semibold block mb-1">Model Engine</label>
                       <select
                         value={selectedNode.data?.model || 'gpt-4o'}
                         onChange={(e) => updateSelectedNodeData('model', e.target.value)}
@@ -979,12 +1288,28 @@ export default function WorkflowsPage() {
                     </div>
                   </div>
                 )}
+
+                {/* Node Quick Actions */}
+                <div className="flex items-center gap-2 pt-2 border-t border-[#27272a]">
+                  <button
+                    onClick={() => duplicateNode(selectedNode.id)}
+                    className="flex-1 bg-[#18181b] hover:bg-[#27272a] border border-[#27272a] text-white text-xs font-semibold py-1.5 rounded-lg transition"
+                  >
+                    📋 Duplicate
+                  </button>
+                  <button
+                    onClick={() => deleteNode(selectedNode.id)}
+                    className="flex-1 bg-red-950/30 hover:bg-red-900/50 border border-red-500/30 text-red-400 text-xs font-semibold py-1.5 rounded-lg transition"
+                  >
+                    🗑️ Delete Node
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center p-6 text-center text-[#71717a] border border-dashed border-[#27272a] rounded-xl my-auto">
                 <span className="text-2xl mb-2">🖱️</span>
                 <p className="text-xs font-semibold text-[#a1a1aa]">No Node Selected</p>
-                <p className="text-[11px] mt-1">Click any node on canvas to customize its parameters and properties.</p>
+                <p className="text-[11px] mt-1">Click any node on canvas to customize parameters & connection properties.</p>
               </div>
             )}
 
@@ -1040,7 +1365,7 @@ export default function WorkflowsPage() {
           </aside>
         </div>
 
-        {/* Toast Floating Notification */}
+        {/* Floating Toast Notification */}
         {toastMessage && (
           <div className="fixed bottom-6 right-6 z-50 bg-[#18181b] border border-[#ff4f00] text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 animate-bounce">
             <span className="text-[#ff4f00]">⚡</span>
