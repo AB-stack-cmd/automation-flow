@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import Navbar from '../components/Navbar';
 import Head from 'next/head';
 import Link from 'next/link';
 import { UserButton, useUser } from '@clerk/nextjs';
@@ -261,27 +262,19 @@ export default function FileVault() {
         )}
 
         {/* Top Navbar */}
-        <header className="sticky top-0 z-40 bg-[#09090b]/90 backdrop-blur-md border-b border-[#27272a] px-6 py-4">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Link href="/" className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-[#ff4f00] flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-[#ff4f00]/20">
-                  ⚡
-                </div>
-                <span className="font-display text-xl font-bold tracking-tight text-white">NEURON_FLOW</span>
-              </Link>
-              <span className="text-[#27272a] text-xl font-light">/</span>
-              <span className="text-gray-300 font-semibold tracking-wide flex items-center gap-2">
-                📂 Neuron Vault
+        <header className="sticky top-0 z-50 bg-[#09090b]/95 backdrop-blur-md border-b border-[#27272a] px-3 sm:px-6 lg:px-8 py-3.5 transition-colors w-full">
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4 w-full">
+            <Link href="/" className="flex items-center gap-2.5 cursor-pointer shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-[#ff4f00] flex items-center justify-center text-white font-bold text-lg shadow-md shadow-[#ff4f00]/30">
+                ⚡
+              </div>
+              <span className="font-display text-lg sm:text-xl font-bold tracking-tight text-white">NEURON_FLOW</span>
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#ff4f00]/10 text-[#ff4f00] border border-[#ff4f00]/20 hidden sm:inline-block">
+                File Vault 📂
               </span>
-            </div>
+            </Link>
 
-            <nav className="hidden md:flex items-center gap-1.5 text-sm font-medium bg-[#121215]/90 p-1.5 rounded-xl border border-[#ff4f00]/30 shadow-[0_0_20px_rgba(255,79,0,0.08)] backdrop-blur-md transition-all duration-300">
-              <Link href="/" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#ff4f00]/10 hover:border-[#ff4f00]/30 border border-transparent transition-all duration-200">Dashboard</Link>
-              <Link href="/workflows" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#ff4f00]/10 hover:border-[#ff4f00]/30 border border-transparent transition-all duration-200">Visual Flow Designer</Link>
-              <Link href="/excel" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium text-[#a1a1aa] hover:text-white hover:bg-[#ff4f00]/10 hover:border-[#ff4f00]/30 border border-transparent transition-all duration-200">Excel AI</Link>
-              <Link href="/files" className="px-3 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-[#ff4f00] bg-[#ff4f00]/15 border border-[#ff4f00]/40 shadow-sm shadow-[#ff4f00]/20 transition-all duration-200">File Vault 📂</Link>
-            </nav>
+            <Navbar activePage="files" />
 
             <div className="flex items-center gap-3 shrink-0">
               <UserButton />
