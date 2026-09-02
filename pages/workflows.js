@@ -631,21 +631,18 @@ export default function WorkflowsPage() {
                   type="button"
                   onClick={() => setLiveEngineOn(!liveEngineOn)}
                   title="Live Engine Active - Click to toggle engine status"
-                  className={`flex items-center gap-2 px-3 py-1 rounded-full border transition-all shrink-0 cursor-pointer shadow-sm ${
-                    liveEngineOn
+                  className={`flex items-center gap-2 px-3 py-1 rounded-full border transition-all shrink-0 cursor-pointer shadow-sm ${liveEngineOn
                       ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
                       : 'bg-amber-500/10 border-amber-500/30 text-amber-400 hover:bg-amber-500/20'
-                  }`}
+                    }`}
                 >
                   <span className="text-[11px] font-bold uppercase tracking-widest whitespace-nowrap">
                     {liveEngineOn ? 'Live Engine ON' : 'Engine PAUSED'}
                   </span>
-                  <div className={`w-8 h-4 rounded-full relative flex items-center px-0.5 border transition-colors ${
-                    liveEngineOn ? 'bg-emerald-500/20 border-emerald-500/40 justify-end' : 'bg-amber-500/20 border-amber-500/40 justify-start'
-                  }`}>
-                    <div className={`w-3 h-3 rounded-full transition-all ${
-                      liveEngineOn ? 'bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-amber-400'
-                    }`}></div>
+                  <div className={`w-8 h-4 rounded-full relative flex items-center px-0.5 border transition-colors ${liveEngineOn ? 'bg-emerald-500/20 border-emerald-500/40 justify-end' : 'bg-amber-500/20 border-amber-500/40 justify-start'
+                    }`}>
+                    <div className={`w-3 h-3 rounded-full transition-all ${liveEngineOn ? 'bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-amber-400'
+                      }`}></div>
                   </div>
                 </button>
                 <div className="h-4 w-px bg-outline-variant/30 mx-1 shrink-0"></div>
@@ -726,13 +723,12 @@ export default function WorkflowsPage() {
                             key={item.type}
                             type="button"
                             onClick={() => addNodeToCanvas(item.type)}
-                            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md border text-xs font-bold text-left transition-all cursor-pointer ${
-                              item.isGreen
+                            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md border text-xs font-bold text-left transition-all cursor-pointer ${item.isGreen
                                 ? 'border-[#25D366]/50 bg-[#fffefb] hover:border-[#25D366] text-[#201515]'
                                 : item.isRose
-                                ? 'border-rose-300 bg-[#fffefb] hover:border-rose-600 text-rose-700'
-                                : 'border-[#c5c0b1] bg-[#fffefb] hover:border-[#ff4f00] text-[#201515]'
-                            }`}
+                                  ? 'border-rose-300 bg-[#fffefb] hover:border-rose-600 text-rose-700'
+                                  : 'border-[#c5c0b1] bg-[#fffefb] hover:border-[#ff4f00] text-[#201515]'
+                              }`}
                           >
                             <span>{item.icon}</span>
                             <span>{item.label}</span>
@@ -752,7 +748,7 @@ export default function WorkflowsPage() {
                 className="flex-1 h-full bg-[#fffefb] relative dot-grid overflow-hidden select-none"
               >
                 <div className="react-flow" data-testid="rf__wrapper" style={{ width: '100%', height: '100%', overflow: 'hidden', position: 'relative', zIndex: 0 }}>
-                  <div className="react-flow__renderer" style={{ position: 'absolute', width: '100%', height: '100%', top: 0, left: 0 }}>
+                  <div className="react-flow__renderer" style={{ position: 'static', width: '100%', height: '100%', top: 0, left: 0 }}>
                     <div className="react-flow__pane" style={{ position: 'absolute', width: '100%', height: '100%', top: 0, left: 0 }}>
                       <div className="react-flow__viewport react-flow__container" style={{ transform: 'translate(0px, 0px) scale(1)' }}>
                         {/* SVG Connection Edges Layer */}
@@ -873,9 +869,8 @@ export default function WorkflowsPage() {
                                   style={{ zIndex: isSelected ? 1000 : 0, transform: `translate(${node.x}px, ${node.y}px)`, pointerEvents: 'all' }}
                                 >
                                   <div className="relative group flex flex-col items-center cursor-grab active:cursor-grabbing">
-                                    <div className={`w-14 h-14 rounded-full bg-[#f8f4f0] dark:bg-[#18181b] border-2 flex items-center justify-center relative transition-all duration-200 ${
-                                      isSelected ? 'border-[#ff4f00] ring-2 ring-[#ff4f00]/40' : 'border-[#201515] dark:border-[#3f3f46] hover:border-[#ff4f00]'
-                                    } shadow-sm`}>
+                                    <div className={`w-14 h-14 rounded-full bg-[#f8f4f0] dark:bg-[#18181b] border-2 flex items-center justify-center relative transition-all duration-200 ${isSelected ? 'border-[#ff4f00] ring-2 ring-[#ff4f00]/40' : 'border-[#201515] dark:border-[#3f3f46] hover:border-[#ff4f00]'
+                                      } shadow-sm`}>
                                       <span className="text-[#ff4f00] font-bold text-xl">⏰</span>
                                       <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#ff4f00] border-2 border-[#fffefb] flex items-center justify-center shadow-sm">
                                         <svg className="w-2.5 h-2.5 text-[#fffefb] ml-0.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
@@ -906,13 +901,12 @@ export default function WorkflowsPage() {
                                 className={`react-flow__node nopan selectable absolute ${isSelected ? 'selected' : ''}`}
                                 style={{ zIndex: isSelected ? 1000 : 0, transform: `translate(${node.x}px, ${node.y}px)`, pointerEvents: 'all' }}
                               >
-                                <div className={`node-card w-56 p-4 rounded-md relative group cursor-pointer text-[#201515] dark:text-[#f4f4f5] text-left transition-all duration-200 shadow-sm ${
-                                  isSelected
+                                <div className={`node-card w-56 p-4 rounded-md relative group cursor-pointer text-[#201515] dark:text-[#f4f4f5] text-left transition-all duration-200 shadow-sm ${isSelected
                                     ? 'bg-[#f8f4f0] dark:bg-[#1f1f23] border-2 border-[#ff4f00] shadow-[0_4px_16px_rgba(255,79,0,0.2)] scale-[1.02]'
                                     : isActive
-                                    ? 'bg-[#f8f4f0] dark:bg-[#1f1f23] border-2 border-emerald-500 shadow-[0_4px_16px_rgba(16,185,129,0.3)] animate-pulse'
-                                    : 'bg-[#f8f4f0] dark:bg-[#18181b] border border-[#c5c0b1] dark:border-[#27272a] hover:border-[#201515] dark:hover:border-[#ff4f00] hover:shadow-md'
-                                }`}>
+                                      ? 'bg-[#f8f4f0] dark:bg-[#1f1f23] border-2 border-emerald-500 shadow-[0_4px_16px_rgba(16,185,129,0.3)] animate-pulse'
+                                      : 'bg-[#f8f4f0] dark:bg-[#18181b] border border-[#c5c0b1] dark:border-[#27272a] hover:border-[#201515] dark:hover:border-[#ff4f00] hover:shadow-md'
+                                  }`}>
                                   {/* Performance Badge */}
                                   {node.type !== 'slack' && node.type !== 'end' && (
                                     <div className="absolute top-2 right-2 flex items-center gap-1 text-[9px] font-mono font-bold bg-[#ff4f00]/10 border border-[#ff4f00]/30 text-[#ff4f00] dark:text-orange-400 px-1.5 py-0.5 rounded-full shadow-2xs">
@@ -990,11 +984,10 @@ export default function WorkflowsPage() {
                     type="button"
                     onClick={runWorkflow}
                     disabled={isRunning}
-                    className={`px-8 py-3 rounded-md font-bold text-xs tracking-wider uppercase shadow-xl transition-all flex items-center gap-2 cursor-pointer ${
-                      isRunning
+                    className={`px-8 py-3 rounded-md font-bold text-xs tracking-wider uppercase shadow-xl transition-all flex items-center gap-2 cursor-pointer ${isRunning
                         ? 'bg-amber-500 text-white animate-pulse'
                         : 'bg-[#ff4f00] text-[#fffefb] hover:opacity-90 active:scale-98'
-                    }`}
+                      }`}
                   >
                     <span>⚡</span>
                     <span>{isRunning ? 'Running Engine...' : 'Run Workflow'}</span>
