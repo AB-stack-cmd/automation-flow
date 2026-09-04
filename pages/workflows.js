@@ -440,7 +440,8 @@ export default function WorkflowsPage() {
               background: #facc15;
           }
           .dot-grid {
-            background-image: radial-gradient(#262626 1px, transparent 1px);
+            background-color: #0c0c0e;
+            background-image: radial-gradient(rgba(255, 255, 255, 0.22) 1.5px, transparent 1.5px);
             background-size: 24px 24px;
           }
           .glass-panel {
@@ -724,10 +725,10 @@ export default function WorkflowsPage() {
                             type="button"
                             onClick={() => addNodeToCanvas(item.type)}
                             className={`w-full flex items-center gap-2 px-3 py-2 rounded-md border text-xs font-bold text-left transition-all cursor-pointer ${item.isGreen
-                                ? 'border-[#25D366]/50 bg-[#fffefb] hover:border-[#25D366] text-[#201515]'
+                                ? 'border-[#25D366]/40 bg-[#18181b] hover:border-[#25D366] text-[#25D366]'
                                 : item.isRose
-                                  ? 'border-rose-300 bg-[#fffefb] hover:border-rose-600 text-rose-700'
-                                  : 'border-[#c5c0b1] bg-[#fffefb] hover:border-[#ff4f00] text-[#201515]'
+                                  ? 'border-rose-500/40 bg-[#18181b] hover:border-rose-500 text-rose-400'
+                                  : 'border-[#27272a] bg-[#18181b] hover:border-[#ff4f00] text-[#f4f4f5]'
                               }`}
                           >
                             <span>{item.icon}</span>
@@ -745,7 +746,7 @@ export default function WorkflowsPage() {
                 ref={canvasRef}
                 onMouseMove={handleCanvasMouseMove}
                 onMouseUp={handleCanvasMouseUp}
-                className="flex-1 h-full bg-[#fffefb] relative dot-grid overflow-hidden select-none"
+                className="flex-1 h-full bg-[#0c0c0e] relative dot-grid overflow-hidden select-none"
               >
                 <div className="react-flow" data-testid="rf__wrapper" style={{ width: '100%', height: '100%', overflow: 'hidden', position: 'relative', zIndex: 0 }}>
                   <div className="react-flow__renderer" style={{ position: 'static', width: '100%', height: '100%', top: 0, left: 0 }}>
@@ -777,9 +778,10 @@ export default function WorkflowsPage() {
                                     fill="none"
                                     className="react-flow__edge-path"
                                     style={{
-                                      strokeWidth: isEdgeActive ? 4 : 2,
-                                      stroke: 'rgb(250, 204, 21)',
-                                      strokeDasharray: isEdgeActive ? '6 4' : 'none'
+                                      strokeWidth: isEdgeActive ? 4 : 2.5,
+                                      stroke: isEdgeActive ? '#ff4f00' : '#ff7a33',
+                                      strokeDasharray: isEdgeActive ? '6 4' : 'none',
+                                      filter: 'drop-shadow(0 0 6px rgba(255, 122, 51, 0.45))'
                                     }}
                                   />
                                   <path
@@ -810,6 +812,7 @@ export default function WorkflowsPage() {
                                   stroke="#ff4f00"
                                   strokeWidth="2.5"
                                   strokeDasharray="4 4"
+                                  style={{ filter: 'drop-shadow(0 0 6px rgba(255, 79, 0, 0.6))' }}
                                 />
                               );
                             })()}
@@ -843,7 +846,7 @@ export default function WorkflowsPage() {
                                 <button
                                   type="button"
                                   onClick={() => insertNodeBetweenEdge(edge.id)}
-                                  className="group flex items-center justify-center w-6 h-6 rounded-full bg-[#ff4f00] border-2 border-[#fffefb] text-[#fffefb] hover:scale-110 transition-all duration-150 cursor-pointer shadow-md"
+                                  className="group flex items-center justify-center w-6 h-6 rounded-full bg-[#ff4f00] border-2 border-[#18181b] text-white hover:scale-110 transition-all duration-150 cursor-pointer shadow-lg shadow-[#ff4f00]/40"
                                   title="Insert OpenAI node here"
                                 >
                                   <span className="text-xs font-bold transition-transform duration-200 group-hover:rotate-90">+</span>
@@ -869,23 +872,23 @@ export default function WorkflowsPage() {
                                   style={{ zIndex: isSelected ? 1000 : 0, transform: `translate(${node.x}px, ${node.y}px)`, pointerEvents: 'all' }}
                                 >
                                   <div className="relative group flex flex-col items-center cursor-grab active:cursor-grabbing">
-                                    <div className={`w-14 h-14 rounded-full bg-[#f8f4f0] dark:bg-[#18181b] border-2 flex items-center justify-center relative transition-all duration-200 ${isSelected ? 'border-[#ff4f00] ring-2 ring-[#ff4f00]/40' : 'border-[#201515] dark:border-[#3f3f46] hover:border-[#ff4f00]'
-                                      } shadow-sm`}>
+                                    <div className={`w-14 h-14 rounded-full bg-[#18181b] border-2 flex items-center justify-center relative transition-all duration-200 ${isSelected ? 'border-[#ff4f00] ring-2 ring-[#ff4f00]/40 shadow-lg shadow-[#ff4f00]/20' : 'border-[#3f3f46] hover:border-[#ff4f00]'
+                                      } shadow-md`}>
                                       <span className="text-[#ff4f00] font-bold text-xl">⏰</span>
-                                      <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#ff4f00] border-2 border-[#fffefb] flex items-center justify-center shadow-sm">
-                                        <svg className="w-2.5 h-2.5 text-[#fffefb] ml-0.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
+                                      <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#ff4f00] border-2 border-[#18181b] flex items-center justify-center shadow-sm">
+                                        <svg className="w-2.5 h-2.5 text-white ml-0.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
                                       </div>
                                     </div>
-                                    <div className="mt-2 whitespace-nowrap text-[11px] uppercase tracking-wider font-semibold text-[#201515] dark:text-[#f4f4f5] bg-[#fffefb] dark:bg-[#141417] px-2.5 py-0.5 rounded-full border border-[#c5c0b1] dark:border-[#27272a]">
+                                    <div className="mt-2 whitespace-nowrap text-[11px] uppercase tracking-wider font-semibold text-[#f4f4f5] bg-[#141417] px-2.5 py-0.5 rounded-full border border-[#27272a] shadow-sm">
                                       {node.label}
                                     </div>
-                                    <div className="text-[10px] text-[#605d52] dark:text-[#a1a1aa] font-mono mt-1 font-semibold">
+                                    <div className="text-[10px] text-[#a1a1aa] font-mono mt-1 font-semibold">
                                       Every {node.data?.interval || 10} seconds
                                     </div>
                                     {/* Output Port Handle */}
                                     <div
                                       onClick={(e) => handlePortClick(e, node.id, 'output')}
-                                      className="react-flow__handle react-flow__handle-right nodrag nopan !w-3 !h-3 !bg-[#ff4f00] !border-2 !border-[#fffefb] !rounded-full !right-[-6px] source cursor-pointer hover:scale-125 transition-transform"
+                                      className="react-flow__handle react-flow__handle-right nodrag nopan !w-3 !h-3 !bg-[#ff4f00] !border-2 !border-[#18181b] !rounded-full !right-[-6px] source cursor-pointer hover:scale-125 transition-transform shadow-md"
                                       title="Output Source Handle"
                                     ></div>
                                   </div>
@@ -901,15 +904,15 @@ export default function WorkflowsPage() {
                                 className={`react-flow__node nopan selectable absolute ${isSelected ? 'selected' : ''}`}
                                 style={{ zIndex: isSelected ? 1000 : 0, transform: `translate(${node.x}px, ${node.y}px)`, pointerEvents: 'all' }}
                               >
-                                <div className={`node-card w-56 p-4 rounded-md relative group cursor-pointer text-[#201515] dark:text-[#f4f4f5] text-left transition-all duration-200 shadow-sm ${isSelected
-                                    ? 'bg-[#f8f4f0] dark:bg-[#1f1f23] border-2 border-[#ff4f00] shadow-[0_4px_16px_rgba(255,79,0,0.2)] scale-[1.02]'
+                                <div className={`node-card w-56 p-4 rounded-xl relative group cursor-pointer text-[#f4f4f5] text-left transition-all duration-200 shadow-xl ${isSelected
+                                    ? 'bg-[#1a1a1f] border-2 border-[#ff4f00] shadow-[0_4px_24px_rgba(255,79,0,0.3)] scale-[1.02]'
                                     : isActive
-                                      ? 'bg-[#f8f4f0] dark:bg-[#1f1f23] border-2 border-emerald-500 shadow-[0_4px_16px_rgba(16,185,129,0.3)] animate-pulse'
-                                      : 'bg-[#f8f4f0] dark:bg-[#18181b] border border-[#c5c0b1] dark:border-[#27272a] hover:border-[#201515] dark:hover:border-[#ff4f00] hover:shadow-md'
+                                      ? 'bg-[#1a1a1f] border-2 border-emerald-500 shadow-[0_4px_24px_rgba(16,185,129,0.35)] animate-pulse'
+                                      : 'bg-[#141417] border border-[#27272a] hover:border-[#ff4f00] hover:shadow-2xl'
                                   }`}>
                                   {/* Performance Badge */}
                                   {node.type !== 'slack' && node.type !== 'end' && (
-                                    <div className="absolute top-2 right-2 flex items-center gap-1 text-[9px] font-mono font-bold bg-[#ff4f00]/10 border border-[#ff4f00]/30 text-[#ff4f00] dark:text-orange-400 px-1.5 py-0.5 rounded-full shadow-2xs">
+                                    <div className="absolute top-2.5 right-2.5 flex items-center gap-1 text-[9px] font-mono font-bold bg-[#ff4f00]/10 border border-[#ff4f00]/30 text-orange-400 px-1.5 py-0.5 rounded-full shadow-xs">
                                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                                       <span>⚡ &lt;1ms</span>
                                       <span className="opacity-40">|</span>
@@ -921,7 +924,7 @@ export default function WorkflowsPage() {
                                   {node.type !== 'start_trigger' && (
                                     <div
                                       onClick={(e) => handlePortClick(e, node.id, 'input')}
-                                      className="react-flow__handle react-flow__handle-left nodrag nopan !w-3 !h-3 !bg-[#201515] dark:!bg-[#f4f4f5] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#ff4f00] target cursor-pointer hover:scale-125 transition-transform"
+                                      className="react-flow__handle react-flow__handle-left nodrag nopan !w-3 !h-3 !bg-[#f4f4f5] !border-2 !border-[#18181b] !rounded-full !left-[-6px] hover:!bg-[#ff4f00] target cursor-pointer hover:scale-125 transition-transform shadow-md"
                                       title="Input Target Handle"
                                     ></div>
                                   )}
@@ -931,32 +934,32 @@ export default function WorkflowsPage() {
                                     <span className="text-lg">
                                       {node.type === 'google_sheets' ? '📊' : node.type === 'openai' ? '🤖' : node.type === 'slack' ? '💬' : node.type === 'send_whatsapp' ? '📲' : '⚡'}
                                     </span>
-                                    <span className="text-sm font-bold text-[#201515] dark:text-[#f4f4f5]">{node.label}</span>
+                                    <span className="text-sm font-bold text-[#f4f4f5]">{node.label}</span>
                                   </div>
 
                                   {/* Node Content Body Preview */}
-                                  <div className="text-xs text-[#605d52] dark:text-[#a1a1aa] flex flex-col gap-0.5">
+                                  <div className="text-xs text-[#a1a1aa] flex flex-col gap-0.5">
                                     {node.type === 'google_sheets' && (
                                       <>
                                         <div>Action: <span className="text-[#ff4f00] font-bold uppercase text-[10px]">{node.data?.action || 'read'}</span></div>
-                                        <div>Sheet: <span className="font-semibold text-[#201515] dark:text-[#f4f4f5]">{node.data?.sheet || 'Sheet1'}</span></div>
-                                        <div className="text-[10px]">Data: {node.data?.dataName || 'Blog Posts'}</div>
+                                        <div>Sheet: <span className="font-semibold text-white">{node.data?.sheet || 'Sheet1'}</span></div>
+                                        <div className="text-[10px] text-[#71717a]">Data: {node.data?.dataName || 'Blog Posts'}</div>
                                       </>
                                     )}
                                     {node.type === 'openai' && (
                                       <>
-                                        <div>Model: <span className="text-purple-600 dark:text-purple-400 font-bold uppercase text-[10px]">{node.data?.model || 'gpt-4o'}</span></div>
-                                        <div className="truncate text-[10px]">Prompt: {node.data?.prompt || 'Summarize contents concisely...'}</div>
+                                        <div>Model: <span className="text-purple-400 font-bold uppercase text-[10px]">{node.data?.model || 'gpt-4o'}</span></div>
+                                        <div className="truncate text-[10px] text-[#71717a]">Prompt: {node.data?.prompt || 'Summarize contents concisely...'}</div>
                                       </>
                                     )}
                                     {node.type === 'slack' && (
-                                      <div className="truncate text-[10px]">Msg: {node.data?.message || '📢 *New Notification:* {{trigger.title}}'}</div>
+                                      <div className="truncate text-[10px] text-[#71717a]">Msg: {node.data?.message || '📢 *New Notification:* {{trigger.title}}'}</div>
                                     )}
                                     {node.type === 'send_whatsapp' && (
                                       <div>Phone: <span className="font-mono text-emerald-400">{node.data?.phone || '+1 555-019-2834'}</span></div>
                                     )}
                                     {node.type !== 'google_sheets' && node.type !== 'openai' && node.type !== 'slack' && node.type !== 'send_whatsapp' && (
-                                      <div className="text-[10px] font-mono">Node Type: {node.type}</div>
+                                      <div className="text-[10px] font-mono text-[#71717a]">Node Type: {node.type}</div>
                                     )}
                                   </div>
 
@@ -964,7 +967,7 @@ export default function WorkflowsPage() {
                                   {node.type !== 'end' && (
                                     <div
                                       onClick={(e) => handlePortClick(e, node.id, 'output')}
-                                      className="react-flow__handle react-flow__handle-right nodrag nopan !w-3 !h-3 !bg-[#ff4f00] !border-2 !border-[#fffefb] !rounded-full !right-[-6px] source cursor-pointer hover:scale-125 transition-transform"
+                                      className="react-flow__handle react-flow__handle-right nodrag nopan !w-3 !h-3 !bg-[#ff4f00] !border-2 !border-[#18181b] !rounded-full !right-[-6px] source cursor-pointer hover:scale-125 transition-transform shadow-md"
                                       title="Output Source Handle"
                                     ></div>
                                   )}
