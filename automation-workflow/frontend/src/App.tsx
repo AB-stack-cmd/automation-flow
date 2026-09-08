@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import ReactFlow, {
   Background,
+  Controls,
+  MiniMap,
   useNodesState,
   useEdgesState,
   addEdge,
@@ -40,14 +42,18 @@ const edgeTypes = {
 
 const nodeTypes = {
   trigger: TriggerNode,
+  start_webhook: TriggerNode,
   crm_lead_trigger: TriggerNode,
   marketing_email: MarketingNode,
+  simulated_email: MarketingNode,
   crm_action: CRMNode,
+  crm_contact: CRMNode,
   ifelse: LogicNode,
   delay: DelayNode,
   code: CodeNode,
   end: EndNode,
   start_trigger: StartNode,
+  google_form: GoogleFormTriggerNode,
   google_form_trigger: GoogleFormTriggerNode,
   schedule_trigger: ScheduleTriggerNode,
   google_sheets: GoogleSheetsNode,
@@ -64,14 +70,17 @@ const nodeTypes = {
   'action.discord': DiscordNode,
   respond_to_webhook: RespondToWebhookNode,
   'action.respondToWebhook': RespondToWebhookNode,
+  webhook_response: RespondToWebhookNode,
   excel: ExcelNode,
   'action.excel': ExcelNode,
   mcp_connector: McpConnectorNode,
   'action.mcpConnector': McpConnectorNode,
   whatsapp_trigger: WhatsAppTriggerNode,
   whatsapp: WhatsAppNode,
+  send_whatsapp: WhatsAppNode,
   'action.whatsapp': WhatsAppNode
 };
+
 
 const BACKEND_URL = 'http://localhost:4000';
 
@@ -585,6 +594,8 @@ export default function App() {
   // Navigation layout state
   const [viewMode, setViewMode] = useState<'overview' | 'canvas' | 'templates' | 'variables' | 'settings' | 'history' | 'executions'>('overview');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [showMiniMap, setShowMiniMap] = useState(false);
+  const [panOnScroll, setPanOnScroll] = useState(false);
 
   // User Profile States
   const DEFAULT_AVATAR = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="avatarGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="%23ff4f00"/><stop offset="100%" stop-color="%23201515"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(%23avatarGrad)"/><circle cx="50" cy="40" r="18" fill="%23fffefb"/><path d="M18 78 C 18 58, 82 58, 82 78" fill="%23fffefb"/></svg>`;
@@ -1383,14 +1394,39 @@ return {
     setIsLiveEngineActive(wf.isActive !== false);
     try {
       const def = typeof wf.definition === 'string' ? JSON.parse(wf.definition) : wf.definition;
-      setNodes(def.nodes || []);
-      setEdges(def.edges || []);
+      const rawNodes = def?.nodes || [];
+      const normalizedNodes = rawNodes.map((n: any, idx: number) => {
+        const posX = n.position?.x ?? n.x ?? (100 + (idx % 4) * 260);
+        const posY = n.position?.y ?? n.y ?? (180 + Math.floor(idx / 4) * 160);
+        return {
+          ...n,
+          id: String(n.id || `node_${idx}`),
+          type: n.type || 'code',
+          position: { x: Number(posX) || 100, y: Number(posY) || 100 },
+          data: {
+            label: n.data?.label || n.label || n.type || 'Node',
+            ...(n.data || {})
+          }
+        };
+      });
+      const rawEdges = def?.edges || [];
+      const normalizedEdges = rawEdges.map((e: any, idx: number) => ({
+        ...e,
+        id: String(e.id || `edge_${idx}`),
+        source: String(e.source),
+        target: String(e.target),
+        animated: e.animated !== false,
+      }));
+      setNodes(normalizedNodes);
+      setEdges(normalizedEdges);
       setSelectedNode(null);
-    } catch {
+    } catch (err) {
+      console.error("Failed to parse workflow definition:", err);
       setNodes([]);
       setEdges([]);
     }
   }, [setNodes, setEdges]);
+
 
   // Fetch workflows
   const fetchWorkflows = useCallback(async () => {
@@ -2862,6 +2898,27 @@ return {
                     ☰
                   </button>
                 )}
+                {/* Floating Movable Helper Chip & MiniMap toggle (Top Right) */}
+                <div className="absolute top-6 right-6 z-20 flex items-center gap-2 bg-[#18181b]/90 backdrop-blur-md border border-[#27272a] px-3 py-1.5 rounded-lg shadow-lg text-xs">
+                  <span className="text-[#ff4f00] text-sm">✋</span>
+                  <span className="font-semibold text-white">Canvas Movable:</span>
+                  <span className="text-neutral-400">Drag or Space+Drag</span>
+                  <div className="w-px h-3.5 bg-neutral-700 mx-1"></div>
+                  <button
+                    onClick={() => setPanOnScroll(p => !p)}
+                    className={`px-2 py-0.5 rounded text-[11px] font-bold transition-all cursor-pointer ${panOnScroll ? 'bg-[#ff4f00] text-white' : 'bg-[#27272a] text-neutral-300 hover:bg-[#3f3f46]'}`}
+                    title="Toggle Scroll to Pan vs Scroll to Zoom"
+                  >
+                    {panOnScroll ? 'Scroll: Pan ✋' : 'Scroll: Zoom 🔍'}
+                  </button>
+                  <button
+                    onClick={() => setShowMiniMap(m => !m)}
+                    className={`px-2 py-0.5 rounded text-[11px] font-bold transition-all cursor-pointer ${showMiniMap ? 'bg-[#ff4f00] text-white' : 'bg-[#27272a] text-neutral-300 hover:bg-[#3f3f46]'}`}
+                    title="Toggle Overview MiniMap"
+                  >
+                    🗺️ MiniMap
+                  </button>
+                </div>
                 <ReactFlow
                   nodes={nodes}
                   edges={edgesWithAddButton}
@@ -2878,12 +2935,42 @@ return {
                   nodesDraggable={true}
                   nodesConnectable={true}
                   elementsSelectable={true}
+                  panOnDrag={true}
+                  panOnScroll={panOnScroll}
+                  zoomOnScroll={!panOnScroll}
+                  zoomOnPinch={true}
+                  zoomOnDoubleClick={false}
+                  panActivationKeyCode="Space"
+                  selectionOnDrag={false}
+                  preventScrolling={false}
+                  autoPanOnNodeDrag={true}
+                  autoPanOnConnect={true}
+                  minZoom={0.15}
+                  maxZoom={3}
+                  translateExtent={[[-20000, -20000], [20000, 20000]]}
                   snapToGrid={true}
                   snapGrid={[15, 15]}
                   fitView
                 >
                   <Background color="#ff4f00" gap={32} size={1} />
+                  <Controls
+                    showInteractive={true}
+                    position="bottom-left"
+                    className="!bg-[#18181b] !border !border-[#27272a] !rounded-lg !shadow-xl !mb-2"
+                  />
+                  {showMiniMap && (
+                    <MiniMap
+                      nodeStrokeColor="#ff4f00"
+                      nodeColor="#27272a"
+                      maskColor="rgba(0, 0, 0, 0.65)"
+                      position="bottom-right"
+                      className="!bg-[#18181b]/95 !border !border-[#27272a] !rounded-lg !shadow-2xl !mb-20 !mr-2"
+                      pannable
+                      zoomable
+                    />
+                  )}
                 </ReactFlow>
+
 
                 {/* Primary Action Button (#ff4f00 CTA) */}
                 <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20">

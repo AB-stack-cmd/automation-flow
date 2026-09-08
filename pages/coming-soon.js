@@ -22,8 +22,8 @@ export default function ComingSoonPage() {
     setFlowCanvasUrl(getFlowCanvasUrl());
   }, []);
 
-  const pageTitle = name || feature || (route ? route.replace('/', '').toUpperCase() : 'Feature');
-  const displayTitle = pageTitle ? `${pageTitle.charAt(0).toUpperCase()}${pageTitle.slice(1)} Page` : 'Feature';
+  const pageTitle = name || feature || (route ? route.replace('/', '').toUpperCase() : 'Upcoming Feature');
+  const displayTitle = pageTitle ? `${pageTitle.charAt(0).toUpperCase()}${pageTitle.slice(1)}` : 'Upcoming Feature';
 
   const handleSubscribe = (e) => {
     e.preventDefault();

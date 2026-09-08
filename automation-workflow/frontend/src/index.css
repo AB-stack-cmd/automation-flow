@@ -65,6 +65,43 @@ aside.bg-surface-container {
   transition: background-color 0.2s ease;
 }
 
+/* React Flow Canvas Panning & Grab Hand Cursor */
+.react-flow__pane {
+  cursor: grab !important;
+}
+
+.react-flow__pane:active,
+.react-flow__pane.dragging {
+  cursor: grabbing !important;
+}
+
+.react-flow__controls {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45) !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  border: 1px solid #27272a !important;
+}
+
+.react-flow__controls-button {
+  background: #18181b !important;
+  border-bottom: 1px solid #27272a !important;
+  color: #f4f4f5 !important;
+  fill: #f4f4f5 !important;
+  width: 34px !important;
+  height: 34px !important;
+}
+
+.react-flow__controls-button:hover {
+  background: #27272a !important;
+  color: #ff4f00 !important;
+  fill: #ff4f00 !important;
+}
+
+.react-flow__controls-button svg {
+  max-width: 15px !important;
+  max-height: 15px !important;
+}
+
 /* Custom scrollbars */
 ::-webkit-scrollbar {
   width: 8px;
@@ -86,3 +123,4 @@ aside.bg-surface-container {
   background-color: #ff4f00;
   color: #fffefb;
 }
+

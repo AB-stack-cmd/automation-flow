@@ -129,6 +129,12 @@ export default function WorkflowsPage() {
   const [draggingNodeId, setDraggingNodeId] = useState(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
+  // Canvas Panning & Zooming State
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [isPanningCanvas, setIsPanningCanvas] = useState(false);
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+
   const canvasRef = useRef(null);
 
   const showToast = useCallback((msg) => {
@@ -282,7 +288,7 @@ export default function WorkflowsPage() {
     showToast('Deleted node');
   };
 
-  // Node Dragging Handlers
+  // Node & Canvas Dragging / Panning Handlers
   const handleNodeMouseDown = (e, nodeId) => {
     e.stopPropagation();
     setSelectedNodeId(nodeId);
@@ -290,29 +296,84 @@ export default function WorkflowsPage() {
     const node = nodes.find(n => n.id === nodeId);
     if (node && canvasRef.current) {
       const rect = canvasRef.current.getBoundingClientRect();
+      const currentCanvasX = (e.clientX - rect.left - panOffset.x) / zoom;
+      const currentCanvasY = (e.clientY - rect.top - panOffset.y) / zoom;
       setDragOffset({
-        x: e.clientX - rect.left - node.x,
-        y: e.clientY - rect.top - node.y,
+        x: currentCanvasX - node.x,
+        y: currentCanvasY - node.y,
       });
     }
+  };
+
+  const handleCanvasMouseDown = (e) => {
+    // Only pan if clicking on empty canvas background (not on a node card, handle, or button)
+    if (e.target.closest('.react-flow__node') || e.target.closest('button')) {
+      return;
+    }
+    setIsPanningCanvas(true);
+    setPanStart({
+      x: e.clientX - panOffset.x,
+      y: e.clientY - panOffset.y,
+    });
   };
 
   const handleCanvasMouseMove = (e) => {
     if (!canvasRef.current) return;
     const rect = canvasRef.current.getBoundingClientRect();
-    const currentX = e.clientX - rect.left;
-    const currentY = e.clientY - rect.top;
+
+    if (isPanningCanvas) {
+      setPanOffset({
+        x: e.clientX - panStart.x,
+        y: e.clientY - panStart.y,
+      });
+      return;
+    }
+
+    const currentX = (e.clientX - rect.left - panOffset.x) / zoom;
+    const currentY = (e.clientY - rect.top - panOffset.y) / zoom;
     setMousePos({ x: currentX, y: currentY });
 
     if (draggingNodeId) {
-      const newX = Math.max(20, Math.round((currentX - dragOffset.x) / 10) * 10);
-      const newY = Math.max(20, Math.round((currentY - dragOffset.y) / 10) * 10);
+      const newX = Math.round((currentX - dragOffset.x) / 10) * 10;
+      const newY = Math.round((currentY - dragOffset.y) / 10) * 10;
       setNodes(prev => prev.map(n => n.id === draggingNodeId ? { ...n, x: newX, y: newY } : n));
     }
   };
 
   const handleCanvasMouseUp = () => {
     setDraggingNodeId(null);
+    setIsPanningCanvas(false);
+  };
+
+  const handleCanvasWheel = (e) => {
+    if (!canvasRef.current) return;
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+      setZoom(prev => Math.min(2.5, Math.max(0.3, Number((prev * zoomFactor).toFixed(2)))));
+    } else {
+      // 2-finger trackpad scroll or mouse wheel pan
+      setPanOffset(prev => ({
+        x: prev.x - e.deltaX,
+        y: prev.y - e.deltaY,
+      }));
+    }
+  };
+
+  const handleZoomIn = () => setZoom(z => Math.min(2.5, Number((z + 0.15).toFixed(2))));
+  const handleZoomOut = () => setZoom(z => Math.max(0.3, Number((z - 0.15).toFixed(2))));
+  const handleResetCanvas = () => {
+    setPanOffset({ x: 0, y: 0 });
+    setZoom(1);
+    showToast('Reset canvas position & zoom (100%)');
+  };
+  const handleFitView = () => {
+    if (nodes.length === 0) return;
+    const minX = Math.min(...nodes.map(n => n.x));
+    const minY = Math.min(...nodes.map(n => n.y));
+    setPanOffset({ x: Math.max(20, 80 - minX), y: Math.max(20, 80 - minY) });
+    setZoom(1);
+    showToast('Centered view to workflow nodes');
   };
 
   // Connection Handles Click (Visual Auto-Connection)
@@ -744,14 +805,30 @@ export default function WorkflowsPage() {
               {/* Interactive Visual Canvas Area */}
               <div
                 ref={canvasRef}
+                onMouseDown={handleCanvasMouseDown}
                 onMouseMove={handleCanvasMouseMove}
                 onMouseUp={handleCanvasMouseUp}
+                onMouseLeave={handleCanvasMouseUp}
+                onWheel={handleCanvasWheel}
                 className="flex-1 h-full bg-[#0c0c0e] relative dot-grid overflow-hidden select-none"
+                style={{
+                  cursor: isPanningCanvas ? 'grabbing' : 'grab',
+                  backgroundPosition: `${panOffset.x}px ${panOffset.y}px`,
+                  backgroundSize: `${24 * zoom}px ${24 * zoom}px`,
+                }}
               >
                 <div className="react-flow" data-testid="rf__wrapper" style={{ width: '100%', height: '100%', overflow: 'hidden', position: 'relative', zIndex: 0 }}>
                   <div className="react-flow__renderer" style={{ position: 'static', width: '100%', height: '100%', top: 0, left: 0 }}>
                     <div className="react-flow__pane" style={{ position: 'absolute', width: '100%', height: '100%', top: 0, left: 0 }}>
-                      <div className="react-flow__viewport react-flow__container" style={{ transform: 'translate(0px, 0px) scale(1)' }}>
+                      <div
+                        className="react-flow__viewport react-flow__container"
+                        style={{
+                          transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`,
+                          transformOrigin: '0 0',
+                          width: '100%',
+                          height: '100%',
+                        }}
+                      >
                         {/* SVG Connection Edges Layer */}
                         <svg width="100%" height="100%" className="react-flow__edges react-flow__container absolute inset-0 pointer-events-none" style={{ zIndex: 0 }}>
                           <g>
@@ -979,6 +1056,48 @@ export default function WorkflowsPage() {
                       </div>
                     </div>
                   </div>
+                </div>
+                {/* Canvas Movable Navigation Controls Widget (Bottom Left) */}
+                <div className="absolute bottom-8 left-8 z-20 flex items-center gap-1.5 bg-[#18181b]/95 backdrop-blur-md border border-[#27272a] p-1.5 rounded-xl shadow-2xl">
+                  <button
+                    type="button"
+                    onClick={handleZoomIn}
+                    className="w-8 h-8 rounded-lg bg-[#27272a] hover:bg-[#3f3f46] text-white font-bold flex items-center justify-center transition-colors cursor-pointer text-base"
+                    title="Zoom In (+)"
+                  >
+                    +
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleZoomOut}
+                    className="w-8 h-8 rounded-lg bg-[#27272a] hover:bg-[#3f3f46] text-white font-bold flex items-center justify-center transition-colors cursor-pointer text-base"
+                    title="Zoom Out (-)"
+                  >
+                    −
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleFitView}
+                    className="h-8 px-2.5 rounded-lg bg-[#27272a] hover:bg-[#3f3f46] text-white text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                    title="Fit View / Center All Nodes"
+                  >
+                    <span>⛶</span> Center
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleResetCanvas}
+                    className="h-8 px-2 rounded-lg bg-[#27272a] hover:bg-[#3f3f46] text-[#ff4f00] text-[11px] font-mono font-bold flex items-center justify-center transition-colors cursor-pointer"
+                    title="Reset Zoom to 100%"
+                  >
+                    {Math.round(zoom * 100)}%
+                  </button>
+                </div>
+
+                {/* Floating Movable Helper Chip (Top Right) */}
+                <div className="absolute top-4 right-4 z-20 flex items-center gap-2 bg-[#18181b]/90 backdrop-blur-md border border-[#27272a] px-3 py-1.5 rounded-lg shadow-lg text-xs text-neutral-300 pointer-events-none">
+                  <span className="text-[#ff4f00] text-sm">✋</span>
+                  <span className="font-semibold text-white">Canvas Movable:</span>
+                  <span className="text-neutral-400">Click &amp; drag background to pan • Scroll to move</span>
                 </div>
 
                 {/* Floating Bottom Center Action Button */}
