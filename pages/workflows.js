@@ -129,6 +129,12 @@ export default function WorkflowsPage() {
   const [draggingNodeId, setDraggingNodeId] = useState(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
+  // Canvas Panning & Zooming State
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [isPanningCanvas, setIsPanningCanvas] = useState(false);
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+
   const canvasRef = useRef(null);
 
   const showToast = useCallback((msg) => {
@@ -282,7 +288,7 @@ export default function WorkflowsPage() {
     showToast('Deleted node');
   };
 
-  // Node Dragging Handlers
+  // Node & Canvas Dragging / Panning Handlers
   const handleNodeMouseDown = (e, nodeId) => {
     e.stopPropagation();
     setSelectedNodeId(nodeId);
@@ -290,29 +296,84 @@ export default function WorkflowsPage() {
     const node = nodes.find(n => n.id === nodeId);
     if (node && canvasRef.current) {
       const rect = canvasRef.current.getBoundingClientRect();
+      const currentCanvasX = (e.clientX - rect.left - panOffset.x) / zoom;
+      const currentCanvasY = (e.clientY - rect.top - panOffset.y) / zoom;
       setDragOffset({
-        x: e.clientX - rect.left - node.x,
-        y: e.clientY - rect.top - node.y,
+        x: currentCanvasX - node.x,
+        y: currentCanvasY - node.y,
       });
     }
+  };
+
+  const handleCanvasMouseDown = (e) => {
+    // Only pan if clicking on empty canvas background (not on a node card, handle, or button)
+    if (e.target.closest('.react-flow__node') || e.target.closest('button')) {
+      return;
+    }
+    setIsPanningCanvas(true);
+    setPanStart({
+      x: e.clientX - panOffset.x,
+      y: e.clientY - panOffset.y,
+    });
   };
 
   const handleCanvasMouseMove = (e) => {
     if (!canvasRef.current) return;
     const rect = canvasRef.current.getBoundingClientRect();
-    const currentX = e.clientX - rect.left;
-    const currentY = e.clientY - rect.top;
+
+    if (isPanningCanvas) {
+      setPanOffset({
+        x: e.clientX - panStart.x,
+        y: e.clientY - panStart.y,
+      });
+      return;
+    }
+
+    const currentX = (e.clientX - rect.left - panOffset.x) / zoom;
+    const currentY = (e.clientY - rect.top - panOffset.y) / zoom;
     setMousePos({ x: currentX, y: currentY });
 
     if (draggingNodeId) {
-      const newX = Math.max(20, Math.round((currentX - dragOffset.x) / 10) * 10);
-      const newY = Math.max(20, Math.round((currentY - dragOffset.y) / 10) * 10);
+      const newX = Math.round((currentX - dragOffset.x) / 10) * 10;
+      const newY = Math.round((currentY - dragOffset.y) / 10) * 10;
       setNodes(prev => prev.map(n => n.id === draggingNodeId ? { ...n, x: newX, y: newY } : n));
     }
   };
 
   const handleCanvasMouseUp = () => {
     setDraggingNodeId(null);
+    setIsPanningCanvas(false);
+  };
+
+  const handleCanvasWheel = (e) => {
+    if (!canvasRef.current) return;
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+      setZoom(prev => Math.min(2.5, Math.max(0.3, Number((prev * zoomFactor).toFixed(2)))));
+    } else {
+      // 2-finger trackpad scroll or mouse wheel pan
+      setPanOffset(prev => ({
+        x: prev.x - e.deltaX,
+        y: prev.y - e.deltaY,
+      }));
+    }
+  };
+
+  const handleZoomIn = () => setZoom(z => Math.min(2.5, Number((z + 0.15).toFixed(2))));
+  const handleZoomOut = () => setZoom(z => Math.max(0.3, Number((z - 0.15).toFixed(2))));
+  const handleResetCanvas = () => {
+    setPanOffset({ x: 0, y: 0 });
+    setZoom(1);
+    showToast('Reset canvas position & zoom (100%)');
+  };
+  const handleFitView = () => {
+    if (nodes.length === 0) return;
+    const minX = Math.min(...nodes.map(n => n.x));
+    const minY = Math.min(...nodes.map(n => n.y));
+    setPanOffset({ x: Math.max(20, 80 - minX), y: Math.max(20, 80 - minY) });
+    setZoom(1);
+    showToast('Centered view to workflow nodes');
   };
 
   // Connection Handles Click (Visual Auto-Connection)
@@ -440,7 +501,8 @@ export default function WorkflowsPage() {
               background: #facc15;
           }
           .dot-grid {
-            background-image: radial-gradient(#262626 1px, transparent 1px);
+            background-color: #0c0c0e;
+            background-image: radial-gradient(rgba(255, 255, 255, 0.22) 1.5px, transparent 1.5px);
             background-size: 24px 24px;
           }
           .glass-panel {
@@ -631,21 +693,18 @@ export default function WorkflowsPage() {
                   type="button"
                   onClick={() => setLiveEngineOn(!liveEngineOn)}
                   title="Live Engine Active - Click to toggle engine status"
-                  className={`flex items-center gap-2 px-3 py-1 rounded-full border transition-all shrink-0 cursor-pointer shadow-sm ${
-                    liveEngineOn
+                  className={`flex items-center gap-2 px-3 py-1 rounded-full border transition-all shrink-0 cursor-pointer shadow-sm ${liveEngineOn
                       ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
                       : 'bg-amber-500/10 border-amber-500/30 text-amber-400 hover:bg-amber-500/20'
-                  }`}
+                    }`}
                 >
                   <span className="text-[11px] font-bold uppercase tracking-widest whitespace-nowrap">
                     {liveEngineOn ? 'Live Engine ON' : 'Engine PAUSED'}
                   </span>
-                  <div className={`w-8 h-4 rounded-full relative flex items-center px-0.5 border transition-colors ${
-                    liveEngineOn ? 'bg-emerald-500/20 border-emerald-500/40 justify-end' : 'bg-amber-500/20 border-amber-500/40 justify-start'
-                  }`}>
-                    <div className={`w-3 h-3 rounded-full transition-all ${
-                      liveEngineOn ? 'bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-amber-400'
-                    }`}></div>
+                  <div className={`w-8 h-4 rounded-full relative flex items-center px-0.5 border transition-colors ${liveEngineOn ? 'bg-emerald-500/20 border-emerald-500/40 justify-end' : 'bg-amber-500/20 border-amber-500/40 justify-start'
+                    }`}>
+                    <div className={`w-3 h-3 rounded-full transition-all ${liveEngineOn ? 'bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-amber-400'
+                      }`}></div>
                   </div>
                 </button>
                 <div className="h-4 w-px bg-outline-variant/30 mx-1 shrink-0"></div>
@@ -726,13 +785,12 @@ export default function WorkflowsPage() {
                             key={item.type}
                             type="button"
                             onClick={() => addNodeToCanvas(item.type)}
-                            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md border text-xs font-bold text-left transition-all cursor-pointer ${
-                              item.isGreen
-                                ? 'border-[#25D366]/50 bg-[#fffefb] hover:border-[#25D366] text-[#201515]'
+                            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md border text-xs font-bold text-left transition-all cursor-pointer ${item.isGreen
+                                ? 'border-[#25D366]/40 bg-[#18181b] hover:border-[#25D366] text-[#25D366]'
                                 : item.isRose
-                                ? 'border-rose-300 bg-[#fffefb] hover:border-rose-600 text-rose-700'
-                                : 'border-[#c5c0b1] bg-[#fffefb] hover:border-[#ff4f00] text-[#201515]'
-                            }`}
+                                  ? 'border-rose-500/40 bg-[#18181b] hover:border-rose-500 text-rose-400'
+                                  : 'border-[#27272a] bg-[#18181b] hover:border-[#ff4f00] text-[#f4f4f5]'
+                              }`}
                           >
                             <span>{item.icon}</span>
                             <span>{item.label}</span>
@@ -747,14 +805,30 @@ export default function WorkflowsPage() {
               {/* Interactive Visual Canvas Area */}
               <div
                 ref={canvasRef}
+                onMouseDown={handleCanvasMouseDown}
                 onMouseMove={handleCanvasMouseMove}
                 onMouseUp={handleCanvasMouseUp}
-                className="flex-1 h-full bg-[#fffefb] relative dot-grid overflow-hidden select-none"
+                onMouseLeave={handleCanvasMouseUp}
+                onWheel={handleCanvasWheel}
+                className="flex-1 h-full bg-[#0c0c0e] relative dot-grid overflow-hidden select-none"
+                style={{
+                  cursor: isPanningCanvas ? 'grabbing' : 'grab',
+                  backgroundPosition: `${panOffset.x}px ${panOffset.y}px`,
+                  backgroundSize: `${24 * zoom}px ${24 * zoom}px`,
+                }}
               >
                 <div className="react-flow" data-testid="rf__wrapper" style={{ width: '100%', height: '100%', overflow: 'hidden', position: 'relative', zIndex: 0 }}>
-                  <div className="react-flow__renderer" style={{ position: 'absolute', width: '100%', height: '100%', top: 0, left: 0 }}>
+                  <div className="react-flow__renderer" style={{ position: 'static', width: '100%', height: '100%', top: 0, left: 0 }}>
                     <div className="react-flow__pane" style={{ position: 'absolute', width: '100%', height: '100%', top: 0, left: 0 }}>
-                      <div className="react-flow__viewport react-flow__container" style={{ transform: 'translate(0px, 0px) scale(1)' }}>
+                      <div
+                        className="react-flow__viewport react-flow__container"
+                        style={{
+                          transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`,
+                          transformOrigin: '0 0',
+                          width: '100%',
+                          height: '100%',
+                        }}
+                      >
                         {/* SVG Connection Edges Layer */}
                         <svg width="100%" height="100%" className="react-flow__edges react-flow__container absolute inset-0 pointer-events-none" style={{ zIndex: 0 }}>
                           <g>
@@ -781,9 +855,10 @@ export default function WorkflowsPage() {
                                     fill="none"
                                     className="react-flow__edge-path"
                                     style={{
-                                      strokeWidth: isEdgeActive ? 4 : 2,
-                                      stroke: 'rgb(250, 204, 21)',
-                                      strokeDasharray: isEdgeActive ? '6 4' : 'none'
+                                      strokeWidth: isEdgeActive ? 4 : 2.5,
+                                      stroke: isEdgeActive ? '#ff4f00' : '#ff7a33',
+                                      strokeDasharray: isEdgeActive ? '6 4' : 'none',
+                                      filter: 'drop-shadow(0 0 6px rgba(255, 122, 51, 0.45))'
                                     }}
                                   />
                                   <path
@@ -814,6 +889,7 @@ export default function WorkflowsPage() {
                                   stroke="#ff4f00"
                                   strokeWidth="2.5"
                                   strokeDasharray="4 4"
+                                  style={{ filter: 'drop-shadow(0 0 6px rgba(255, 79, 0, 0.6))' }}
                                 />
                               );
                             })()}
@@ -847,7 +923,7 @@ export default function WorkflowsPage() {
                                 <button
                                   type="button"
                                   onClick={() => insertNodeBetweenEdge(edge.id)}
-                                  className="group flex items-center justify-center w-6 h-6 rounded-full bg-[#ff4f00] border-2 border-[#fffefb] text-[#fffefb] hover:scale-110 transition-all duration-150 cursor-pointer shadow-md"
+                                  className="group flex items-center justify-center w-6 h-6 rounded-full bg-[#ff4f00] border-2 border-[#18181b] text-white hover:scale-110 transition-all duration-150 cursor-pointer shadow-lg shadow-[#ff4f00]/40"
                                   title="Insert OpenAI node here"
                                 >
                                   <span className="text-xs font-bold transition-transform duration-200 group-hover:rotate-90">+</span>
@@ -873,24 +949,23 @@ export default function WorkflowsPage() {
                                   style={{ zIndex: isSelected ? 1000 : 0, transform: `translate(${node.x}px, ${node.y}px)`, pointerEvents: 'all' }}
                                 >
                                   <div className="relative group flex flex-col items-center cursor-grab active:cursor-grabbing">
-                                    <div className={`w-14 h-14 rounded-full bg-[#f8f4f0] dark:bg-[#18181b] border-2 flex items-center justify-center relative transition-all duration-200 ${
-                                      isSelected ? 'border-[#ff4f00] ring-2 ring-[#ff4f00]/40' : 'border-[#201515] dark:border-[#3f3f46] hover:border-[#ff4f00]'
-                                    } shadow-sm`}>
+                                    <div className={`w-14 h-14 rounded-full bg-[#18181b] border-2 flex items-center justify-center relative transition-all duration-200 ${isSelected ? 'border-[#ff4f00] ring-2 ring-[#ff4f00]/40 shadow-lg shadow-[#ff4f00]/20' : 'border-[#3f3f46] hover:border-[#ff4f00]'
+                                      } shadow-md`}>
                                       <span className="text-[#ff4f00] font-bold text-xl">⏰</span>
-                                      <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#ff4f00] border-2 border-[#fffefb] flex items-center justify-center shadow-sm">
-                                        <svg className="w-2.5 h-2.5 text-[#fffefb] ml-0.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
+                                      <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#ff4f00] border-2 border-[#18181b] flex items-center justify-center shadow-sm">
+                                        <svg className="w-2.5 h-2.5 text-white ml-0.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
                                       </div>
                                     </div>
-                                    <div className="mt-2 whitespace-nowrap text-[11px] uppercase tracking-wider font-semibold text-[#201515] dark:text-[#f4f4f5] bg-[#fffefb] dark:bg-[#141417] px-2.5 py-0.5 rounded-full border border-[#c5c0b1] dark:border-[#27272a]">
+                                    <div className="mt-2 whitespace-nowrap text-[11px] uppercase tracking-wider font-semibold text-[#f4f4f5] bg-[#141417] px-2.5 py-0.5 rounded-full border border-[#27272a] shadow-sm">
                                       {node.label}
                                     </div>
-                                    <div className="text-[10px] text-[#605d52] dark:text-[#a1a1aa] font-mono mt-1 font-semibold">
+                                    <div className="text-[10px] text-[#a1a1aa] font-mono mt-1 font-semibold">
                                       Every {node.data?.interval || 10} seconds
                                     </div>
                                     {/* Output Port Handle */}
                                     <div
                                       onClick={(e) => handlePortClick(e, node.id, 'output')}
-                                      className="react-flow__handle react-flow__handle-right nodrag nopan !w-3 !h-3 !bg-[#ff4f00] !border-2 !border-[#fffefb] !rounded-full !right-[-6px] source cursor-pointer hover:scale-125 transition-transform"
+                                      className="react-flow__handle react-flow__handle-right nodrag nopan !w-3 !h-3 !bg-[#ff4f00] !border-2 !border-[#18181b] !rounded-full !right-[-6px] source cursor-pointer hover:scale-125 transition-transform shadow-md"
                                       title="Output Source Handle"
                                     ></div>
                                   </div>
@@ -906,16 +981,15 @@ export default function WorkflowsPage() {
                                 className={`react-flow__node nopan selectable absolute ${isSelected ? 'selected' : ''}`}
                                 style={{ zIndex: isSelected ? 1000 : 0, transform: `translate(${node.x}px, ${node.y}px)`, pointerEvents: 'all' }}
                               >
-                                <div className={`node-card w-56 p-4 rounded-md relative group cursor-pointer text-[#201515] dark:text-[#f4f4f5] text-left transition-all duration-200 shadow-sm ${
-                                  isSelected
-                                    ? 'bg-[#f8f4f0] dark:bg-[#1f1f23] border-2 border-[#ff4f00] shadow-[0_4px_16px_rgba(255,79,0,0.2)] scale-[1.02]'
+                                <div className={`node-card w-56 p-4 rounded-xl relative group cursor-pointer text-[#f4f4f5] text-left transition-all duration-200 shadow-xl ${isSelected
+                                    ? 'bg-[#1a1a1f] border-2 border-[#ff4f00] shadow-[0_4px_24px_rgba(255,79,0,0.3)] scale-[1.02]'
                                     : isActive
-                                    ? 'bg-[#f8f4f0] dark:bg-[#1f1f23] border-2 border-emerald-500 shadow-[0_4px_16px_rgba(16,185,129,0.3)] animate-pulse'
-                                    : 'bg-[#f8f4f0] dark:bg-[#18181b] border border-[#c5c0b1] dark:border-[#27272a] hover:border-[#201515] dark:hover:border-[#ff4f00] hover:shadow-md'
-                                }`}>
+                                      ? 'bg-[#1a1a1f] border-2 border-emerald-500 shadow-[0_4px_24px_rgba(16,185,129,0.35)] animate-pulse'
+                                      : 'bg-[#141417] border border-[#27272a] hover:border-[#ff4f00] hover:shadow-2xl'
+                                  }`}>
                                   {/* Performance Badge */}
                                   {node.type !== 'slack' && node.type !== 'end' && (
-                                    <div className="absolute top-2 right-2 flex items-center gap-1 text-[9px] font-mono font-bold bg-[#ff4f00]/10 border border-[#ff4f00]/30 text-[#ff4f00] dark:text-orange-400 px-1.5 py-0.5 rounded-full shadow-2xs">
+                                    <div className="absolute top-2.5 right-2.5 flex items-center gap-1 text-[9px] font-mono font-bold bg-[#ff4f00]/10 border border-[#ff4f00]/30 text-orange-400 px-1.5 py-0.5 rounded-full shadow-xs">
                                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                                       <span>⚡ &lt;1ms</span>
                                       <span className="opacity-40">|</span>
@@ -927,7 +1001,7 @@ export default function WorkflowsPage() {
                                   {node.type !== 'start_trigger' && (
                                     <div
                                       onClick={(e) => handlePortClick(e, node.id, 'input')}
-                                      className="react-flow__handle react-flow__handle-left nodrag nopan !w-3 !h-3 !bg-[#201515] dark:!bg-[#f4f4f5] !border-2 !border-[#fffefb] !rounded-full !left-[-6px] hover:!bg-[#ff4f00] target cursor-pointer hover:scale-125 transition-transform"
+                                      className="react-flow__handle react-flow__handle-left nodrag nopan !w-3 !h-3 !bg-[#f4f4f5] !border-2 !border-[#18181b] !rounded-full !left-[-6px] hover:!bg-[#ff4f00] target cursor-pointer hover:scale-125 transition-transform shadow-md"
                                       title="Input Target Handle"
                                     ></div>
                                   )}
@@ -937,32 +1011,32 @@ export default function WorkflowsPage() {
                                     <span className="text-lg">
                                       {node.type === 'google_sheets' ? '📊' : node.type === 'openai' ? '🤖' : node.type === 'slack' ? '💬' : node.type === 'send_whatsapp' ? '📲' : '⚡'}
                                     </span>
-                                    <span className="text-sm font-bold text-[#201515] dark:text-[#f4f4f5]">{node.label}</span>
+                                    <span className="text-sm font-bold text-[#f4f4f5]">{node.label}</span>
                                   </div>
 
                                   {/* Node Content Body Preview */}
-                                  <div className="text-xs text-[#605d52] dark:text-[#a1a1aa] flex flex-col gap-0.5">
+                                  <div className="text-xs text-[#a1a1aa] flex flex-col gap-0.5">
                                     {node.type === 'google_sheets' && (
                                       <>
                                         <div>Action: <span className="text-[#ff4f00] font-bold uppercase text-[10px]">{node.data?.action || 'read'}</span></div>
-                                        <div>Sheet: <span className="font-semibold text-[#201515] dark:text-[#f4f4f5]">{node.data?.sheet || 'Sheet1'}</span></div>
-                                        <div className="text-[10px]">Data: {node.data?.dataName || 'Blog Posts'}</div>
+                                        <div>Sheet: <span className="font-semibold text-white">{node.data?.sheet || 'Sheet1'}</span></div>
+                                        <div className="text-[10px] text-[#71717a]">Data: {node.data?.dataName || 'Blog Posts'}</div>
                                       </>
                                     )}
                                     {node.type === 'openai' && (
                                       <>
-                                        <div>Model: <span className="text-purple-600 dark:text-purple-400 font-bold uppercase text-[10px]">{node.data?.model || 'gpt-4o'}</span></div>
-                                        <div className="truncate text-[10px]">Prompt: {node.data?.prompt || 'Summarize contents concisely...'}</div>
+                                        <div>Model: <span className="text-purple-400 font-bold uppercase text-[10px]">{node.data?.model || 'gpt-4o'}</span></div>
+                                        <div className="truncate text-[10px] text-[#71717a]">Prompt: {node.data?.prompt || 'Summarize contents concisely...'}</div>
                                       </>
                                     )}
                                     {node.type === 'slack' && (
-                                      <div className="truncate text-[10px]">Msg: {node.data?.message || '📢 *New Notification:* {{trigger.title}}'}</div>
+                                      <div className="truncate text-[10px] text-[#71717a]">Msg: {node.data?.message || '📢 *New Notification:* {{trigger.title}}'}</div>
                                     )}
                                     {node.type === 'send_whatsapp' && (
                                       <div>Phone: <span className="font-mono text-emerald-400">{node.data?.phone || '+1 555-019-2834'}</span></div>
                                     )}
                                     {node.type !== 'google_sheets' && node.type !== 'openai' && node.type !== 'slack' && node.type !== 'send_whatsapp' && (
-                                      <div className="text-[10px] font-mono">Node Type: {node.type}</div>
+                                      <div className="text-[10px] font-mono text-[#71717a]">Node Type: {node.type}</div>
                                     )}
                                   </div>
 
@@ -970,7 +1044,7 @@ export default function WorkflowsPage() {
                                   {node.type !== 'end' && (
                                     <div
                                       onClick={(e) => handlePortClick(e, node.id, 'output')}
-                                      className="react-flow__handle react-flow__handle-right nodrag nopan !w-3 !h-3 !bg-[#ff4f00] !border-2 !border-[#fffefb] !rounded-full !right-[-6px] source cursor-pointer hover:scale-125 transition-transform"
+                                      className="react-flow__handle react-flow__handle-right nodrag nopan !w-3 !h-3 !bg-[#ff4f00] !border-2 !border-[#18181b] !rounded-full !right-[-6px] source cursor-pointer hover:scale-125 transition-transform shadow-md"
                                       title="Output Source Handle"
                                     ></div>
                                   )}
@@ -983,6 +1057,48 @@ export default function WorkflowsPage() {
                     </div>
                   </div>
                 </div>
+                {/* Canvas Movable Navigation Controls Widget (Bottom Left) */}
+                <div className="absolute bottom-8 left-8 z-20 flex items-center gap-1.5 bg-[#18181b]/95 backdrop-blur-md border border-[#27272a] p-1.5 rounded-xl shadow-2xl">
+                  <button
+                    type="button"
+                    onClick={handleZoomIn}
+                    className="w-8 h-8 rounded-lg bg-[#27272a] hover:bg-[#3f3f46] text-white font-bold flex items-center justify-center transition-colors cursor-pointer text-base"
+                    title="Zoom In (+)"
+                  >
+                    +
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleZoomOut}
+                    className="w-8 h-8 rounded-lg bg-[#27272a] hover:bg-[#3f3f46] text-white font-bold flex items-center justify-center transition-colors cursor-pointer text-base"
+                    title="Zoom Out (-)"
+                  >
+                    −
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleFitView}
+                    className="h-8 px-2.5 rounded-lg bg-[#27272a] hover:bg-[#3f3f46] text-white text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                    title="Fit View / Center All Nodes"
+                  >
+                    <span>⛶</span> Center
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleResetCanvas}
+                    className="h-8 px-2 rounded-lg bg-[#27272a] hover:bg-[#3f3f46] text-[#ff4f00] text-[11px] font-mono font-bold flex items-center justify-center transition-colors cursor-pointer"
+                    title="Reset Zoom to 100%"
+                  >
+                    {Math.round(zoom * 100)}%
+                  </button>
+                </div>
+
+                {/* Floating Movable Helper Chip (Top Right) */}
+                <div className="absolute top-4 right-4 z-20 flex items-center gap-2 bg-[#18181b]/90 backdrop-blur-md border border-[#27272a] px-3 py-1.5 rounded-lg shadow-lg text-xs text-neutral-300 pointer-events-none">
+                  <span className="text-[#ff4f00] text-sm">✋</span>
+                  <span className="font-semibold text-white">Canvas Movable:</span>
+                  <span className="text-neutral-400">Click &amp; drag background to pan • Scroll to move</span>
+                </div>
 
                 {/* Floating Bottom Center Action Button */}
                 <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20">
@@ -990,11 +1106,10 @@ export default function WorkflowsPage() {
                     type="button"
                     onClick={runWorkflow}
                     disabled={isRunning}
-                    className={`px-8 py-3 rounded-md font-bold text-xs tracking-wider uppercase shadow-xl transition-all flex items-center gap-2 cursor-pointer ${
-                      isRunning
+                    className={`px-8 py-3 rounded-md font-bold text-xs tracking-wider uppercase shadow-xl transition-all flex items-center gap-2 cursor-pointer ${isRunning
                         ? 'bg-amber-500 text-white animate-pulse'
                         : 'bg-[#ff4f00] text-[#fffefb] hover:opacity-90 active:scale-98'
-                    }`}
+                      }`}
                   >
                     <span>⚡</span>
                     <span>{isRunning ? 'Running Engine...' : 'Run Workflow'}</span>

@@ -9,12 +9,12 @@ const isPublicRoute = createRouteMatcher([
   '/docs',
   '/privacy',
   '/support',
-  '/workflows',
-  '/excel',
-  '/connections(.*)',
-  '/files(.*)',
   '/share(.*)',
-  '/api(.*)'
+  '/api/files/info(.*)',
+  '/api/files/download(.*)',
+  '/api/webhook(.*)',
+  '/api/webhook-test(.*)',
+  '/api/forms(.*)'
 ]);
 
 export default function middleware(req, evt) {
@@ -22,7 +22,7 @@ export default function middleware(req, evt) {
     const secretKey = process.env.CLERK_SECRET_KEY || '';
     const pubKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || '';
 
-    // If Clerk credentials are not configured or are placeholder keys, bypass Edge auth safely
+    // If Clerk credentials are not configured or are placeholder keys, allow Next fallback
     if (
       !secretKey ||
       !pubKey ||
@@ -36,13 +36,9 @@ export default function middleware(req, evt) {
     // Safely delegate to Clerk middleware when credentials are present
     const clerkHandler = clerkMiddleware(async (auth, request) => {
       if (!isPublicRoute(request)) {
-        try {
-          const authObj = typeof auth === 'function' ? await auth() : auth;
-          if (authObj && typeof authObj.protect === 'function') {
-            await authObj.protect();
-          }
-        } catch (e) {
-          // If auth protection fails, allow request or handle gracefully
+        const authObj = typeof auth === 'function' ? await auth() : auth;
+        if (authObj && typeof authObj.protect === 'function') {
+          await authObj.protect();
         }
       }
       return NextResponse.next();

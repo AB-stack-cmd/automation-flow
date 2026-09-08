@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Navbar from '../components/Navbar';
 import Head from 'next/head';
 import Link from 'next/link';
-import { UserButton, useUser } from '@clerk/nextjs';
+import { UserButton, SignInButton, useUser } from '@clerk/nextjs';
 import { getFlowCanvasUrl } from '../lib/config';
 
 export default function FileVault() {
@@ -277,7 +277,15 @@ export default function FileVault() {
             <Navbar activePage="files" />
 
             <div className="flex items-center gap-3 shrink-0">
-              <UserButton />
+              {isLoaded && isSignedIn ? (
+                <UserButton />
+              ) : (
+                <SignInButton mode="modal">
+                  <button className="bg-[#18181b] hover:bg-[#27272a] border border-[#27272a] hover:border-[#ff4f00] text-white transition-all rounded-lg px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-medium cursor-pointer shrink-0">
+                    Sign In
+                  </button>
+                </SignInButton>
+              )}
               <a
                 href={flowCanvasUrl}
                 className="bg-[#ff4f00] hover:bg-[#e04500] text-white font-bold shadow-md shadow-[#ff4f00]/25 rounded-lg px-3.5 sm:px-4 py-2 text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all duration-200 shrink-0 border border-[#ff4f00] active:scale-95 cursor-pointer"
