@@ -10,6 +10,10 @@ export default function MyApp({ Component, pageProps }) {
   return (
     <ClerkProvider
       publishableKey={publishableKey}
+      signInUrl="/sign-in"
+      signUpUrl="/sign-up"
+      signInFallbackRedirectUrl="/"
+      signUpFallbackRedirectUrl="/"
       {...pageProps}
     >
       <Component {...pageProps} />

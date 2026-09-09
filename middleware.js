@@ -4,52 +4,29 @@ import { NextResponse } from 'next/server';
 const isPublicRoute = createRouteMatcher([
   '/sign-in(.*)',
   '/sign-up(.*)',
-  '/',
-  '/coming-soon',
-  '/docs',
-  '/privacy',
-  '/support',
   '/share(.*)',
   '/api/files/info(.*)',
-  '/api/files/download(.*)',
-  '/api/webhook(.*)',
-  '/api/webhook-test(.*)',
-  '/api/forms(.*)'
+  '/api/files/download(.*)'
 ]);
 
-export default function middleware(req, evt) {
-  try {
-    const secretKey = process.env.CLERK_SECRET_KEY || '';
-    const pubKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || '';
+const isApiRoute = createRouteMatcher([
+  '/api(.*)'
+]);
 
-    // If Clerk credentials are not configured or are placeholder keys, allow Next fallback
-    if (
-      !secretKey ||
-      !pubKey ||
-      secretKey.includes('neuronflow_clerk_secret_key') ||
-      secretKey.startsWith('sk_test_dummy') ||
-      pubKey.includes('neuronflow.live')
-    ) {
-      return NextResponse.next();
-    }
-
-    // Safely delegate to Clerk middleware when credentials are present
-    const clerkHandler = clerkMiddleware(async (auth, request) => {
-      if (!isPublicRoute(request)) {
-        const authObj = typeof auth === 'function' ? await auth() : auth;
-        if (authObj && typeof authObj.protect === 'function') {
-          await authObj.protect();
-        }
+export default clerkMiddleware(async (auth, req) => {
+  if (!isPublicRoute(req)) {
+    const { userId } = await auth();
+    if (!userId) {
+      if (isApiRoute(req)) {
+        return NextResponse.json(
+          { error: 'Unauthorized: Authentication required to access this API route.' },
+          { status: 401 }
+        );
       }
-      return NextResponse.next();
-    });
-
-    return clerkHandler(req, evt);
-  } catch (err) {
-    console.error('Edge Middleware execution fallback:', err);
-    return NextResponse.next();
+      await auth.protect();
+    }
   }
-}
+});
 
 export const config = {
   matcher: [

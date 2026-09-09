@@ -35,16 +35,16 @@ app.get('/api/metrics/throughput-test', async (req, res) => {
     const durationMs = 300;
     const startTime = Date.now();
     let count = 0;
-    
+
     // Measure engine throughput in real-time
     while (Date.now() - startTime < durationMs) {
       // Simulate fast-path workflow node evaluation iterations
       count += 50;
     }
-    
+
     const elapsed = Math.max(1, Date.now() - startTime);
     const rps = Math.round((count / elapsed) * 1000);
-    
+
     res.json({
       actualRps: rps,
       formattedRps: `${rps.toLocaleString()} rps`,
@@ -231,28 +231,28 @@ function sanitizeValue(val, type) {
 function validateAndSanitizePayload(body, nodeFields) {
   const sanitized = {};
   const errors = {};
-  
+
   if (nodeFields && Array.isArray(nodeFields)) {
     for (const field of nodeFields) {
       const name = field.name || field.id;
       if (!name) continue;
-      
+
       let val = body[name];
       if (field.required && (val === undefined || val === null || val === '')) {
         errors[name] = `${field.label || name} is required.`;
         continue;
       }
-      
+
       if (val === undefined || val === null || val === '') {
         sanitized[name] = field.defaultValue || '';
         continue;
       }
-      
+
       sanitized[name] = sanitizeValue(val, field.type);
     }
     return { success: Object.keys(errors).length === 0, errors, data: sanitized };
   }
-  
+
   // Default: sanitize everything
   for (const [key, val] of Object.entries(body)) {
     if (typeof val === 'string') {
@@ -344,7 +344,7 @@ app.post('/api/webhooks/:workflowId', async (req, res) => {
     const { nodes } = JSON.parse(workflow.definition);
     const triggerNode = nodes.find(n => n.type === 'webhook' || n.type === 'trigger');
     const fields = triggerNode?.data?.fields || null;
-    
+
     const valResult = validateAndSanitizePayload(triggerData, fields);
     if (!valResult.success) {
       return res.status(400).json({
@@ -387,6 +387,7 @@ app.post('/api/webhooks/:workflowId', async (req, res) => {
 
 // Dedicated Real-Time WhatsApp Webhook Trigger Endpoint
 app.post('/api/webhooks/whatsapp/:workflowId', async (req, res) => {
+
   try {
     const { workflowId } = req.params;
     const triggerData = req.body || {};
@@ -574,7 +575,7 @@ app.post('/api/executions/:executionId/rerun', async (req, res) => {
       return res.status(404).json({ error: 'Execution not found' });
     }
     const triggerData = oldExecution.triggerData ? JSON.parse(oldExecution.triggerData) : {};
-    
+
     // Create a new execution log entry
     const execution = await prisma.executionLog.create({
       data: {
@@ -584,11 +585,11 @@ app.post('/api/executions/:executionId/rerun', async (req, res) => {
         triggerData: oldExecution.triggerData
       }
     });
-    
+
     // Start background execution
     const context = { trigger: triggerData, steps: {} };
     executeWorkflow(oldExecution.workflowId, execution.id, null, context);
-    
+
     res.json({ success: true, executionId: execution.id });
   } catch (err) {
     res.status(500).json({ error: err.message });

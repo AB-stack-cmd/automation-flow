@@ -1,4 +1,5 @@
 import db from '../../../lib/db';
+import { getAuth } from '@clerk/nextjs/server';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -6,10 +7,18 @@ export default async function handler(req, res) {
   }
 
   try {
+    const { userId } = getAuth(req);
     const { clerkId, email, name, imageUrl } = req.body || {};
 
     if (!clerkId || typeof clerkId !== 'string' || !clerkId.trim()) {
       return res.status(400).json({ error: '[Auth Error] Valid "clerkId" string is required.' });
+    }
+
+    const cleanClerkId = clerkId.trim();
+
+    // Verify session identity matches the user being synced to prevent identity forgery
+    if (userId && userId !== cleanClerkId) {
+      return res.status(403).json({ error: '[Security Error] Session identity does not match requested sync identity.' });
     }
 
     if (!email || typeof email !== 'string' || !email.includes('@')) {
@@ -17,7 +26,6 @@ export default async function handler(req, res) {
     }
 
     const cleanEmail = email.trim().toLowerCase();
-    const cleanClerkId = clerkId.trim();
 
     // Search existing user by clerkId first to prevent account takeover via email collision
     const existingClerkUser = await db.user.findUnique({

@@ -12,10 +12,10 @@ export default function SignInPage() {
       <div className="min-h-screen bg-[#121212] text-[#f4f4f5] flex flex-col items-center justify-center p-6 relative">
         <div className="absolute top-6 left-6">
           <Link
-            href="/"
-            className="px-4 py-2 bg-[#18181b] border border-[#27272a] hover:border-[#ff4f00] text-xs font-semibold rounded-md text-[#a1a1aa] hover:text-white transition"
+            href="/sign-up"
+            className="px-4 py-2 bg-[#18181b] border border-[#27272a] hover:border-[#ff4f00] text-xs font-semibold rounded-md text-[#a1a1aa] hover:text-white transition flex items-center gap-1.5"
           >
-            ← Back to Dashboard
+            Don't have an account? <span className="text-[#ff4f00]">Sign Up →</span>
           </Link>
         </div>
         <div className="flex items-center gap-3 mb-8">
@@ -28,8 +28,13 @@ export default function SignInPage() {
           path="/sign-in"
           routing="path"
           signUpUrl="/sign-up"
-          redirectUrl="/"
+          fallbackRedirectUrl="/"
         />
+        <div className="mt-8 text-xs text-[#71717a] flex items-center gap-2">
+          <span>🔒 Protected Access</span>
+          <span>•</span>
+          <span>End-to-End Encrypted Session</span>
+        </div>
       </div>
     </>
   );
